@@ -52,7 +52,7 @@ function Registrar() {
                             </Form.Group>
                         </Form>
                         
-                        <div className="text-center">
+                        <div className="text-center button-container">
                             <Button className="w-100 text-center register-button">Cadastrar</Button>
                             <p className="mt-2">Já possui uma conta? <a href="/login" className="text-decoration-none">Entrar</a></p>
                         </div>

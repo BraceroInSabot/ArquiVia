@@ -1,0 +1,39 @@
+.navbar {
+  background-color: #D9F4FE;
+  padding: 0 60px 0 60px;
+  height: 8vh;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 3px solid #049DD9;
+}
+
+.underline-animation {
+  position: relative;
+  display: inline-block;
+  color: #049DD9;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.underline-animation::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  transform: scaleX(0);
+  height: 1px;
+  bottom: 0;
+  left: 0;
+  background-color: #049DD9;
+  transform-origin: bottom right;
+  transition: transform 0.25s ease-out;
+}
+
+.underline-animation:hover::after {
+  transform: scaleX(1);
+  transform-origin: bottom left;
+}
+
+.userImage {
+  border-radius: 50%;
+}

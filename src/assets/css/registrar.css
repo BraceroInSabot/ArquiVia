@@ -91,7 +91,7 @@ html, body, #root {
     text-align: center;
 }
 
-a {
+.button-container > a {
     text-decoration: none;
     color: #049DD9;
     font-weight: 600;

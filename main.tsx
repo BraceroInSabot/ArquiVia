@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import App from './src/routes/Base.tsx'
+import Index from './src/routes/Index.tsx'
 import Login from './src/routes/Login.tsx'
 import Registrar from './src/routes/Registrar.tsx'
 import EsqueciSenha from './src/routes/EsqueciSenha.tsx'
@@ -10,7 +10,7 @@ const router = createBrowserRouter(
   [
     {
       path: '/',
-      element: <App />,
+      element: <Index />,
     },
     {
       path: 'login',

@@ -12,7 +12,9 @@ function EsqueciSenha() {
           <div className="login-form-components">
             <Container>
               <Col>
-                <img src="src\assets\img\logos\AnnotaPs-Logo-Medio-invertido.png" alt="" width="148px" height="40px"/>
+                <div className="logo-container">
+                  <img src="src\assets\img\logos\AnnotaPs-Logo-Medio-invertido.png" alt="" width="148px" height="40px"/>
+                </div>
                 <Form className="text-left">
                   <Form.Group controlId="formBasicEmail">
                       <Form.Label>Insira o seu E-mail</Form.Label>
@@ -33,7 +35,7 @@ function EsqueciSenha() {
                   </Button>
                 </div>
 
-                <div className="extra-options">
+                <div className="extra-options mt-2">
                   <a href="/login">
                     Entrar
                   </a>

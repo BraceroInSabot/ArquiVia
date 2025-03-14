@@ -12,7 +12,9 @@ function Login() {
           <div className="login-form-components">
             <Container className="w-80 d-flex justify-content-center"> 
               <Col>
-                <img src="src\assets\img\logos\AnnotaPs-Logo-Medio-invertido.png" alt=""/>
+                <div className="logo-container">
+                  <img src="src\assets\img\logos\AnnotaPs-Logo-Medio-invertido.png" alt=""/>
+                </div>
                 <Form className="text-left">
                   <Form.Group controlId="formBasicUsuario">
                       <Form.Label>Usuario</Form.Label>
@@ -33,7 +35,7 @@ function Login() {
                   </Button>
                 </div>
 
-                <div className="extra-options">
+                <div className="extra-options mt-2">
                   <a href="/esqueci-minha-senha">
                     Esqueci minha senha
                   </a>

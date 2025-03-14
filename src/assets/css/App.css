@@ -1,0 +1,26 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Roboto', sans-serif;
+  background-color: #f0f0f0;
+}
+
+.navbar {
+  background-color: #D9F4FE;
+  padding: 0 60px 0 60px;
+  height: 8vh;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 3px solid #049DD9;
+}
+
+.navbar a {
+  text-decoration: none;
+  color: #049DD9;
+  font-weight: bold;
+}
+
+.userImage {
+  border-radius: 50%;
+}

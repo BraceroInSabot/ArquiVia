@@ -1,0 +1,106 @@
+html, body, #root {
+  height: 100%;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Roboto', sans-serif;
+    font-size: 11px !important;
+    background-color: #f0f0f0;
+    color: #202020;
+}
+
+.divider {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  gap: 0px;
+}
+
+.login-form {
+  width: 30%;
+  background-color: #D9F4FE;
+  display: flex;
+  justify-content: center;
+}
+
+.login-form-components {
+  flex-direction: column;
+  width: 50%;
+  gap: 1vh;
+}
+
+.login-form-components-input {
+  display: flex;
+  flex-direction: column;
+  justify-content: left;
+  text-align: left;
+  width: 100%;
+}
+
+.login-form-components-input > label {
+  margin-top: 2vh;
+  font-weight: 500;
+}
+
+.login-form-components-input > input{
+    border: #D9D9D9 1px solid;
+    padding: 0.8vh 1vh;
+    font-size: 400;
+    font-weight: 300;
+    width: 100%;
+    float: left;
+}
+
+.login-button {
+    border-radius: 10%;
+    border: #049DD9 1px solid !important;
+    padding: 1vh 2vh !important;
+    background-color: #049DD9 !important;
+    color: white;
+    font-family: raleway-medium;
+    font-weight: 600;
+    margin-top: 2vh;
+}
+
+.login-form-components > button:hover{
+    border-radius: 10%;
+    border: #049DD9 1px solid;
+    padding: 1vh 2vh;
+    background-color: white;
+    color: #049DD9;
+    font-family: raleway-medium;
+    font-weight: 600;
+}
+
+.extra-options {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  height: auto;
+}
+
+.extra-options > a {
+  text-decoration: none;
+  color: #049DD9;
+  font-weight: 600;
+  text-align: center;
+}
+
+
+
+.img-container {
+    display: flex;
+    justify-content: center;
+    width: 70%;
+    background-color: #D9D9D9;
+}
+
+img{
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  height: auto;
+  text-align: center;
+}

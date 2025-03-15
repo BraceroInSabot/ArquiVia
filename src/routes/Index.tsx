@@ -1,6 +1,7 @@
 import "../assets/css/index.css";
 import NavBar from "../components/NavBar";
 import IndexCards from "../components/IndexCards";
+import Estatisticas from "../components/Estatisticas";
 import logo from "../assets/img/logos/AnnotaPs-Logo-Pequeno.png";
 import { useEffect } from "react";
 import { Button, Col, Container, Form, Row } from 'react-bootstrap';
@@ -46,6 +47,8 @@ function Index() {
                     </div>
 
                 </div>
+
+                <Estatisticas/>
             </section>
         </>
     )

@@ -1,0 +1,85 @@
+@font-face {
+    font-family: 'raleway-regular';
+    src: url(../fonts/raleway/Raleway-Regular.ttf) format('truetype');
+}
+
+@font-face {
+    font-family: 'roboto-medium';
+    src: url(../fonts/roboto/Roboto-Medium.ttf) format('truetype');
+}
+
+@font-face {
+    font-family: 'roboto-regular';
+    src: url(../fonts/roboto/Roboto-Regular.ttf) format('truetype');
+}
+
+.estatisticas {
+    display: flex;
+    justify-content: space-between;  
+    gap: 20px;  
+}
+
+.DocEstatisticas {
+    border: 1px solid #049dd94f;
+    border-radius: 6px;
+    width: 100%;
+    padding: 1vh;
+}
+
+.eTitulo {
+    color: #049dd9;
+    font-family: raleway-regular;
+    font-size: 16px;
+}
+
+.eIndicativo {
+    color: #202020;
+    font-family: roboto-medium;
+    font-size: 28px;
+}
+
+.ePorcentagemContainer{
+    display: flex;
+    justify-content: start;
+}
+
+
+.ePorcentagemContainer > img{
+    width: 5%;
+    height: 5%;
+}
+
+.ePorcentagem {
+    color: #202020;
+    font-family: roboto-regular;
+    font-size: 16px;
+    margin-left: 1%;
+    margin-bottom: 0px;
+}
+
+.graficos {
+    margin-top: 2vh;
+    width: 100%;
+}
+
+.graficoBarra {
+    border: 1px solid #049dd94f;
+    border-radius: 6px;
+    width: 100%;
+    padding: 1vh;
+    margin-top: 2vh;
+}
+
+.graficoPizzaContainer {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.graficoPìzza {
+    border: 1px solid #049dd94f;
+    border-radius: 6px;
+    width: 100%;
+    padding: 1vh;
+    margin-top: 2vh;
+}

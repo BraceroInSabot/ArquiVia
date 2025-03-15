@@ -17,7 +17,7 @@ function NavBar({logoImage, userImage}: NavBarProps) {
         <span>
             <a href="#" className="underline-animation">Documentações</a>
         </span>
-        <a href="#">
+        <a href="">
             <img src={userImage} className="userImage" width="35" height="35" alt="Precisão Logo"/>
         </a>
     </div>

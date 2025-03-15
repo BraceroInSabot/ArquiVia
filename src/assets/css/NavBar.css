@@ -21,6 +21,7 @@
   color: #049DD9;
   text-decoration: none;
   font-weight: 700;
+  font-size: 16px;
 }
 
 .underline-animation::after {

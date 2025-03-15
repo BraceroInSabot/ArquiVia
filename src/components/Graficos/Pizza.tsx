@@ -25,7 +25,7 @@ const GraficoPizza = () => {
 
     return (
       <div>
-        <ReactApexChart series={state.series} type="pie" width={380} />
+        <ReactApexChart options={state.options} series={state.series} type="pie" width={380} />
       </div>
     );
 }

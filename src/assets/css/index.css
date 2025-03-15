@@ -20,3 +20,9 @@ body {
 section {
     padding: 20px 5% !important;
 }
+
+.last-cards {
+    display: flex;
+    justify-content: space-between;
+}
+

@@ -1,5 +1,6 @@
 import "../assets/css/index.css";
 import NavBar from "../components/NavBar";
+import IndexCards from "../components/IndexCards";
 import logo from "../assets/img/logos/AnnotaPs-Logo-Pequeno.png";
 import { useEffect } from "react";
 
@@ -15,7 +16,10 @@ function Index() {
             </nav>
             
             <section>
-                <img src={logo} alt="asdasd" />
+                <h1>Vistos Recentementes</h1>
+
+                <IndexCards />
+                
             </section>
         </>
     )

@@ -1,11 +1,20 @@
 import "../assets/css/login.css";
 import { Button, Col, Container, Form, Row } from 'react-bootstrap';
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 function Login() {
+    const navigate = useNavigate();
+
+    const handleLogin = () => {
+      // Aqui você pode adicionar lógica de validação antes de redirecionar
+      navigate("/"); // Redireciona para a URL desejada
+    };
+    
     useEffect(() => {
         document.title = "Logar - AnnotaPS";
     }, []);
+
     return (
       <div className="divider">
         <div className="login-form">
@@ -30,7 +39,7 @@ function Login() {
                 <div className="erros" id="erros"></div>
 
                 <div className="d-flex justify-content-center w-100 text-center mt-2">
-                  <Button className="text-center w-100 p-1 login-button">
+                  <Button className="text-center w-100 p-1 login-button" onClick={handleLogin}>
                     Entrar
                   </Button>
                 </div>

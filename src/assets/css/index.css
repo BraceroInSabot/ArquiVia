@@ -53,16 +53,16 @@ section {
     margin-top: 2vh !important;
     font-family: raleway-regular !important;
     font-size: 20px !important;
-    color: #049DD9 !important;
+    color: #FFF !important;
     border-color: #049DD9 !important;
     border: 2px solid !important;
-    background-color: #FFF !important;
+    background-color: #049DD9 !important;
 }
 
 .vermais:hover {
-    color: #FFF !important;
+    color: #049DD9 !important;
     border-color: #049DD9 !important;
-    background-color: #049DD9 !important;
+    background-color: transparent !important;
 }
 
 .metricas-intro {

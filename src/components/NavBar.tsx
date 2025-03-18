@@ -10,7 +10,7 @@ function NavBar({ logoImage, userImage }: NavBarProps) {
   
   return (
     <div className="navbar">
-      <a href="#">
+      <a href="/">
         <img src={logoImage} width="40" height="40" alt="Precisão Logo" />
       </a>
       <span>

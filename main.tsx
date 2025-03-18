@@ -5,6 +5,7 @@ import Login from './src/routes/Login.tsx'
 import Registrar from './src/routes/Registrar.tsx'
 import Perfil from './src/routes/Perfil.tsx'
 import EsqueciSenha from './src/routes/EsqueciSenha.tsx'
+import Setor from './src/routes/Setor.tsx'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 
 const router = createBrowserRouter(
@@ -28,6 +29,10 @@ const router = createBrowserRouter(
     {
       path: 'perfil',
       element: <Perfil />
+    },
+    {
+      path: 'setor',
+      element: <Setor />
     }
   ]
 )

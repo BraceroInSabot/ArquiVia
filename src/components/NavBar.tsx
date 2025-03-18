@@ -25,7 +25,7 @@ function NavBar({ logoImage, userImage }: NavBarProps) {
         </Dropdown.Toggle>
 
         <Dropdown.Menu align="end" className="menuDropdown">
-          <Dropdown.Item href="#">Perfil</Dropdown.Item>
+          <Dropdown.Item href="/perfil">Perfil</Dropdown.Item>
           <Dropdown.Item href="#">Setor</Dropdown.Item>
         </Dropdown.Menu>
       </Dropdown>

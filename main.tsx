@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import Index from './src/routes/Index.tsx'
 import Login from './src/routes/Login.tsx'
 import Registrar from './src/routes/Registrar.tsx'
+import Perfil from './src/routes/Perfil.tsx'
 import EsqueciSenha from './src/routes/EsqueciSenha.tsx'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 
@@ -24,6 +25,10 @@ const router = createBrowserRouter(
       path: 'esqueci-minha-senha',
       element: <EsqueciSenha />,
     },
+    {
+      path: 'perfil',
+      element: <Perfil />
+    }
   ]
 )
 

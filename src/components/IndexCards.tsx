@@ -8,6 +8,7 @@ function IndexCards() {
     
   return (
     <div className="cards-container">
+        <a href="/anotacao" aria-disabled>
         <div className="cartao" id="cartao">
             <div className="cartao-header">
                 <h2>Como fazer a primeira Transmissão</h2>
@@ -34,7 +35,9 @@ function IndexCards() {
                 </div>
             </div>
         </div>
+        </a>
 
+        <a href="/anotacao" aria-disabled>
         <div className="cartao" id="cartao">
             <div className="cartao-header">
                 <h2>Como fazer a primeira Transmissão</h2>
@@ -61,7 +64,9 @@ function IndexCards() {
                 </div>
             </div>
         </div>
+        </a>
 
+        <a href="/anotacao" aria-disabled>
         <div className="cartao" id="cartao">
             <div className="cartao-header">
                 <h2>Como fazer a primeira Transmissão</h2>
@@ -88,6 +93,7 @@ function IndexCards() {
                 </div>
             </div>
         </div>
+        </a>
     </div>
   );
 }

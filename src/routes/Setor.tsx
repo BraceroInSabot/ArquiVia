@@ -1,5 +1,6 @@
 import NavBar from "../components/NavBar";
 import SetorInformacao from "../components/SetorInformacao";
+import SetorQuadroColaborador from "../components/SetorQuadroColaboradores";
 import logo from "../assets/img/logos/AnnotaPs-Logo-Pequeno.png";
 import "../assets/css/setor.css";
 
@@ -18,6 +19,8 @@ function Setor () {
             <section className="busca-container">
                 <input type="text" placeholder="Buscar por colaborador..."/>
             </section>           
+
+            <SetorQuadroColaborador />
         </>
     )
 }

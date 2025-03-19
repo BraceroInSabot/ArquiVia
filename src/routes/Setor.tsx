@@ -1,5 +1,7 @@
 import NavBar from "../components/NavBar";
+import SetorInformacao from "../components/SetorInformacao";
 import logo from "../assets/img/logos/AnnotaPs-Logo-Pequeno.png";
+
 import { useEffect } from "react";
 
 function Setor () {
@@ -9,6 +11,8 @@ function Setor () {
     return (
         <>
             <NavBar logoImage={logo} userImage={logo} />
+            
+            <SetorInformacao />            
         </>
     )
 }

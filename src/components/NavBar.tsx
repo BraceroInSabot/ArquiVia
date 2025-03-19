@@ -14,7 +14,7 @@ function NavBar({ logoImage, userImage }: NavBarProps) {
         <img src={logoImage} width="40" height="40" alt="Precisão Logo" />
       </a>
       <span>
-        <a href="#" className="underline-animation">Anotações</a>
+        <a href="/anotacoes" className="underline-animation">Anotações</a>
       </span>
       <span>
         <a href="#" className="underline-animation">Documentações</a>

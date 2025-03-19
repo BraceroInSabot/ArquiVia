@@ -1,12 +1,14 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+
 import Index from './src/routes/Index.tsx'
 import Login from './src/routes/Login.tsx'
 import Registrar from './src/routes/Registrar.tsx'
 import Perfil from './src/routes/Perfil.tsx'
 import EsqueciSenha from './src/routes/EsqueciSenha.tsx'
 import Setor from './src/routes/Setor.tsx'
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import Anotacoes from './src/routes/Anotacoes.tsx'
 
 const router = createBrowserRouter(
   [
@@ -33,6 +35,10 @@ const router = createBrowserRouter(
     {
       path: 'setor',
       element: <Setor />
+    },
+    {
+      path: 'anotacoes',
+      element: <Anotacoes />
     }
   ]
 )

@@ -1,0 +1,50 @@
+.anotacoes-cartao {
+    display: flex;
+}
+
+.a-c-filtragem {
+    display: flex;
+    flex-direction: column;
+    width: 20%;
+    font-family: roboto-medium;
+    font-size: 12px;
+    font-weight: 500;
+    color: #202020;
+    border: 1px solid black;
+    padding: 2%;
+    border-radius: 10px;
+    border-color: black;
+}
+
+.opcoes-select > option {
+    font-family: roboto-medium;
+    font-size: 12px;
+    font-weight: 500;
+    color: #202020;
+}
+
+.opcoes-checkbox {
+    display: flex;
+    width: 100%;
+    gap: 5%;
+}
+
+.opcoes-select {
+    padding: 1%;
+    font-size: 12px;
+}
+
+
+.opcoes-botao {
+    background-color: #049DD9;
+    border-color: #049DD9;
+    border-width: 2px;
+    margin-top: 5%;
+}
+
+.opcoes-botao:hover {
+    background-color: transparent;
+    color: #049DD9;
+    border-color: #049DD9;
+    border-width: 2px;
+}

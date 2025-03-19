@@ -1,11 +1,14 @@
 import "../assets/css/IndexCards.css";
 import orientacao from "../assets/img/icons/orientacao.png";
 import naoRevisado from "../assets/img/icons/nao-revisado.png";
+import { useEffect } from "react";
 
 function IndexCards() {
+
+    
   return (
     <div className="cards-container">
-        <div className="cartao" id="card-1">
+        <div className="cartao" id="cartao">
             <div className="cartao-header">
                 <h2>Como fazer a primeira Transmissão</h2>
                 <img src={orientacao} alt="Orientação" />
@@ -32,7 +35,7 @@ function IndexCards() {
             </div>
         </div>
 
-        <div className="cartao" id="card-1">
+        <div className="cartao" id="cartao">
             <div className="cartao-header">
                 <h2>Como fazer a primeira Transmissão</h2>
                 <img src={orientacao} alt="Orientação" />
@@ -59,7 +62,7 @@ function IndexCards() {
             </div>
         </div>
 
-        <div className="cartao" id="card-1">
+        <div className="cartao" id="cartao">
             <div className="cartao-header">
                 <h2>Como fazer a primeira Transmissão</h2>
                 <img src={orientacao} alt="Orientação" />

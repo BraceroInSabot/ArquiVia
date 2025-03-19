@@ -1,5 +1,6 @@
 .anotacoes-cartao {
     display: flex;
+    margin: 2% 0% 2% 0%;
 }
 
 .a-c-filtragem {
@@ -10,10 +11,18 @@
     font-size: 12px;
     font-weight: 500;
     color: #202020;
-    border: 1px solid black;
-    padding: 2%;
+}
+
+.filtragem {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 10%;
+    background-color: #f5f5fa;
+    border: 1px solid #f5f5fa;
     border-radius: 10px;
-    border-color: black;
+    border-color: #f5f5fa;
+    box-shadow: 0.7vh 0.7vh 0.7vh #d5d5de;
 }
 
 .opcoes-select > option {
@@ -47,4 +56,8 @@
     color: #049DD9;
     border-color: #049DD9;
     border-width: 2px;
+}
+
+.a-c-listagem {
+    margin-left: 1%;
 }

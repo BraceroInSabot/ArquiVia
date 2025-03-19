@@ -24,6 +24,15 @@
     padding: 1%;
     background: linear-gradient(white, white) padding-box, 
                 linear-gradient(to bottom, #049DD9, #232722) border-box;
+
+    transition: transform 0.1s ease-out;
+    transform-origin: center;
+    perspective: 500px;
+
+}
+
+.cartao:hover {
+    box-shadow: 10px 10px 20px 5px rgba(0, 0, 0, 0.3);
 }
 
 .cartao-header {

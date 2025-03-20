@@ -3,6 +3,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 INSTALLED_APPS = [
+    "apps.APIUserAuth",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -13,8 +14,13 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "rest_framework",
     "corsheaders",
-
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -70,5 +76,7 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
+
+AUTH_USER_MODEL = 'APIUserAuth.Colaborador'
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv(".env/.env")
 
+
 def main():
     """Run administrative tasks."""
     print(os.getenv("DEBUG"))

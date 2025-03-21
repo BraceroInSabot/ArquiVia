@@ -4,6 +4,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 INSTALLED_APPS = [
     "apps.APIUserAuth",
+    "apps.APISetor",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -17,9 +18,12 @@ INSTALLED_APPS = [
 ]
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": {
+        "rest_framework.permissions.IsAuthenticated",
+    }
 }
 
 MIDDLEWARE = [
@@ -77,6 +81,6 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
-AUTH_USER_MODEL = 'APIUserAuth.Colaborador'
+AUTH_USER_MODEL = "APIUserAuth.Colaborador"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

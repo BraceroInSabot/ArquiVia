@@ -3,7 +3,8 @@ from django.contrib.auth.models import AbstractUser, PermissionsMixin
 
 
 class Colaborador(AbstractUser, PermissionsMixin):
-    imagem = models.CharField(max_length=255, null=True)
+    codigocolaborador = models.SmallAutoField(primary_key=True, db_column='CodigoColaborador', verbose_name='Codigo do Colaborador')
+    imagem = models.CharField(max_length=255, default=' ')
     nome = models.CharField(max_length=100)
     horario_inicio_expediente = models.TimeField(blank=True, null=True)
     horario_final_expediente = models.TimeField(blank=True, null=True)

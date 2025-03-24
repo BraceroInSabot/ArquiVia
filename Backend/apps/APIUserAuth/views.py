@@ -6,7 +6,7 @@ from .serializer import RegistroUsuarioSerializer
 from django.shortcuts import render
 
 class LoginTokenObtainPairView(TokenObtainPairView):
-
+    permission_classes = [AllowAny]
     def post(self, request, *args, **kwargs):
         """Obtém o Token do usuário a partir de autenticação do usuário em client-side. Armazena o token em Coookies.
 
@@ -14,13 +14,13 @@ class LoginTokenObtainPairView(TokenObtainPairView):
             request: metadados requisição realizada
         """
 
+        response = super().post(request, *args, **kwargs)
         try:
-            response = super().post(request, *args, **kwargs)
+            print(111112312312)
             tokens = response.data
 
             access_token = tokens['access']
             refresh_token = tokens['refresh']
-
             res = Response()
 
             res.data = {"sucesso": "usuário autenticado com sucesso"}

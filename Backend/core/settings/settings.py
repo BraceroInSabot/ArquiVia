@@ -26,6 +26,10 @@ REST_FRAMEWORK = {
     }
 }
 
+SIMPLE_JWT = {
+    "USER_ID_FIELD": "codigocolaborador",
+}
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",

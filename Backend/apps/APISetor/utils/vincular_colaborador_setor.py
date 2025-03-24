@@ -2,6 +2,7 @@ from ..models import Setor, Colaborador_Setor
 
 def vincular(User, codigo):
     try:
+        print('comecou')
         setor_chave = Setor.objects.get(codigoChave=codigo)  # Busca um setor único
         print(f'Setor encontrado: {setor_chave}')
         print(f'Usuário: {User.username}')
@@ -13,9 +14,10 @@ def vincular(User, codigo):
         )
 
         col_setor.save()
+        print('Salvou!')
         return True  # Indica que deu certo
 
-    except Setor.DoesNotExist:
+    except setor_chave.DoesNotExist:
         print('Setor não encontrado.')
         return False
     except Exception as e:

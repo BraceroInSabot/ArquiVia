@@ -1,3 +1,5 @@
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_protect
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework.views import Response, APIView
 from rest_framework.decorators import api_view, permission_classes
@@ -7,6 +9,7 @@ from django.shortcuts import render
 
 class LoginTokenObtainPairView(TokenObtainPairView):
     permission_classes = [AllowAny]
+
     def post(self, request, *args, **kwargs):
         """Obtém o Token do usuário a partir de autenticação do usuário em client-side. Armazena o token em Coookies.
 
@@ -25,26 +28,31 @@ class LoginTokenObtainPairView(TokenObtainPairView):
 
             res.data = {"sucesso": "usuário autenticado com sucesso"}
 
-            res.set_cookie(
-                key='access_token',
-                value=access_token,
-                httponly=True,
-                secure=True,
-                samesite='None',
-                path='/'
-            )
-
+            print("Começou")
+            try:
+                res.set_cookie(
+                    key='access_token',
+                    value=access_token,
+                    httponly=True,
+                    secure=True,
+                    samesite='',
+                    path='/',
+                )
+            except Exception as e:
+                print(e)
+            print('Terminou')
             res.set_cookie(
                 key='refresh_token',
                 value=refresh_token,
                 httponly=True,
                 secure=True,
-                samesite='None',
-                path='/'
+                samesite='',
+                path='/',
             )
-
+            
             return res
-        except:
+        except Exception as e:
+            print(e)
             return Response({"falha": "houve uma falha na autenticação do usuário."})
 
 class LoginTokenRefreshPairView(TokenRefreshView):

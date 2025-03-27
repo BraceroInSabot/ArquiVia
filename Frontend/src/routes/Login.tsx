@@ -1,14 +1,17 @@
 import "../assets/css/login.css";
 import { Button, Col, Container, Form, Row } from 'react-bootstrap';
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { login } from "../api/apiHandler";
 
 function Login() {
     const navigate = useNavigate();
-
+    const [usuario, setUsuario] = useState("");
+    const [senha, setSenha] = useState("");
+    
     const handleLogin = () => {
-      // Aqui você pode adicionar lógica de validação antes de redirecionar
-      navigate("/"); // Redireciona para a URL desejada
+      login(usuario, senha);
+      navigate("/"); 
     };
     
     useEffect(() => {
@@ -25,14 +28,24 @@ function Login() {
                   <img src="src\assets\img\logos\AnnotaPs-Logo-Medio-invertido.png" alt=""/>
                 </div>
                 <Form className="text-left">
-                  <Form.Group controlId="formBasicUsuario">
+                  <Form.Group >
                       <Form.Label>Usuario</Form.Label>
-                      <Form.Control className="p-2" type="text" id="usuario" placeholder="joao.silva" />
+                      <Form.Control 
+                        className="p-2" 
+                        type="text" 
+                        id="usuario" 
+                        placeholder="joao.silva" 
+                        onChange={(e) => setUsuario(e.target.value)} 
+                        value={usuario} />
                   </Form.Group>
                   
-                  <Form.Group className="mt-2" controlId="formBasicSenha">
+                  <Form.Group className="mt-2" >
                       <Form.Label>Senha</Form.Label>
-                      <Form.Control type="password" placeholder="•••••••••" />
+                      <Form.Control 
+                        type="password" 
+                        placeholder="•••••••••" 
+                        onChange={(e) => setSenha(e.target.value)} 
+                        value={senha}/>
                   </Form.Group>
                 </Form>
 

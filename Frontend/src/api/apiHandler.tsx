@@ -2,7 +2,9 @@ import axios from "axios";
 
 import { AxiosError, AxiosResponse } from "axios";
 
-const BASE_URL: string = 'http://127.0.0.1:8000/api/';
+const versao: string = 'v1';
+
+const BASE_URL: string = 'http://127.0.0.1:8000/api/' + versao + '/';
 const AUTH_URL: string = BASE_URL + 'auth/';
 const LOGIN_URL: string = AUTH_URL + 'token/entrar';
 const LOGOUT_URL: string = AUTH_URL + 'token/sair';

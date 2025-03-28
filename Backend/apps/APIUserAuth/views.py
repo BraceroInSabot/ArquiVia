@@ -6,6 +6,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .serializer import RegistroUsuarioSerializer
 from django.shortcuts import render
+from apps.APISetor.models import Colaborador_Setor
 
 class LoginTokenObtainPairView(TokenObtainPairView):
     permission_classes = [AllowAny]
@@ -18,6 +19,7 @@ class LoginTokenObtainPairView(TokenObtainPairView):
         """
 
         response = super().post(request, *args, **kwargs)
+
         try:
             print(111112312312)
             tokens = response.data
@@ -68,7 +70,7 @@ class LoginTokenRefreshPairView(TokenRefreshView):
             token_acesso = tokens['access']
 
             res = Response()
-            res.data = {"Atualização": "Autenticação renovada com sucesso"}
+            res.data = {"autenticacao": True}
 
             res.set_cookie(
                 key='access_token',
@@ -83,7 +85,7 @@ class LoginTokenRefreshPairView(TokenRefreshView):
 
             return res
         except:
-            return Response({"Atualização: Renovação não completa."})
+            return Response({"autenticacao": False})
         
 
 class RegisterTokenView(APIView):

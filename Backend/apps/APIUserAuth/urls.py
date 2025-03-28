@@ -1,7 +1,6 @@
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.urls import path
 
-from .views import LoginTokenObtainPairView, LoginTokenRefreshPairView, LogoutTokenView, RegisterTokenView
+from .views import LoginTokenObtainPairView, LoginTokenRefreshPairView, LogoutTokenView, RegisterTokenView, EstaAutenticadoView, UsuarioInformacoesView
 
 urlpatterns = [
     path("token/entrar", LoginTokenObtainPairView.as_view(), name="entrar"),

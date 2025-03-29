@@ -1,14 +1,36 @@
 import "../assets/css/perfil.css";
 import NavBar from "../components/NavBar";
 import logo from "../assets/img/logos/AnnotaPs-Logo-Pequeno.png";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "react-bootstrap";
+import { verificar_dados_usuario } from "../api/apiHandler";
 
-function Perfil () {
+interface UsuarioInterface {
+    nome: string;
+    setor: string;
+    email: string;
+    data_criacao: string;
+    ultimo_login: string;
+    inicio_expediente: string;
+    final_expediente: string;
+}
+
+function Perfil() {
+    const [usuario, setUsuario] = useState<UsuarioInterface | null>(null);
 
     useEffect(() => {
-            document.title = "Guilherme Bracero - AnnotaPS";
-        }, []);
+        document.title = "Guilherme Bracero - AnnotaPS";
+
+        // Buscar os dados do usuário e armazenar no estado
+        const fetchData = async () => {
+            const dadosUsuario = await verificar_dados_usuario();
+            console.log(dadosUsuario['usuario'][0]);
+            setUsuario(dadosUsuario['usuario'][0]);
+        };
+
+        fetchData();
+    }, []);
+
 
     return (
         <>
@@ -19,18 +41,18 @@ function Perfil () {
                     <img src={logo} alt="Perfil do Usuário" />
                     <div className="perfil-dados">
                         <div className="perfil-textos">
-                            <h1>Guilherme Bracero Gonzales</h1>
-                            <h2>Setor N2</h2>
+                            <h1>{ usuario?.nome }</h1>
+                            <h2>{ usuario?.setor }</h2>
 
                             <div className="perfil-datas">
-                                <span>Conta criada em 21 de fev, 2025.</span>
-                                <span>Última vez logado em 24 de fev, 2025.</span>
+                                <span>Conta criada em { usuario?.data_criacao}</span>
+                                <span>Última vez logado em { usuario?.ultimo_login }</span>
                             </div>
 
                             <div className="perfil-informacoes">
-                                <span>guibragon@gmail.com</span><br />
-                                <span>Inicia o expediente em: 13h00</span><br />
-                                <span>Termina o expediente em: 22h00</span>
+                                <span>{ usuario?.email }</span><br />
+                                <span>Inicia o expediente em: { usuario?.inicio_expediente || "--:--" }</span><br />
+                                <span>Termina o expediente em: { usuario?.final_expediente || "--:--" }</span>
                             </div>
                         </div>
                         <div className="perfil-botoes">

@@ -7,6 +7,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from .serializer import RegistroUsuarioSerializer
 from django.shortcuts import render
 from apps.APISetor.models import Colaborador_Setor
+from django.utils import timezone
 
 class LoginTokenObtainPairView(TokenObtainPairView):
     permission_classes = [AllowAny]
@@ -94,18 +95,22 @@ class RegisterTokenView(APIView):
     def post(self, request):
         serializer = RegistroUsuarioSerializer(data=request.data)
 
-        print(1203120398120382198, serializer.is_valid())
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data)
+            return Response({"Sucesso": True}, status=201)
         
-        print('asdasd')
         return Response((serializer.errors), status=400)
 
 class LogoutTokenView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+        try:
+            user = request.user
+            user.last_login = timezone.now().astimezone(timezone.get_current_timezone())
+            user.save()
+        except:
+            pass
         try:
             res = Response()
             res.data = {'Sucesso': 'Usuário deslogado com sucesso!'}

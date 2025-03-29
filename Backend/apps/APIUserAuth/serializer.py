@@ -44,7 +44,6 @@ class RegistroUsuarioSerializer(serializers.ModelSerializer):
             ).validar_tudo()
         
         if  validacao[0] == False:
-            print(1238129476149816439871265387125341827654085, validacao[0])
             response = {"Falha": f"Dados de usuário invalidos! {validacao}"}
             raise serializers.ValidationError(response, code=status.HTTP_400_BAD_REQUEST)
 
@@ -56,19 +55,15 @@ class RegistroUsuarioSerializer(serializers.ModelSerializer):
             )
             user.set_password(validated_data['password'])
             user.save()
-            print('Criou!')
         except:
             response={"Falha": "Usuário informado já existe no banco!"}
-            print(222323)
             return response
         
         try:        
-            print(user, cod_chave)
             vincular(user, cod_chave)
             response={"Sucesso": "Usuário criado com sucesso!"}
             return response
         except:
-            print(12313131245123)
             response={"Falha": "Houve um erro no processo de vinculação do usuário com o setor!"}
             return response
         

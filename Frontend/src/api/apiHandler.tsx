@@ -44,15 +44,19 @@ interface Email {
 }
 
 const login = async (usuario: string, senha: string) => {
-    let response = await axios.post(LOGIN_URL, {
-        username: usuario,
-        password: senha
-    }, {
-        withCredentials: true,
-    });
+    try {
+        let response = await axios.post(LOGIN_URL, {
+            username: usuario,
+            password: senha
+        }, {
+            withCredentials: true,
+        });
 
-
-    return response.data.sucesso;
+        return true;
+    } catch (Error) {
+        console.log(Error);
+        return false
+    }
 };
 
 const logout = async () => {

@@ -8,10 +8,19 @@ function Login() {
     const navigate = useNavigate();
     const [usuario, setUsuario] = useState("");
     const [senha, setSenha] = useState("");
+    const [alerta, setAlerta] = useState("");
+    const [isInvalid, setIsInvalid] = useState(false);
     
-    const handleLogin = () => {
-      login(usuario, senha);
-      navigate("/"); 
+    const handleLogin = async () => {
+      setAlerta("");
+
+      if (await login(usuario, senha)) {
+        navigate("/"); 
+      } else {
+        setAlerta("Credenciais incorretas.");
+        setIsInvalid(true);
+        return;
+      }
     };
     
     useEffect(() => {
@@ -49,10 +58,12 @@ function Login() {
                   </Form.Group>
                 </Form>
 
-                <div className="erros" id="erros"></div>
+                <div className="erros" id="erros">
+                  <p>{ isInvalid ? alerta : '' }</p>
+                </div>
 
                 <div className="d-flex justify-content-center w-100 text-center mt-2">
-                  <Button className="text-center w-100 p-1 login-button" onClick={handleLogin}>
+                  <Button className="text-center w-100 p-1 login-button" onClick={handleLogin} enterKeyHint={"enter"}>
                     Entrar
                   </Button>
                 </div>

@@ -50,3 +50,28 @@ class UsuarioInformacoesView(APIView):
         }
 
         return Response({"usuario": [infos]}, status=200)
+    
+class DesativarUsuarioView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        password = request.data.get('password', '')
+
+        if not user.check_password(password):
+            return Response({"error": "Senha incorreta."}, status=400)
+
+        user.is_active = False
+        user.save()
+
+        try:
+            res = Response()
+            res.data = {'Sucesso': 'Usuário deslogado com sucesso!'}
+            res.delete_cookie('access_token', path='/', samesite='None')
+            res.delete_cookie('refresh_token', path='/', samesite='None')
+            print("a58sd4a6s84da68s4")
+        except:
+            return Response({'Falha': 'Não foi possível deslogar o usuário.'})
+
+        return res
+        

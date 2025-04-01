@@ -1,9 +1,11 @@
-import "../assets/css/perfil.css";
-import NavBar from "../components/NavBar";
-import logo from "../assets/img/logos/AnnotaPs-Logo-Pequeno.png";
 import { useState, useEffect } from "react";
 import { Button } from "react-bootstrap";
+import NavBar from "../components/NavBar";
+import logo from "../assets/img/logos/AnnotaPs-Logo-Pequeno.png";
 import { verificar_dados_usuario } from "../api/apiHandler";
+import DesativarUsuarioModal from "../components/Modals/DesativarUsuario";
+import { useNavigate } from "react-router";
+import "../assets/css/perfil.css";
 
 interface UsuarioInterface {
     nome: string;
@@ -16,21 +18,25 @@ interface UsuarioInterface {
 }
 
 function Perfil() {
+    const navigate = useNavigate();
     const [usuario, setUsuario] = useState<UsuarioInterface | null>(null);
+    const [showDeactivateModal, setShowDeactivateModal] = useState(false);
 
     useEffect(() => {
-        document.title = "Guilherme Bracero - AnnotaPS";
+        document.title = "Perfil - AnnotaPS";
 
-        // Buscar os dados do usuário e armazenar no estado
         const fetchData = async () => {
             const dadosUsuario = await verificar_dados_usuario();
-            console.log(dadosUsuario['usuario'][0]);
             setUsuario(dadosUsuario['usuario'][0]);
         };
 
         fetchData();
     }, []);
 
+    const deactivateModal = () => {
+        setShowDeactivateModal(false); // Fecha o modal
+        navigate('/login'); // Redireciona para a tela de login
+    };
 
     return (
         <>
@@ -45,7 +51,7 @@ function Perfil() {
                             <h2>{ usuario?.setor }</h2>
 
                             <div className="perfil-datas">
-                                <span>Conta criada em { usuario?.data_criacao}</span>
+                                <span>Conta criada em { usuario?.data_criacao }</span>
                                 <span>Última vez logado em { usuario?.ultimo_login }</span>
                             </div>
 
@@ -56,7 +62,12 @@ function Perfil() {
                             </div>
                         </div>
                         <div className="perfil-botoes">
-                            <Button className="botao-desativar-conta">Desativar Conta</Button>
+                            <Button 
+                                className="botao-desativar-conta" 
+                                onClick={() => setShowDeactivateModal(true)}
+                            >
+                                Desativar Conta
+                            </Button>
 
                             <div className="perfil-botoes-alterar">
                                 <Button className="botao-alterar-setor">Alterar Setor</Button>
@@ -66,10 +77,16 @@ function Perfil() {
                         </div>
                     </div>
                 </div>
-
             </section>
+
+            {/* MODAL DE CONFIRMAÇÃO */}
+            <DesativarUsuarioModal 
+                show={showDeactivateModal} 
+                onHide={() => setShowDeactivateModal(false)} 
+                onConfirm={deactivateModal} // Passa a função de redirecionamento
+            />
         </>
-    )
+    );
 }
 
 export default Perfil;

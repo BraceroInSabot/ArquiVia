@@ -22,32 +22,20 @@ function verificaremail() {
     }
 }
 
-function verificarsenha() {
-    var senha = document.getElementById("senha").value;
-    
-    const erros = document.getElementById("erros");
-
+function verificarsenha(senha: string) {
     const validacoes = [];
 
     if (senha.length < 6) {
-        document.getElementById("senha").style.border = "1px solid red";
         validacoes.push("A senha deve conter no mínimo 6 caracteres.");
     } 
     if (!senha.match(/[A-Z]/)) {
-        document.getElementById("senha").style.border = "1px solid red";
         validacoes.push("A senha deve conter no mínimo uma letra maiúscula."); 
     } 
     if (!senha.match(/[!@#$%^&*(),.?":{}|<>]/)) {
-        document.getElementById("senha").style.border = "1px solid red";
         validacoes.push("A senha deve conter no mínimo um caractere especial.");
     } 
-    if (validacoes.length === 0) {
-        document.getElementById("senha").style.border = "1px solid #ced4da";
-    }
 
-    erros.innerHTML = validacoes.join("<br>");
-
-    return validacoes.length === 0;
+    return validacoes;
 }
 
 function verificarconfirmarsenha() {

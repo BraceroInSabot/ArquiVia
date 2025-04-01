@@ -14,6 +14,20 @@ function Registrar() {
     const [senha, setSenha] = useState("");
     const [cSenha, setcSenha] = useState("");
     const [cChave, setcChave] = useState("");
+    const [style, setStyle] = useState<{ border?: string }>({});
+    const [erros, setErros] = useState<string[]>([]);
+
+    const handlePasswordVerifier = async (senhaForm: string) => {
+        const validacoes = verificarsenha(senhaForm);
+        setErros(validacoes); // Armazena o array de erros diretamente no estado
+        console.log(validacoes)
+        if (validacoes.length !== 0) {
+            setStyle({ border: "1px solid red" });
+        }
+        if (senha === null) {
+            setStyle({ border: "1px solid #ced4da" });
+        }
+    };
 
     const handleRegistrar = async (): Promise<true|false> => {
         console.log("Registrando usuário:", { usuario, nome, email, senha, cSenha, cChave });
@@ -37,7 +51,7 @@ function Registrar() {
                 <Container className="w-50 d-flex justify-content-center"> 
                     <Col>
                         <Form className="text-left">
-                            <Form.Group controlId="formBasicUsuario">
+                            <Form.Group >
                                 <Form.Label>Usuario</Form.Label>
                                 <Form.Control 
                                 type="text" 
@@ -79,15 +93,20 @@ function Registrar() {
                                 <Form.Control 
                                 type="password" 
                                 onChange={(e) => {
-                                    verificarsenha();
-                                    setSenha(e.target.value)
+                                    setSenha(e.target.value);
+                                    handlePasswordVerifier(e.target.value);
                                     }
                                 } 
+                                style={style}
                                 id="senha" 
                                 placeholder="•••••••••" />
                             </Form.Group>
 
-                            <div id="erros"></div>
+                            <div id="erros" className="text-danger">
+                                {erros.map((erro, index) => (
+                                    <p key={index}>{erro}</p>
+                                ))}
+                            </div>
 
                             <Form.Group className="mt-2" controlId="formBasicSenhaConfirmar">
                                 <Form.Label>Confirmar Senha</Form.Label>

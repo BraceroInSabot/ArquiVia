@@ -26,55 +26,47 @@ body {
     width: 100%;
 }
 
-/* Container principal da página de redefinição de senha */
-.password-reset-div {
+.central-div {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     height: auto;
-    width: 50%;
-    padding: 7vh 1vh;
+    width: 40%;
+    padding: 5vh 3vh;
     background-color: #D9F4FE;
-    border-radius: 8px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-/* Título da página */
-.password-reset-title {
-    font-size: 20px;
-    font-weight: bold;
+.central-div h2 {
+    margin-bottom: 2vh;
+    font-size: 16px;
+    font-weight: 600;
+    color: #202020;
     text-align: center;
-    margin-bottom: 20px;
-    color: #049DD9;
 }
 
-/* Formulário de redefinição de senha */
 .password-reset-form {
-    display: flex;
-    flex-direction: column;
-    text-align: left;
     width: 100%;
 }
 
-/* Campos de entrada de senha */
 .password-reset-form input {
-    border: 1px solid #D9D9D9;
-    padding: 0.6vh 1vh;
-    border-radius: 4px;
     width: 100%;
+    border: 1px solid #D9D9D9;
+    padding: 0.8vh 1vh;
+    border-radius: 5px;
 }
 
-/* Labels dos campos */
 .password-reset-form label {
+    display: block;
     margin-top: 2vh;
     margin-bottom: 1vh;
     font-size: 12px;
-    font-weight: 500;
+    font-weight: 600;
 }
 
-/* Botão de alterar senha */
-.password-reset-button {
+.register-button {
     margin-top: 3vh;
     border-radius: 8px;
     padding: 1vh 2vh;
@@ -83,25 +75,30 @@ body {
     font-family: raleway-medium;
     font-weight: 600;
     border: none;
-    transition: background-color 0.3s ease;
+    transition: 0.3s ease-in-out;
 }
 
-/* Efeito hover no botão */
-.password-reset-button:hover {
-    background-color: #0278a8 !important;
+.register-button:hover {
+    background-color: white !important;
+    color: #049DD9 !important;
+    border: 1px solid #049DD9;
 }
 
-/* Mensagens de erro */
-.input-error {
-    border: 1px solid red;
-}
-
-/* Link para login ou suporte */
-.button-container > a {
-    text-decoration: none;
-    color: #049DD9;
-    font-weight: 600;
+.button-container {
+    width: 100%;
     text-align: center;
-    margin-top: 3vh;
-    display: block;
+}
+
+.input-error {
+    border: 1px solid red !important;
+}
+
+.input-correct {
+    border: 1px solid #D9D9D9;
+}
+
+.alert-token {
+    display: flex;
+    justify-content: center;
+    width: 50%;
 }

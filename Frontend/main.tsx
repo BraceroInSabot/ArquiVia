@@ -9,6 +9,7 @@ import Perfil from './src/routes/Perfil.tsx'
 import EsqueciSenha from './src/routes/EsqueciSenha.tsx'
 import Setor from './src/routes/Setor.tsx'
 import Anotacoes from './src/routes/Anotacoes.tsx'
+import ResetPassword from './src/routes/RedefinirSenha.tsx'
 
 const router = createBrowserRouter(
   [
@@ -39,6 +40,10 @@ const router = createBrowserRouter(
     {
       path: 'anotacoes',
       element: <Anotacoes />
+    },
+    {
+      path: 'refinir-senha/:token',
+      element: <ResetPassword />
     }
   ]
 )

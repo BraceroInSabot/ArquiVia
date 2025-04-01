@@ -1,6 +1,7 @@
 import axios from "axios";
 
 import { AxiosError, AxiosResponse } from "axios";
+import RedefinirSenha from "../routes/RedefinirSenha";
 
 const versao: string = 'v1';
 
@@ -15,6 +16,9 @@ const LOGIN_URL: string = AUTH_URL + 'entrar';
 const LOGOUT_URL: string = AUTH_URL + 'sair';
 const REFRESH_URL: string = AUTH_URL + 'atualizar-token';
 const REGISTRAR_URL: string = AUTH_URL + 'criar-conta';
+const ESQUECI_SENHA_URL: string = AUTH_URL + 'esqueci-senha';
+const VALIDAR_TOKEN_URL: string = AUTH_URL + 'validar-token-senha/';
+const REDEFINIR_SENHA_URL: string = AUTH_URL + 'redefinir-senha/';
 
 // usuario
 const VERIFICAR_URL: string = USUARIO_URL + 'verificar';
@@ -32,6 +36,11 @@ interface RegistroDados {
 interface RegistroResposta {
     sucesso?: string;
     erros?: string;
+}
+
+interface Email {
+    emailUsuario: string,
+    emailGestor: string
 }
 
 const login = async (usuario: string, senha: string) => {
@@ -127,4 +136,70 @@ const verificar_dados_usuario = async () => {
     }
 };
 
-export { login, logout, call_refresh_token, verificar_token, verificar_dados_usuario, registrar };
+const esqueci_senha = async ({emailUsuario, emailGestor}: Email) => {
+    try {
+        const response = await axios.post(
+            ESQUECI_SENHA_URL, 
+            {
+                emailUsuario: emailUsuario,
+                emailGestor: emailGestor
+            },
+            { withCredentials: true }
+        );
+
+        return response.data.sucesso
+    } catch (error: any) {
+        return false
+    }
+}
+
+const validar_token = async (token: string): Promise<true|false> => {
+    try {
+        console.log(VALIDAR_TOKEN_URL + token)
+        const response = await axios.get(
+            VALIDAR_TOKEN_URL + token,
+        )
+
+        return true
+    } catch (error:any) {
+        return false
+    }
+}
+
+interface RedefinicaoSenha {
+    token: string,
+    password: string
+}
+
+const redefinirSenha = async (
+        { token, password }: RedefinicaoSenha
+    ): Promise<boolean> => 
+    {
+    
+    try {
+        const response = await axios.post(
+            REDEFINIR_SENHA_URL + token,
+            { 
+                token: token,
+                password: password
+            },
+            { withCredentials: true }
+        );
+        return response.data.sucesso || false;
+    } catch (error: any) {
+        console.error(error);
+        return false;
+    }
+};
+
+export { 
+    login, 
+    logout, 
+    call_refresh_token, 
+    verificar_token, 
+    verificar_dados_usuario, 
+    registrar, 
+    esqueci_senha,
+    validar_token,
+    redefinirSenha
+ };

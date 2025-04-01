@@ -7,6 +7,8 @@ from datetime import datetime
 from django.utils.formats import date_format
 from django.utils import timezone
 from core.settings import settings
+from ..APISetor.models import Setor, Colaborador_Setor
+from .utils.dump import dumpTokens
 
 class EstaAutenticadoView(APIView):
     permission_classes = [IsAuthenticated]
@@ -50,7 +52,7 @@ class UsuarioInformacoesView(APIView):
         }
 
         return Response({"usuario": [infos]}, status=200)
-    
+
 class DesativarUsuarioView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -64,14 +66,38 @@ class DesativarUsuarioView(APIView):
         user.is_active = False
         user.save()
 
-        try:
-            res = Response()
-            res.data = {'Sucesso': 'Usuário deslogado com sucesso!'}
-            res.delete_cookie('access_token', path='/', samesite='None')
-            res.delete_cookie('refresh_token', path='/', samesite='None')
-            print("a58sd4a6s84da68s4")
-        except:
-            return Response({'Falha': 'Não foi possível deslogar o usuário.'})
-
-        return res
+        return dumpTokens()
         
+class AlterarSetorUsuarioView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        ccSetor1 = request.data.get("codigoChaveAtual")
+        ccSetor2 = request.data.get("codigoChaveAlvo")
+        res = Response()
+
+        try:
+            setorUsuario = Colaborador_Setor.objects.filter(codigoColaborador=user).first()
+        except Colaborador_Setor.DoesNotExist:
+            res.data = {"O setor do usuário não foi encontrado."}
+            res.status_code = 400
+            return res
+
+        print(setorUsuario.codigoSetor.codigoChave, ccSetor1)
+        if (setorUsuario.codigoSetor.codigoChave != ccSetor1): 
+            res.data = {"Setor não correspondente."}
+            res.status_code = 400
+            return res
+
+        try:
+            setorAlvo = Setor.objects.filter(codigoChave=ccSetor2).first()
+        except Setor.DoesNotExist:
+            res.data = {"Setor alvo não encontrado."}
+            res.status_code = 400
+            return res
+        
+        setorUsuario.codigoSetor = setorAlvo
+        setorUsuario.save()
+        
+        return dumpTokens()

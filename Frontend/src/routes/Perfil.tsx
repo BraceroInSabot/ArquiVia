@@ -4,6 +4,7 @@ import NavBar from "../components/NavBar";
 import logo from "../assets/img/logos/AnnotaPs-Logo-Pequeno.png";
 import { verificar_dados_usuario } from "../api/apiHandler";
 import DesativarUsuarioModal from "../components/Modals/DesativarUsuario";
+import AlterarSetorUsuarioModal from "../components/Modals/AlterarSetor";
 import { useNavigate } from "react-router";
 import "../assets/css/perfil.css";
 
@@ -21,6 +22,7 @@ function Perfil() {
     const navigate = useNavigate();
     const [usuario, setUsuario] = useState<UsuarioInterface | null>(null);
     const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+    const [showUpdateSetorModal, setShowUpdateSetorModal] = useState(false);
 
     useEffect(() => {
         document.title = "Perfil - AnnotaPS";
@@ -37,6 +39,11 @@ function Perfil() {
         setShowDeactivateModal(false); // Fecha o modal
         navigate('/login'); // Redireciona para a tela de login
     };
+
+    const updateSetorModal = () => {
+        setShowUpdateSetorModal(false);
+        navigate('/login');
+    }
 
     return (
         <>
@@ -70,7 +77,12 @@ function Perfil() {
                             </Button>
 
                             <div className="perfil-botoes-alterar">
-                                <Button className="botao-alterar-setor">Alterar Setor</Button>
+                                <Button 
+                                    className="botao-alterar-setor"
+                                    onClick={() => setShowUpdateSetorModal(true)}
+                                >
+                                    Alterar Setor
+                                </Button>
                                 <Button className="botao-alterar-senha">Alterar Senha</Button>
                                 <Button className="botao-alterar-dados">Alterar Dados</Button>
                             </div>
@@ -84,6 +96,11 @@ function Perfil() {
                 show={showDeactivateModal} 
                 onHide={() => setShowDeactivateModal(false)} 
                 onConfirm={deactivateModal} // Passa a função de redirecionamento
+            />
+            <AlterarSetorUsuarioModal
+                show={showUpdateSetorModal}
+                onHide={() => setShowUpdateSetorModal(false)}
+                onConfirm={updateSetorModal}
             />
         </>
     );

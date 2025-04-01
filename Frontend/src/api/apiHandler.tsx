@@ -24,6 +24,7 @@ const REDEFINIR_SENHA_URL: string = AUTH_URL + 'redefinir-senha/';
 const VERIFICAR_URL: string = USUARIO_URL + 'verificar';
 const USUARIO_DADOS_URL: string = USUARIO_URL + 'dados';
 const DESATIVAR_USUARIO_URL: string = USUARIO_URL + 'desativar';
+const ALTERAR_SETOR_URL: string = USUARIO_URL + 'alterar-setor';
 
 interface RegistroDados {
     usuario: string;
@@ -215,6 +216,25 @@ const desativarUsuario = async (password: string) => {
     }
 }
 
+const alterarSetor = async (codigoChaveAtual: string, codigoChaveAlvo: string) => {
+    try {
+        const response = await axios.post(
+            ALTERAR_SETOR_URL,
+            {
+                codigoChaveAtual: codigoChaveAtual,
+                codigoChaveAlvo: codigoChaveAlvo
+            },
+            {
+                withCredentials: true
+            }
+        )
+
+        return true;
+    } catch (error:any) {
+        return false;
+    }
+}
+
 
 export { 
     login, 
@@ -226,5 +246,6 @@ export {
     esqueci_senha,
     validar_token,
     redefinirSenha,
-    desativarUsuario
+    desativarUsuario,
+    alterarSetor
  };

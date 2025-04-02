@@ -1,7 +1,7 @@
 from rest_framework import status, serializers
 
 class ValidacaoAutenticacao:
-    def __init__(self, usuario, nome, email, senha, c_senha):
+    def __init__(self, usuario=None, nome=None, email=None, senha=None, c_senha=None):
         self.usuario = usuario
         self.nome = nome
         self.email = email

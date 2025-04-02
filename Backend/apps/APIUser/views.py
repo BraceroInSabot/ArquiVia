@@ -2,13 +2,14 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from apps.APISetor.models import Colaborador_Setor
-from datetime import datetime
+from apps.APISetor.models import Colaborador_Setor, Setor
+from apps.APIUserAuth.models import Colaborador
 from django.utils.formats import date_format
 from django.utils import timezone
-from core.settings import settings
-from ..APISetor.models import Setor, Colaborador_Setor
 from .utils.dump import dumpTokens
+from django.contrib.auth import authenticate
+from django.contrib.auth.hashers import make_password
+from apps.APIUserAuth.utils.validacoes import ValidacaoAutenticacao
 
 class EstaAutenticadoView(APIView):
     permission_classes = [IsAuthenticated]
@@ -101,3 +102,47 @@ class AlterarSetorUsuarioView(APIView):
         setorUsuario.save()
         
         return dumpTokens()
+
+class AlterarSenhaUsuarioView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        senhaAtual = request.data['password']
+        senhaNova = request.data['nPassword']
+
+        try:
+            senhaUsuario = authenticate(username=user.username, password=senhaAtual)
+
+            if not senhaUsuario:
+                res = Response()
+                res.data = {"Alerta": "Senha atual incorreta"}
+                res.status_code = 400
+                return res
+        except Colaborador.DoesNotExist:
+            res = Response()
+            res.data = {"Alerta": "Senha atual incorreta"}
+            res.status_code = 400
+            return res
+        
+        try:
+            if not ValidacaoAutenticacao(senha=senhaNova).validar_senha():
+                res = Response()
+                res.data = {"Alerta": "A nova senha não é permitida."}
+                res.status_code = 400
+                return res
+        except:
+            res = Response(
+                data={"Alerta": "Houve um erro inesperado."}, 
+                status_code=400)
+            return res
+
+
+        user.password = make_password(senhaNova)
+        user.save()
+
+        res = Response(
+            data={"Alerta": "Alteração de senha completa com sucesso!"}, 
+            status=200)
+        return res
+

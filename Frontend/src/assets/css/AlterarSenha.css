@@ -1,0 +1,14 @@
+.campos-input-senhas > input{
+    display: inline;
+    margin-bottom: 5%;
+    width: 40%;
+}
+
+.novas-senhas {
+    display: flex;
+    justify-content: space-between;
+}
+
+.novas-senhas > input {
+    width: 40%;
+}

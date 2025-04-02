@@ -25,6 +25,7 @@ const VERIFICAR_URL: string = USUARIO_URL + 'verificar';
 const USUARIO_DADOS_URL: string = USUARIO_URL + 'dados';
 const DESATIVAR_USUARIO_URL: string = USUARIO_URL + 'desativar';
 const ALTERAR_SETOR_URL: string = USUARIO_URL + 'alterar-setor';
+const ALTERAR_SENHA_URL: string = USUARIO_URL + 'alterar-senha';
 
 interface RegistroDados {
     usuario: string;
@@ -236,6 +237,26 @@ const alterarSetor = async (codigoChaveAtual: string, codigoChaveAlvo: string) =
 }
 
 
+const alterarSenha = async (password: string, nPassword: string) => {
+    try {
+        const response = await axios.post(
+            ALTERAR_SENHA_URL,
+            {
+                password: password,
+                nPassword: nPassword
+            },
+            {
+                withCredentials: true
+            })
+
+        return true;
+    } catch (error:any) {
+        return false;
+    }
+
+
+}
+
 export { 
     login, 
     logout, 
@@ -247,5 +268,6 @@ export {
     validar_token,
     redefinirSenha,
     desativarUsuario,
-    alterarSetor
+    alterarSetor,
+    alterarSenha
  };

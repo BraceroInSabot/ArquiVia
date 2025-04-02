@@ -5,6 +5,7 @@ import logo from "../assets/img/logos/AnnotaPs-Logo-Pequeno.png";
 import { verificar_dados_usuario } from "../api/apiHandler";
 import DesativarUsuarioModal from "../components/Modals/DesativarUsuario";
 import AlterarSetorUsuarioModal from "../components/Modals/AlterarSetor";
+import AlterarSenhaUsuarioModal from "../components/Modals/AlterarSenha"; // Importa o modal de senha
 import { useNavigate } from "react-router";
 import "../assets/css/perfil.css";
 
@@ -23,6 +24,7 @@ function Perfil() {
     const [usuario, setUsuario] = useState<UsuarioInterface | null>(null);
     const [showDeactivateModal, setShowDeactivateModal] = useState(false);
     const [showUpdateSetorModal, setShowUpdateSetorModal] = useState(false);
+    const [showUpdateSenhaModal, setShowUpdateSenhaModal] = useState(false); // Estado do modal de senha
 
     useEffect(() => {
         document.title = "Perfil - AnnotaPS";
@@ -36,14 +38,19 @@ function Perfil() {
     }, []);
 
     const deactivateModal = () => {
-        setShowDeactivateModal(false); // Fecha o modal
-        navigate('/login'); // Redireciona para a tela de login
+        setShowDeactivateModal(false);
+        navigate('/login'); // Redireciona para login
     };
 
     const updateSetorModal = () => {
         setShowUpdateSetorModal(false);
         navigate('/login');
-    }
+    };
+
+    const updateSenhaModal = () => {
+        setShowUpdateSenhaModal(false);
+        navigate('/login'); // Redireciona para login após alterar a senha
+    };
 
     return (
         <>
@@ -83,7 +90,12 @@ function Perfil() {
                                 >
                                     Alterar Setor
                                 </Button>
-                                <Button className="botao-alterar-senha">Alterar Senha</Button>
+                                <Button 
+                                    className="botao-alterar-senha"
+                                    onClick={() => setShowUpdateSenhaModal(true)} // Abre o modal de senha
+                                >
+                                    Alterar Senha
+                                </Button>
                                 <Button className="botao-alterar-dados">Alterar Dados</Button>
                             </div>
                         </div>
@@ -91,16 +103,21 @@ function Perfil() {
                 </div>
             </section>
 
-            {/* MODAL DE CONFIRMAÇÃO */}
+            {/* MODAIS */}
             <DesativarUsuarioModal 
                 show={showDeactivateModal} 
                 onHide={() => setShowDeactivateModal(false)} 
-                onConfirm={deactivateModal} // Passa a função de redirecionamento
+                onConfirm={deactivateModal} 
             />
             <AlterarSetorUsuarioModal
                 show={showUpdateSetorModal}
                 onHide={() => setShowUpdateSetorModal(false)}
                 onConfirm={updateSetorModal}
+            />
+            <AlterarSenhaUsuarioModal
+                show={showUpdateSenhaModal}
+                onHide={() => setShowUpdateSenhaModal(false)}
+                onConfirm={updateSenhaModal}
             />
         </>
     );

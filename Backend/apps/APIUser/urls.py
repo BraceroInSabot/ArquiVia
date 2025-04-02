@@ -4,7 +4,8 @@ from .views import (
     UsuarioInformacoesView, 
     DesativarUsuarioView,
     AlterarSetorUsuarioView,
-    AlterarSenhaUsuarioView
+    AlterarSenhaUsuarioView,
+    AlterarDadosUsuarioView
 )
 
 urlpatterns = [
@@ -12,5 +13,6 @@ urlpatterns = [
     path("dados", UsuarioInformacoesView.as_view(), name='usuario'),
     path("desativar", DesativarUsuarioView.as_view(), name='desativar-usuario'),
     path("alterar-setor", AlterarSetorUsuarioView.as_view(), name='alterar-setor'),
-    path("alterar-senha", AlterarSenhaUsuarioView.as_view(), name='alterar-senha')
+    path("alterar-senha", AlterarSenhaUsuarioView.as_view(), name='alterar-senha'),
+    path("alterar-dados", AlterarDadosUsuarioView.as_view(), name="alterar-dados")
 ]

@@ -5,9 +5,11 @@ import logo from "../assets/img/logos/AnnotaPs-Logo-Pequeno.png";
 import { verificar_dados_usuario } from "../api/apiHandler";
 import DesativarUsuarioModal from "../components/Modals/DesativarUsuario";
 import AlterarSetorUsuarioModal from "../components/Modals/AlterarSetor";
-import AlterarSenhaUsuarioModal from "../components/Modals/AlterarSenha"; // Importa o modal de senha
+import AlterarSenhaUsuarioModal from "../components/Modals/AlterarSenha";
+import AlterarDadosUsuarioModal from "../components/Modals/AlterarDados";
 import { useNavigate } from "react-router";
 import "../assets/css/perfil.css";
+import editIcon from "../assets/img/icons/Editar.svg";
 
 interface UsuarioInterface {
     nome: string;
@@ -24,7 +26,8 @@ function Perfil() {
     const [usuario, setUsuario] = useState<UsuarioInterface | null>(null);
     const [showDeactivateModal, setShowDeactivateModal] = useState(false);
     const [showUpdateSetorModal, setShowUpdateSetorModal] = useState(false);
-    const [showUpdateSenhaModal, setShowUpdateSenhaModal] = useState(false); // Estado do modal de senha
+    const [showUpdateSenhaModal, setShowUpdateSenhaModal] = useState(false);
+    const [showUpdateDadosModal, setShowUpdateDadosModal] = useState(false);
 
     useEffect(() => {
         document.title = "Perfil - AnnotaPS";
@@ -39,7 +42,7 @@ function Perfil() {
 
     const deactivateModal = () => {
         setShowDeactivateModal(false);
-        navigate('/login'); // Redireciona para login
+        navigate('/login');
     };
 
     const updateSetorModal = () => {
@@ -49,7 +52,7 @@ function Perfil() {
 
     const updateSenhaModal = () => {
         setShowUpdateSenhaModal(false);
-        navigate('/login'); // Redireciona para login após alterar a senha
+        navigate('/login');
     };
 
     return (
@@ -61,18 +64,18 @@ function Perfil() {
                     <img src={logo} alt="Perfil do Usuário" />
                     <div className="perfil-dados">
                         <div className="perfil-textos">
-                            <h1>{ usuario?.nome }</h1>
-                            <h2>{ usuario?.setor }</h2>
+                            <h1>{usuario?.nome}</h1> 
+                            <h2>{usuario?.setor}</h2>
 
                             <div className="perfil-datas">
-                                <span>Conta criada em { usuario?.data_criacao }</span>
-                                <span>Última vez logado em { usuario?.ultimo_login }</span>
+                                <span>Conta criada em {usuario?.data_criacao}</span>
+                                <span>Última vez logado em {usuario?.ultimo_login}</span>
                             </div>
 
                             <div className="perfil-informacoes">
-                                <span>{ usuario?.email }</span><br />
-                                <span>Inicia o expediente em: { usuario?.inicio_expediente || "--:--" }</span><br />
-                                <span>Termina o expediente em: { usuario?.final_expediente || "--:--" }</span>
+                                <span>{usuario?.email}</span><br/>
+                                <span>Inicia o expediente em: {usuario?.inicio_expediente || "--:--"}</span><br />
+                                <span>Termina o expediente em: {usuario?.final_expediente || "--:--"}</span>
                             </div>
                         </div>
                         <div className="perfil-botoes">
@@ -92,11 +95,16 @@ function Perfil() {
                                 </Button>
                                 <Button 
                                     className="botao-alterar-senha"
-                                    onClick={() => setShowUpdateSenhaModal(true)} // Abre o modal de senha
+                                    onClick={() => setShowUpdateSenhaModal(true)}
                                 >
                                     Alterar Senha
                                 </Button>
-                                <Button className="botao-alterar-dados">Alterar Dados</Button>
+                                <Button 
+                                    className="botao-alterar-dados"
+                                    onClick={() => setShowUpdateDadosModal(true)}
+                                >
+                                    Alterar Dados
+                                </Button>
                             </div>
                         </div>
                     </div>
@@ -118,6 +126,13 @@ function Perfil() {
                 show={showUpdateSenhaModal}
                 onHide={() => setShowUpdateSenhaModal(false)}
                 onConfirm={updateSenhaModal}
+            />
+            <AlterarDadosUsuarioModal
+                show={showUpdateDadosModal}
+                onHide={() => setShowUpdateDadosModal(false)}
+                onConfirm={() => setShowUpdateDadosModal(false)}
+                nomeAtual={usuario?.nome}
+                emailAtual={usuario?.email}
             />
         </>
     );

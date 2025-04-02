@@ -146,3 +146,20 @@ class AlterarSenhaUsuarioView(APIView):
             status=200)
         return res
 
+class AlterarDadosUsuarioView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        nome = request.data['nome']
+        email = request.data['email']
+
+        if user.nome != nome:
+            user.nome = nome
+            user.save()
+        
+        if user.email != email:
+            user.email = email
+            user.save()
+        
+        return Response(data={"Alerta": "Dados alterados."}, status=200)

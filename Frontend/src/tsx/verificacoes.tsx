@@ -1,25 +1,23 @@
-function verificarusuario() {
-    var username = document.getElementById("usuario").value;
-    if (username.length < 3) {
-        document.getElementById("usuario").style.border = "1px solid red";
-        return false;
-    } else {
-        document.getElementById("usuario").style.border = "1px solid #ced4da";
+function verificarusuario(usuario: string) {
+    if (usuario === '') {
+        return true
     }
-    return true;
+    if (usuario.length > 3) {
+        return true
+    }
+
+    return false
 }
 
-function verificaremail() {
-    var email = document.getElementById("email").value;
-    console.log(!email.includes("@") || !email.includes("."));
-
-    if (!email.includes("@") || !email.includes(".")) {
-        document.getElementById("email").style.border = "1px solid red";
-        return false;
-    } else {
-        document.getElementById("email").style.border = "1px solid #ced4da";
+function verificaremail(email: string) {
+    if (email === '') {
+        return true
+    }
+    if (email.includes("@") && email.includes(".")) {
         return true;
     }
+
+    return false
 }
 
 function verificarsenha(senha: string) {
@@ -38,16 +36,4 @@ function verificarsenha(senha: string) {
     return validacoes;
 }
 
-function verificarconfirmarsenha() {
-    const senha = document.getElementById("senha").value;
-    const confirmarSenha = document.getElementById("confirmar-senha").value;
-
-    if (senha !== confirmarSenha) {
-        document.getElementById("confirmar-senha").style.border = "1px solid red";
-        return false;
-    } else {
-        document.getElementById("confirmar-senha").style.border = "1px solid #ced4da";
-    }
-}
-
-export { verificarusuario, verificaremail, verificarsenha, verificarconfirmarsenha }
+export { verificarusuario, verificaremail, verificarsenha }

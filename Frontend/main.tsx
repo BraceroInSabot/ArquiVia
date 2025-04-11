@@ -11,6 +11,10 @@ import Setor from './src/routes/Setor.tsx'
 import Anotacoes from './src/routes/Anotacoes.tsx'
 import ResetPassword from './src/routes/RedefinirSenha.tsx'
 
+import { ThemeProvider } from './src/components/theme/theme-provider.tsx'
+import './src/index.css'
+// import ModeToggle from './src/components/DarkMode/dkMode.tsx'
+
 const router = createBrowserRouter(
   [
     {
@@ -20,10 +24,6 @@ const router = createBrowserRouter(
     {
       path: 'login',
       element: <Login />,
-    },
-    {
-      path: 'registrar',
-      element: <Registrar />,
     },
     {
       path: 'esqueci-minha-senha',
@@ -50,6 +50,10 @@ const router = createBrowserRouter(
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <RouterProvider router={router}/>
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      {/*<ModeToggle />*/}
+      <RouterProvider router={router}/>
+
+    </ThemeProvider>
   </StrictMode>,
 )

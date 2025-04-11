@@ -47,21 +47,33 @@ interface Email {
     emailGestor: string
 }
 
-const login = async (usuario: string, senha: string) => {
-    try {
-        let response = await axios.post(LOGIN_URL, {
-            username: usuario,
-            password: senha
-        }, {
-            withCredentials: true,
-        });
+interface Login {
+    username: string;
+    password: string;
+}
 
+const login = async ({ username, password }: Login): Promise<[boolean, string] | boolean> => {
+    try {
+      const response = await axios.post(
+        LOGIN_URL,
+        {
+          username: username,
+          password: password,
+        },
+        {
+          withCredentials: true,
+        }
+      );
+  
+      if (response.status === 200) {
         return true;
-    } catch (Error) {
-        console.log(Error);
-        return false
+      } else {
+        return [false, response.data.message || "Erro desconhecido"];
+      }
+    } catch (error: AxiosError | unknown | string) {
+      return [false, error.response.data || "Erro desconhecido"];
     }
-};
+  };
 
 const logout = async () => {
     const response = await axios.post(LOGOUT_URL, {}, {
@@ -72,9 +84,9 @@ const logout = async () => {
 };
 
 
-const registrar = async ({usuario, nome, email, senha, cSenha, cChave}: RegistroDados): Promise<string | false> => {
+const registrar = async ({usuario, nome, email, senha, cSenha, cChave}: RegistroDados): Promise<true | false> => {
     try {
-        const response: AxiosResponse<RegistroResposta> = await axios.post(
+        const response: AxiosResponse<string | true> = await axios.post(
             REGISTRAR_URL,
             {
                 username: usuario,
@@ -89,11 +101,10 @@ const registrar = async ({usuario, nome, email, senha, cSenha, cChave}: Registro
             }
         );
 
-        return response.data.sucesso || false;
-    } catch (error: any) {
-        const errosElement = document.getElementById("erros");
-        if (errosElement && error.response?.data?.erros) {
-            errosElement.innerHTML = `<p class="text-danger">${error.response.data.erros}</p>`;
+        return true;
+    } catch (error: AxiosError | unknown | (string|boolean)[]) {
+        if (axios.isAxiosError(error)) {
+            return false;
         }
         return false;
     }
@@ -144,9 +155,9 @@ const verificar_dados_usuario = async () => {
     }
 };
 
-const esqueci_senha = async ({emailUsuario, emailGestor}: Email) => {
+const esqueci_senha = async ({emailUsuario, emailGestor}: Email): Promise<true | false> => {
     try {
-        const response = await axios.post(
+        const response: AxiosResponse = await axios.post(
             ESQUECI_SENHA_URL, 
             {
                 emailUsuario: emailUsuario,
@@ -155,7 +166,7 @@ const esqueci_senha = async ({emailUsuario, emailGestor}: Email) => {
             { withCredentials: true }
         );
 
-        return response.data.sucesso
+        return response.data['Sucesso'] || response.data['Falha'];
     } catch (error: any) {
         return false
     }
@@ -181,11 +192,11 @@ interface RedefinicaoSenha {
 
 const redefinirSenha = async (
         { token, password }: RedefinicaoSenha
-    ): Promise<boolean> => 
+    ): Promise<true | false> => 
     {
     
     try {
-        const response = await axios.post(
+        const response: AxiosResponse = await axios.post(
             REDEFINIR_SENHA_URL + token,
             { 
                 token: token,
@@ -193,7 +204,8 @@ const redefinirSenha = async (
             },
             { withCredentials: true }
         );
-        return response.data.sucesso || false;
+        console.log(response.data);
+        return response.data;
     } catch (error: any) {
         console.error(error);
         return false;

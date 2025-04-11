@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router-dom";
 import { redefinirSenha } from "../api/apiHandler";
 
 const verificarConfirmacaoSenha = (p:string, cP:string) => {
@@ -22,11 +21,11 @@ const handlePasswordChange = async (
         return;
     }
 
-    const success = await redefinirSenha({ token: String(token), password });
+    const success = await redefinirSenha({ token: String(token), password: password });
 
     if (success) {
-        setMessage("Senha alterada com sucesso! Redirecionando...");
-        setTimeout(() => navigate('/login'), 2000);
+        setMessage("Senha alterada com sucesso! Redirecionando para a área de login...");
+        setTimeout(() => navigate('/login'), 5000);
     } else {
         setMessage("Houve um erro no momento de redefinir a senha.");
     }

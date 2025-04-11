@@ -40,7 +40,7 @@ class LoginTokenObtainPairView(TokenObtainPairView):
             refresh_token = tokens['refresh']
             res = Response()
 
-            res.data = {"sucesso": "usuário autenticado com sucesso"}
+            res.data = {"Sucesso": "usuário autenticado com sucesso"}
 
             print("Começou")
             try:
@@ -173,22 +173,20 @@ class RequisicaoRedefinicaoSenhaView(APIView):
         email = request.data.get('emailUsuario')
         cEmail = request.data.get('emailGestor')
         
-        try:
-            usuario = Colaborador.objects.filter(email=email).first()
-        except Colaborador.DoesNotExist:
-            Response({"Falha": "Email do Usuário não encontrado."})
+        usuario = Colaborador.objects.filter(email=email).first()
+        if usuario == None:
+            return Response({"Falha": [False, "Email do Usuário não encontrado. Verifique o seu e-mail."]})
 
-        try:
-            gestor = Colaborador.objects.filter(email=cEmail).first()
-        except Colaborador.DoesNotExist:
-            Response({"Falha": "Email do Gestor (a) não encontrado."})
+        gestor = Colaborador.objects.filter(email=cEmail).first()
+        if gestor == None:
+            return Response({"Falha": [False, "Email do Gestor (a) não encontrado."]})
 
         try:
             token = PasswordResetToken.objects.create(colaborador=usuario, token=str(uuid4()))
             url = f"{settings.FRONTEND_URL}/refinir-senha/{token.token}"
 
             if self.enviar_email_recuperacao_senha(email, usuario, url=url, token=token):
-                return Response({"Sucesso": "Email enviado com sucesso!"})
+                return Response({"Sucesso": [True, "Email enviado com sucesso!"]})
             else:
                 return Response({"Falha": "Email não enviado"})
         
@@ -224,7 +222,6 @@ class RedefinirSenhaView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
-        print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
         token = request.data.get("token")
         nova_senha = request.data.get("password")
 

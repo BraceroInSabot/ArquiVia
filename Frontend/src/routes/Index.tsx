@@ -15,41 +15,7 @@ function Index() {
 
     return (
         <>
-            <nav>
-                <NavBar logoImage={logo} userImage={logo} />
-            </nav>
             
-            <section>
-                <h1 className="text-center mb-4 titulo">Vistos Recentementes</h1>
-
-                <IndexCards />
-                
-                <div className="d-flex justify-content-center mt-4">
-                    <Button className="vermais">
-                        Ver mais
-                    </Button>
-                </div>
-            </section>
-
-            <section>
-                <div className="metricas-intro">
-                    <div className="figura" id="figura1">
-                        <img src={figura1} alt="" />
-                    </div>
-                    
-                    <div className="metricas-texto">
-                        <h1 className="titulo">Métricas do Setor</h1>
-                        <p>Acompanhe a contabilização das documentações e anotações realizadas pelo seu setor!</p>
-                    </div>
-
-                    <div className="figura" id="figura2">
-                        <img src={figura2} alt="" />
-                    </div>
-
-                </div>
-
-                <Estatisticas/>
-            </section>
         </>
     )
 

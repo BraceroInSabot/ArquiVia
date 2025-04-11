@@ -4,7 +4,6 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 
 import Index from './src/routes/Index.tsx'
 import Login from './src/routes/Login.tsx'
-import Registrar from './src/routes/Registrar.tsx'
 import Perfil from './src/routes/Perfil.tsx'
 import EsqueciSenha from './src/routes/EsqueciSenha.tsx'
 import Setor from './src/routes/Setor.tsx'
@@ -50,7 +49,7 @@ const router = createBrowserRouter(
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+    <ThemeProvider>
       {/*<ModeToggle />*/}
       <RouterProvider router={router}/>
 

@@ -44,6 +44,7 @@ class UsuarioInformacoesView(APIView):
 
         infos = {
             "nome": request.user.nome,
+            "usuario": request.user.username,
             "email": request.user.email,
             "setor": setor_usuario,
             "data_criacao": formatar_data(request.user.date_joined),
@@ -60,9 +61,9 @@ class DesativarUsuarioView(APIView):
     def post(self, request):
         user = request.user
         password = request.data.get('password', '')
-
+        print(password)
         if not user.check_password(password):
-            return Response({"error": "Senha incorreta."}, status=400)
+            return Response({"Falha": "Senha incorreta."}, status=400)
 
         user.is_active = False
         user.save()
@@ -151,15 +152,25 @@ class AlterarDadosUsuarioView(APIView):
 
     def post(self, request):
         user = request.user
-        nome = request.data['nome']
-        email = request.data['email']
+        data = request.data['data']
+        dataType = request.data['type']
 
-        if user.nome != nome:
-            user.nome = nome
-            user.save()
         
-        if user.email != email:
-            user.email = email
-            user.save()
+        if dataType == 1:
+            if user.email != data and user.email != '' and '@' in data and '.' in data:
+                user.email = data
+                user.save()
+                return Response(data={"Sucesso": True}, status=200)
+        elif dataType == 2:
+            if user.username != data and user.username != '' and len(data) > 3:
+                user.username = data
+                user.save()
+                return Response(data={"Sucesso": True}, status=200)
+        else:
+            if user.nome != data and user.nome != '' and len(data) > 3:
+                user.nome = data
+                user.save()
+                return Response(data={"Sucesso": True}, status=200)
         
-        return Response(data={"Alerta": "Dados alterados."}, status=200)
+        
+        return Response(data={}, status=401)

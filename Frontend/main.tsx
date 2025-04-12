@@ -13,8 +13,7 @@ import ResetPassword from './src/routes/RedefinirSenha.tsx'
 import { ThemeProvider } from './src/components/theme/theme-provider.tsx'
 import './src/index.css'
 
-import { SidebarProvider, SidebarTrigger } from "./src/components/ui/sidebar.tsx"
-import { AppSidebar } from "./src/components/NavBar/NavBar.tsx"
+import { Toaster } from "./src/components/ui/sonner.tsx"
 import LayoutWithSidebar from './src/tsx/LayoutWithSidebar.tsx'
 import LayoutNoSidebar from './src/tsx/LayoutNoSidebar.tsx'
 
@@ -46,6 +45,7 @@ createRoot(document.getElementById('root')!).render(
     <ThemeProvider>
       <div className='pl-5 pr-5'>
         <RouterProvider router={router} />
+        <Toaster />
       </div>
     </ThemeProvider>
   </StrictMode>

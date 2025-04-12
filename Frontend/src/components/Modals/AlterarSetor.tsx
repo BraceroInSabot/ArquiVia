@@ -1,73 +1,96 @@
 import "../../assets/css/AlterarSetor.css";
-import { Modal, Button, Alert } from "react-bootstrap";
+import { useState } from "react"
+import { Button } from "../ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/dialog"
+import { Input } from "../ui/input"
+import { Label } from "../ui/label"
+import { toast } from "sonner"
 import { alterarSetor } from "../../api/apiHandler";
-import { useState } from "react";
 
-interface AlterarSetorUsuarioProps {
-    show: boolean;
-    onHide: () => void;
-    onConfirm: () => void; // Nova prop para redirecionamento
-}
-
-function AlterarSetorUsuarioModal({ show, onHide, onConfirm }: AlterarSetorUsuarioProps) {
+function AlterarSetorUsuario() {
     const [codigoChave, setCodigoChave] = useState("");
     const [codigoChave2, setCodigoChave2] = useState("");
-    const [error, setError] = useState(""); // Para exibir erro, se necessário
 
     const validarCodigo = (codigo: string) => /^[A-Za-z]{3}[0-9]{3}$/.test(codigo);
 
-    const handleAlterarUsuario = async () => {
+    const handleAlterarSetor = async () => {
         if (!validarCodigo(codigoChave) || !validarCodigo(codigoChave2)) {
-            setError("Os códigos devem conter 3 letras seguidas de 3 números.");
-            return;
+            toast("Erro!", {
+                description: "Um dos códigos estão incorretos."
+            })
+            return false;
         }
 
         try {
             const sucesso = await alterarSetor(codigoChave.toLowerCase(), codigoChave2.toLowerCase());
 
             if (sucesso) {
-                onConfirm(); // Redireciona para o login
+                toast("Sucesso!", {
+                    description: "Saia da sua conta e entre novamente para garantir a alteração!"
+                })
             } else {
-                setError("Não foi possível alterar o setor da conta.");
+                toast("Erro!", {
+                    description: "Não foi possível fazer a troca de setor."
+                })
             }
-        } catch (error) {
-            setError("Erro ao alterar o setor.");
+        } catch {
+            toast("Erro!", {
+                description: "Houve uma exceção inesperada."
+            })
         }
     };
 
     return (
-        <Modal show={show} onHide={onHide} centered>
-            <Modal.Header closeButton>
-                <Modal.Title>Confirmar Alteração do Setor</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-                {error && <Alert variant="danger">{error}</Alert>}
-                <p>Insira as Chaves requisitadas abaixo:</p>
-                <div className="campos-input">
-                    <input
-                        type="text"
-                        maxLength={6}
-                        value={codigoChave}
-                        onChange={(e) => setCodigoChave(e.target.value.toUpperCase())}
-                        className="cc-atual"
-                        placeholder="Ex: ABC123"
-                    />
-                    <input
-                        type="text"
-                        maxLength={6}
-                        value={codigoChave2}
-                        onChange={(e) => setCodigoChave2(e.target.value.toUpperCase())}
-                        className="cc2-alvo"
-                        placeholder="Ex: XYZ456"
-                    />
-                </div>
-            </Modal.Body>
-            <Modal.Footer>
-                <Button variant="secondary" onClick={onHide}>Cancelar</Button>
-                <Button variant="danger" onClick={handleAlterarUsuario}>Confirmar</Button>
-            </Modal.Footer>
-        </Modal>
+        <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="secondary">Alterar Setor</Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle className="text-white">Alteração de Setor</DialogTitle>
+          <DialogDescription>
+            Preencha os campos para fazer a alteração do seu setor. É necessário entrar em contato com os Gestores (as) de ambos setores.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          {/* Código Chave atual */}
+          <div className="grid grid-cols-4 items-center gap-4 relative">
+            <Label htmlFor="acPassword" className="text-right text-white">
+              Código Chave Atual
+            </Label>
+            <Input
+              id="codigoChave"
+              className="col-span-3 text-gray-400 pr-10"
+              onChange={(e) => setCodigoChave(e.target.value)}
+            />
+          </div>
+
+          {/* Código Chave Alvo */}
+          <div className="grid grid-cols-4 items-center gap-4 relative">
+            <Label htmlFor="newPassword" className="text-right text-white">
+              Código Chave Alvo
+            </Label>
+            <Input
+              id="codigoChave2"
+              className="col-span-3 text-gray-400 pr-10"
+              onChange={(e) => setCodigoChave2(e.target.value)}
+            />
+          </div>
+          </div>
+        <DialogFooter>
+          <Button onClick={handleAlterarSetor}>Salvar Alterações</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
     );
 }
 
-export default AlterarSetorUsuarioModal;
+export default AlterarSetorUsuario;

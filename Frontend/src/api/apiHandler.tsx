@@ -212,7 +212,11 @@ const redefinirSenha = async (
     }
 };
 
-const desativarUsuario = async (password: string) => {
+interface DeactivateUserInterface {
+    password: string
+}
+
+const desativarUsuario = async ({password}: DeactivateUserInterface): Promise<true | string | false> => {
     try {
         const response = await axios.post(
             DESATIVAR_USUARIO_URL,
@@ -224,8 +228,12 @@ const desativarUsuario = async (password: string) => {
             }
         )
 
-        return true;
-    } catch (error:any) {
+        if (response.status === 200) {
+            return true;
+        } else {
+            return response.data["Falha"];
+        }
+    } catch {
         return false;
     }
 }
@@ -269,25 +277,29 @@ const alterarSenha = async (password: string, nPassword: string) => {
 }
 
 interface alteracaoDadosUsuario {
-    nome: string,
-    email: string
+    data: string
+    type: number
 }
 
-const alterarDadosUsuario = async ({nome, email}: alteracaoDadosUsuario) => {
+const alterarDadosUsuario = async ({data, type}: alteracaoDadosUsuario) => {
     try {
         const response = await axios.post(
             ALTERAR_DADOS_URL,
             {
-                nome: nome,
-                email: email
+                data: data,
+                type: type
             },
             {
                 withCredentials: true
             }
         )
 
-        return true;
-    } catch (error:any) {
+        if (response.status === 200) {
+            return response.data["Sucesso"];
+        }
+        
+        return false;
+    } catch {
         return false;
     }
 }

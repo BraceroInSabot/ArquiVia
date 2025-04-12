@@ -1,101 +1,155 @@
-import "../../assets/css/AlterarSenha.css";
-import { Modal, Button, Alert } from "react-bootstrap";
-import { alterarSenha } from "../../api/apiHandler";
-import { useState } from "react";
-import { verificarsenha } from "../../tsx/verificacoes";
+import { useState } from "react"
+import { Button } from "../ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/dialog"
+import { Input } from "../ui/input"
+import { Label } from "../ui/label"
+import { alterarSenha } from "../../api/apiHandler"
+import { toast } from "sonner"
+import { verificarsenha } from "../../tsx/verificacoes"
+import { Eye, EyeOff } from "lucide-react"
 
-interface AlterarSenhaUsuarioProps {
-    show: boolean;
-    onHide: () => void;
-    onConfirm: () => void;
+function AlterarSenhaUsuario() {
+  const [actualPassword, setActualPassword] = useState("")
+  const [newPassword, setNewPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [showAcPass, setShowAcPass] = useState(false)
+  const [showNewPass, setShowNewPass] = useState(false)
+  const [showConfPass, setShowConfPass] = useState(false)
+
+  const handleAlterarSenha = async () => {
+    const validacoes = verificarsenha(newPassword)
+
+    if (!actualPassword || !newPassword || !confirmPassword) {
+      toast.error("Campos inválidos!", {
+        description: "Todos os campos são obrigatórios.",
+      })
+      return
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error("Senhas não semelhantes!", {
+        description: "A confirmação da senha não corresponde à nova senha.",
+      })
+      return
+    }
+
+    if (validacoes && validacoes.length > 0) {
+      validacoes.forEach((erro) =>
+        toast.error("Erro de validação", {
+          description: erro,
+        })
+      )
+      return
+    }
+
+    try {
+      const sucesso = await alterarSenha(actualPassword, newPassword)
+      if (sucesso) {
+        toast.success("Sucesso!", {
+          description: "Senha alterada com sucesso.",
+        })
+      } else {
+        toast.error("Falha!", {
+          description: "Não foi possível alterar a senha.",
+        })
+      }
+    } catch {
+      toast.error("Erro inesperado!", {
+        description: "Houve uma exceção não especificada.",
+      })
+    }
+  }
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="secondary">Alteração de Senha</Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle className="text-white">Alteração de Senha</DialogTitle>
+          <DialogDescription>
+            Preencha os campos para fazer a alteração da sua senha.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          {/* Senha atual */}
+          <div className="grid grid-cols-4 items-center gap-4 relative">
+            <Label htmlFor="acPassword" className="text-right text-white">
+              Senha atual
+            </Label>
+            <Input
+              id="acPassword"
+              type={showAcPass ? "text" : "password"}
+              className="col-span-3 text-gray-400 pr-10"
+              value={actualPassword}
+              onChange={(e) => setActualPassword(e.target.value)}
+            />
+            <button
+              type="button"
+              className="absolute right-4 top-[50%] -translate-y-1/2 text-muted-foreground"
+              onClick={() => setShowAcPass(!showAcPass)}
+            >
+              {showAcPass ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+
+          {/* Nova senha */}
+          <div className="grid grid-cols-4 items-center gap-4 relative">
+            <Label htmlFor="newPassword" className="text-right text-white">
+              Nova Senha
+            </Label>
+            <Input
+              id="newPassword"
+              type={showNewPass ? "text" : "password"}
+              className="col-span-3 text-gray-400 pr-10"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
+            <button
+              type="button"
+              className="absolute right-4 top-[50%] -translate-y-1/2 text-muted-foreground"
+              onClick={() => setShowNewPass(!showNewPass)}
+            >
+              {showNewPass ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+
+          {/* Confirmação de nova senha */}
+          <div className="grid grid-cols-4 items-center gap-4 relative">
+            <Label htmlFor="confNewPass" className="text-right text-white">
+              Confirme a nova Senha
+            </Label>
+            <Input
+              id="confNewPass"
+              type={showConfPass ? "text" : "password"}
+              className="col-span-3 text-gray-400 pr-10"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
+            <button
+              type="button"
+              className="absolute right-4 top-[50%] -translate-y-1/2 text-muted-foreground"
+              onClick={() => setShowConfPass(!showConfPass)}
+            >
+              {showConfPass ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button onClick={handleAlterarSenha}>Salvar Alterações</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
 }
 
-function AlterarSenhaUsuarioModal({ show, onHide, onConfirm }: AlterarSenhaUsuarioProps) {
-    const [senhaAtual, setSenhaAtual] = useState("");
-    const [novaSenha, setNovaSenha] = useState("");
-    const [confirmarSenha, setConfirmarSenha] = useState("");
-    const [errors, setErrors] = useState<string[]>([]);
-
-    const handleAlterarSenha = async () => {
-        const validacoes = verificarsenha(novaSenha);
-        const novosErros: string[] = [];
-
-        if (!senhaAtual || !novaSenha || !confirmarSenha) {
-            novosErros.push("Todos os campos são obrigatórios.");
-        }
-
-        if (validacoes.length > 0) {
-            novosErros.push(...validacoes);
-        }
-
-        if (novaSenha !== confirmarSenha) {
-            novosErros.push("A confirmação da senha não corresponde à nova senha.");
-        }
-
-        if (novosErros.length > 0) {
-            setErrors(novosErros);
-            return;
-        }
-
-        try {
-            const sucesso = await alterarSenha(senhaAtual, novaSenha);
-
-            if (sucesso) {
-                onConfirm(); // Redireciona para login ou outra tela necessária
-            } else {
-                setErrors(["Não foi possível alterar a senha. Verifique se a senha atual está correta."]);
-            }
-        } catch (error) {
-            setErrors(["Erro ao alterar a senha."]);
-        }
-    };
-
-    return (
-        <Modal show={show} onHide={onHide} centered>
-            <Modal.Header closeButton>
-                <Modal.Title>Alterar Senha</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-                {errors.length > 0 && (
-                    <div className="text-danger">
-                        {errors.map((erro, index) => (
-                            <Alert variant="danger" key={index}>{erro}</Alert>
-                        ))}
-                    </div>
-                )}
-                <p>Insira sua senha atual e defina uma nova senha:</p>
-                <div className="campos-input-senhas">
-                    <input
-                        type="password"
-                        value={senhaAtual}
-                        onChange={(e) => setSenhaAtual(e.target.value)}
-                        className="senha-atual"
-                        placeholder="Senha atual"
-                    />
-                    <div className="novas-senhas">
-                        <input
-                            type="password"
-                            value={novaSenha}
-                            onChange={(e) => setNovaSenha(e.target.value)}
-                            className="nova-senha"
-                            placeholder="Nova senha"
-                        />
-                        <input
-                            type="password"
-                            value={confirmarSenha}
-                            onChange={(e) => setConfirmarSenha(e.target.value)}
-                            className="confirmar-senha"
-                            placeholder="Confirmar nova senha"
-                        />
-                    </div>
-                </div>
-            </Modal.Body>
-            <Modal.Footer>
-                <Button variant="secondary" onClick={onHide}>Cancelar</Button>
-                <Button variant="danger" onClick={handleAlterarSenha}>Confirmar</Button>
-            </Modal.Footer>
-        </Modal>
-    );
-}
-
-export default AlterarSenhaUsuarioModal;
+export default AlterarSenhaUsuario

@@ -22,77 +22,10 @@ body {
     margin: 0;
     font-family: 'Roboto', sans-serif;
     font-size: 11px !important;
-    color: #202020;
+    color: #FFF !important;
     font-weight: 500;
 }
 
-.navbar {
-    padding: 0 10%  !important;
-}
-
-section {
-    padding: 20px 10% !important;
-}
-
-.last-cards {
-    display: flex;
-    justify-content: space-between;
-}
-
-.titulo {
-    font-family: poppins-bold;
-    font-size: 32px;
-    font-weight: bold;
-    color: #049DD9;
-    margin: 5vh 0;
-}
-
-.vermais {
-    padding: 1vh 9vh !important;
-    margin-top: 2vh !important;
-    font-family: raleway-regular !important;
-    font-size: 20px !important;
+h2 {
     color: #FFF !important;
-    border-color: #049DD9 !important;
-    border: 2px solid !important;
-    background-color: #049DD9 !important;
-}
-
-.vermais:hover {
-    color: #049DD9 !important;
-    border-color: #049DD9 !important;
-    background-color: transparent !important;
-}
-
-.metricas-intro {
-    display: flex;
-    justify-content: space-between;
-    margin: 5vh 0;
-}
-
-.figura > img{
-    width: 70%;
-}
-
-#figura1 {
-    display: flex;
-    align-items: flex-end;
-}
-
-#figura2 {
-    display: flex;
-    align-items: flex-start;
-}
-
-.metricas-texto {
-    display: inline;
-    align-items: center;
-    text-align: center;
-}
-
-.metricas-texto > p {
-    font-family: roboto-regular;
-    font-size: 15px;
-    color: #202020;
-    margin: 0;
 }

@@ -27,12 +27,12 @@ const router = createBrowserRouter([
       { path: 'perfil', element: <Perfil /> },
       { path: 'setor', element: <Setor /> },
       { path: 'anotacoes', element: <Anotacoes /> },
-      { path: 'redefinir-senha/:token', element: <ResetPassword /> },
     ]
   },
   {
     element: <LayoutNoSidebar />,
     children: [
+      { path: 'redefinir-senha/:token', element: <ResetPassword /> },
       { path: 'login', element: <Login /> },
       { path: 'esqueci-minha-senha', element: <EsqueciSenha /> },
     ]

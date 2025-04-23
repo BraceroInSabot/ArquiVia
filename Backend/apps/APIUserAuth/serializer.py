@@ -60,6 +60,7 @@ class RegistroUsuarioSerializer(serializers.ModelSerializer):
             return response
         
         try:        
+            print(user, cod_chave)
             vincular(user, cod_chave)
             response={"Sucesso": "Usuário criado com sucesso!"}
             return response

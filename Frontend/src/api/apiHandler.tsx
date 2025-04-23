@@ -1,7 +1,6 @@
 import axios from "axios";
 
 import { AxiosError, AxiosResponse } from "axios";
-import RedefinirSenha from "../routes/RedefinirSenha";
 
 const versao: string = 'v1';
 
@@ -10,6 +9,7 @@ const BASE_URL: string = 'http://127.0.0.1:8000/api/' + versao + '/';
 // Tipos de URL
 const AUTH_URL: string = BASE_URL + 'auth/token/';
 const USUARIO_URL: string = BASE_URL + 'usuario/';
+const SETOR_URL: string = BASE_URL + 'setor/';
 
 // auth
 const LOGIN_URL: string = AUTH_URL + 'entrar';
@@ -27,6 +27,14 @@ const DESATIVAR_USUARIO_URL: string = USUARIO_URL + 'desativar';
 const ALTERAR_SETOR_URL: string = USUARIO_URL + 'alterar-setor';
 const ALTERAR_SENHA_URL: string = USUARIO_URL + 'alterar-senha';
 const ALTERAR_DADOS_URL: string = USUARIO_URL + 'alterar-dados';
+
+// setor
+const CONSULTAR_SETOR_URL: string = SETOR_URL + 'info'
+const CONSTULAR_AUTORIDADE_URL: string = SETOR_URL + 'admin'
+const ALTERAR_AUTORIDADE_URL: string = SETOR_URL + 'alterar-adm'
+const DESATIVAR_COLABORADOR_URL: string = SETOR_URL + 'desativar-reativar-colaborador'
+const ALTERAR_DADOS_COLABORADOR: string = SETOR_URL + 'alterar-dados-colaborador'
+const CRIAR_CODIGO_CHAVE: string = SETOR_URL + 'criar-codigo-chave'
 
 interface RegistroDados {
     usuario: string;
@@ -142,8 +150,6 @@ const verificar_dados_usuario = async () => {
         const response = await axios.get(USUARIO_DADOS_URL, {
             withCredentials: true,
         });
-
-        console.log(response.data);
         
         return Array.isArray(response.data) ? response.data[0] : response.data;
     } catch (error: any) {
@@ -167,14 +173,13 @@ const esqueci_senha = async ({emailUsuario, emailGestor}: Email): Promise<true |
         );
 
         return response.data['Sucesso'] || response.data['Falha'];
-    } catch (error: any) {
+    } catch {
         return false
     }
 }
 
 const validar_token = async (token: string): Promise<true|false> => {
     try {
-        console.log(VALIDAR_TOKEN_URL + token)
         const response = await axios.get(
             VALIDAR_TOKEN_URL + token,
         )
@@ -204,10 +209,8 @@ const redefinirSenha = async (
             },
             { withCredentials: true }
         );
-        console.log(response.data);
         return response.data;
     } catch (error: any) {
-        console.error(error);
         return false;
     }
 };
@@ -304,6 +307,137 @@ const alterarDadosUsuario = async ({data, type}: alteracaoDadosUsuario) => {
     }
 }
 
+const dataSetor = async () => {
+    try {
+        const response = await axios.get(
+            CONSULTAR_SETOR_URL,
+            {withCredentials: true},
+        )
+
+        if (response.status === 200) {
+            return response.data;
+        }
+        return false
+    } catch {
+        return false
+    }
+}
+
+const userAutority = async () => {
+    try {
+        const response = await axios.get(
+            CONSTULAR_AUTORIDADE_URL,
+            {withCredentials: true}
+        )
+
+        if (response.status === 200) {
+            return response.data;
+        }
+
+        return false;
+    } catch {
+        return false
+    }
+}
+
+interface updateADMInterface {
+    username: string
+    opType: boolean
+}
+
+const updateADM = async ({username, opType}: updateADMInterface) => {
+    try {
+        const response = await axios.post(
+            ALTERAR_AUTORIDADE_URL,
+            {
+                username: username,
+                opType: opType
+            },
+            {withCredentials: true}
+        )
+        
+        if (response.status === 200) {
+            return true;
+        }
+
+        return false;
+    } catch {
+        return false;
+    }
+}
+
+const DeactivateReactivate = async (username: string, optype: boolean) => {
+    try {
+        console.log(DESATIVAR_COLABORADOR_URL)
+        const response = await axios.post(
+            DESATIVAR_COLABORADOR_URL,
+            {
+                username: username,
+                opType: optype
+            },
+            {
+                withCredentials: true
+            }
+        )
+
+
+        if (response.status === 200) {
+            return true
+        }
+        return false
+    } catch {
+        return false
+    }
+}
+
+interface CollaboratorChangeData {
+    username: string
+    name: string
+    email: string
+  }
+
+const changeCollaboratorData = async({
+    username,
+    name,
+    email
+  }: CollaboratorChangeData) => {
+    try {
+        const response = await axios.post(
+            ALTERAR_DADOS_COLABORADOR,
+            {
+                username: username,
+                name: name,
+                email: email
+            },
+            {
+                withCredentials: true
+            }
+        )
+
+        if (response.status === 200) {
+            return response.data
+        }
+
+        return false
+    } catch {
+        return false
+    }
+}
+
+const create_codigo_chave = async () => {
+    try {
+        const response = await axios.post(
+            CRIAR_CODIGO_CHAVE,
+            {},
+            {withCredentials: true}
+        )
+
+        return response
+    } catch {
+        return false
+    }
+}
+
 export { 
     login, 
     logout, 
@@ -317,5 +451,11 @@ export {
     desativarUsuario,
     alterarSetor,
     alterarSenha,
-    alterarDadosUsuario
+    alterarDadosUsuario,
+    dataSetor,
+    userAutority,
+    updateADM,
+    DeactivateReactivate,
+    changeCollaboratorData,
+    create_codigo_chave
  };

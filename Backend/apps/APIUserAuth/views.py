@@ -17,6 +17,7 @@ from django.template.loaders.cached import Loader
 from uuid import uuid4
 from rest_framework import status
 from django.contrib.auth.hashers import make_password
+from apps.APISetor.models import Codigo_Chave_Setor
 
 # LOGIN
 
@@ -106,10 +107,17 @@ class RegisterTokenView(APIView):
 
     def post(self, request):
         serializer = RegistroUsuarioSerializer(data=request.data)
+        codigoChave = request.data['codigochave']
 
         if serializer.is_valid():
+            
+            if codigoChave != None and not Codigo_Chave_Setor.objects.get(chave=codigoChave).DoesNotExist:
+                return Response({"Falha": "Usuário não encontrado."}, status=400)            
+                
             serializer.save()
+
             return Response({"Sucesso": True}, status=201)
+
         
         return Response((serializer.errors), status=400)
 
@@ -170,32 +178,39 @@ class RequisicaoRedefinicaoSenhaView(APIView):
             return False
 
     def post(self, request):
+        """Além de ser utilizado na tela de autenticação, também é utilizado na tela de gestão de setor pelo Gestor.
+
+        Args:
+            request (HTTPrequest): requisição feita pelo host.
+
+        Returns:
+            Response (200 || 401): Resposta da requisição
+        """
         email = request.data.get('emailUsuario')
         cEmail = request.data.get('emailGestor')
         
         usuario = Colaborador.objects.filter(email=email).first()
         if usuario == None:
-            return Response({"Falha": [False, "Email do Usuário não encontrado. Verifique o seu e-mail."]})
+            return Response(data={"Falha": [False, "Email do Usuário não encontrado. Verifique o seu e-mail."]}, status=200)
 
         gestor = Colaborador.objects.filter(email=cEmail).first()
         if gestor == None:
-            return Response({"Falha": [False, "Email do Gestor (a) não encontrado."]})
+            return Response(data={"Falha": [False, "Email do Gestor (a) não encontrado."]}, status=401)
 
         try:
             token = PasswordResetToken.objects.create(colaborador=usuario, token=str(uuid4()))
-            url = f"{settings.FRONTEND_URL}/refinir-senha/{token.token}"
+            url = f"{settings.FRONTEND_URL}/redefinir-senha/{token.token}"
 
             if self.enviar_email_recuperacao_senha(email, usuario, url=url, token=token):
-                return Response({"Sucesso": [True, "Email enviado com sucesso!"]})
+                return Response(data={"Sucesso": [True, "Email enviado com sucesso!"]}, status=200)
             else:
-                return Response({"Falha": "Email não enviado"})
+                return Response(data={"Falha": "Email não enviado"}, status=401)
         
         except Colaborador_Setor.DoesNotExist:
-            return Response({"Falha": "Email não encontrado."}, status=404)
+            return Response(data={"Falha": "Email não encontrado."}, status=404)
         
         except Exception as e:
-            print(e)
-            return Response({"Falha": "Houve uma falha ao enviar o email."}, status=500)
+            return Response(data={"Falha": "Houve uma falha ao enviar o email."}, status=500)
 
 class ValidarTokenRedefinicaoValidoView(APIView):
     permission_classes = [AllowAny]

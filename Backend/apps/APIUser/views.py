@@ -34,7 +34,7 @@ class UsuarioInformacoesView(APIView):
             
             # print(settings.TIME_ZONE)  
             # print(timezone.get_current_timezone())  
-            print( timezone.localtime(data))
+            # print( timezone.localtime(data))
             data_local = timezone.localtime(data)  # Converte UTC -> America/Sao_Paulo
             print(date_format(timezone.localtime(data), "d \d\e F, Y. H\hi."))
             return date_format(data_local, "d \d\e F, Y. H\hi .")
@@ -49,8 +49,8 @@ class UsuarioInformacoesView(APIView):
             "setor": setor_usuario,
             "data_criacao": formatar_data(request.user.date_joined),
             "ultimo_login": formatar_data(request.user.last_login),
-            "inicio_expediente": formatar_data(inicio_expediente) if inicio_expediente else None,
-            "final_expediente": formatar_data(final_expediente) if final_expediente else None,
+            "inicio_expediente": f"{inicio_expediente.hour}:{inicio_expediente.minute if not inicio_expediente else "00"}" if inicio_expediente else None,
+            "final_expediente": f"{final_expediente.hour}:{final_expediente.minute if not final_expediente else "00"}" if final_expediente else None,
         }
 
         return Response({"usuario": [infos]}, status=200)

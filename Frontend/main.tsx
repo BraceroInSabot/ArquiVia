@@ -8,6 +8,7 @@ import Perfil from './src/routes/Perfil.tsx'
 import EsqueciSenha from './src/routes/EsqueciSenha.tsx'
 import Setor from './src/routes/Setor.tsx'
 import Anotacoes from './src/routes/Anotacoes.tsx'
+import Anotacao from './src/routes/Anotacao.tsx'
 import ResetPassword from './src/routes/RedefinirSenha.tsx'
 
 import { ThemeProvider } from './src/components/theme/theme-provider.tsx'
@@ -32,6 +33,7 @@ const router = createBrowserRouter([
   {
     element: <LayoutNoSidebar />,
     children: [
+      { path: 'anotacao', element: <Anotacao /> },
       { path: 'redefinir-senha/:token', element: <ResetPassword /> },
       { path: 'login', element: <Login /> },
       { path: 'esqueci-minha-senha', element: <EsqueciSenha /> },

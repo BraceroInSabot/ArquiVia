@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <button onclick="dictionary()">Clicar</button>    
+
+    <script>
+        const dictionary = async () => {
+            try {
+                const response = await fetch('br-utf8.txt'); // O arquivo deve estar na mesma pasta
+                const text = await response.text();
+                const array = text.split("\n").map(word => word.trim()).filter(Boolean);
+                console.log(array);
+                return array;
+            } catch (error) {
+                console.error("Erro ao ler o arquivo:", error);
+                return [];
+            }
+        };
+    </script>
+</body>
+</html>

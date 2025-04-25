@@ -1,0 +1,5 @@
+.editor-container {
+    all: unset; /* Remove todos os estilos herdados */
+    color: white; /* Define a cor do texto */
+    border-radius: 8px; /* Adiciona bordas arredondadas */
+  }

@@ -32,9 +32,9 @@ class AbsUser(AbstractUser, PermissionsMixin):
 
 class PasswordResetToken(models.Model):
     reset_id = models.AutoField(primary_key=True, db_column='ID_reset')
-    colaborador = models.ForeignKey(AbsUser, on_delete=models.CASCADE, db_column='PK_user')
+    user_pk = models.ForeignKey(AbsUser, on_delete=models.CASCADE, db_column='PK_user')
     token = models.CharField(max_length=48, unique=True, default=uuid.uuid4, db_column='reset_token')
-    criado_em = models.DateTimeField(auto_now_add=True, db_column='date_created')
+    created_at = models.DateTimeField(auto_now_add=True, db_column='date_creation')
 
     def is_token_valid(self):
         """Verifica se o token ainda é válido.

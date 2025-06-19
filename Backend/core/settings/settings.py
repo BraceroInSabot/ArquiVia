@@ -4,6 +4,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 INSTALLED_APPS =  [
     "apps.APIUser",
+    "apps.APIEmpresa",
 ] + [
     "django.contrib.admin",
     "django.contrib.auth",

@@ -24,5 +24,6 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     # path(f"api/{VERSAO}/auth/token/", include("apps.APIUser.urls")),
     path(f"api/{VERSAO}/usuario/", include("apps.APIUser.urls")),
+    path(f"api/{VERSAO}/empresa/", include("apps.APIEmpresa.urls")),
     # path(f"api/{VERSAO}/", include("apps.APISetor.urls")),
 ]

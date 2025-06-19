@@ -9,7 +9,6 @@ load_dotenv(".env/.env")
 
 def main():
     """Run administrative tasks."""
-    print(os.getenv("DEBUG"))
     if os.getenv("DEBUG"):
         os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings.dev")
     else:

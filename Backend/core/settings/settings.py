@@ -2,10 +2,9 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-INSTALLED_APPS = [
-    "apps.APIUserAuth",
-    "apps.APISetor",
+INSTALLED_APPS =  [
     "apps.APIUser",
+] + [
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -20,7 +19,7 @@ INSTALLED_APPS = [
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "apps.APIUserAuth.utils.autenticacao.CookiesJWTAuth",
+        "apps.APIUser.utils.autenticacao.CookiesJWTAuth",
     ),
     "DEFAULT_PERMISSION_CLASSES": {
         "rest_framework.permissions.IsAuthenticated",
@@ -28,7 +27,7 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    "USER_ID_FIELD": "codigocolaborador",
+    "USER_ID_FIELD": "user_id",
 }
 
 MIDDLEWARE = [
@@ -95,6 +94,14 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
-AUTH_USER_MODEL = "APIUserAuth.Colaborador"
+AUTH_USER_MODEL = "APIUser.AbsUser"
+
+from typing import TypedDict
+
+class ResponseType(TypedDict):
+    sucesso: bool
+    mensagem: str
+
+RESPONSE_PATTERN = ResponseType
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

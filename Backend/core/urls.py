@@ -18,11 +18,11 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
-VERSAO = "v1"
+VERSAO = "v2"
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path(f"api/{VERSAO}/auth/token/", include("apps.APIUserAuth.urls")),
+    # path(f"api/{VERSAO}/auth/token/", include("apps.APIUser.urls")),
     path(f"api/{VERSAO}/usuario/", include("apps.APIUser.urls")),
-    path(f"api/{VERSAO}/", include("apps.APISetor.urls")),
+    # path(f"api/{VERSAO}/", include("apps.APISetor.urls")),
 ]

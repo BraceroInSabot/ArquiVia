@@ -23,6 +23,21 @@ class Sector(models.Model):
     def __str__(self):
         return self.name
 
+class SectorUser(models.Model):
+    sector_user_id = models.BigAutoField(primary_key=True, db_column="ID_sector_user")
+    is_adm = models.BooleanField(default=False, db_column="is_administrator")
+    sector = models.ForeignKey(Sector, on_delete=models.CASCADE, db_column="PK_sector")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, db_column="PK_user")
+    
+    class Meta:
+        db_table = "SectorUser"
+        
+        verbose_name = "Vinculo entre Setor e Usuario"
+        verbose_name_plural = "Vinculos entre Setores e Usuarios"
+        
+    def __str__(self):
+        return f"{self.user} vinculado ao setor {self.sector}"
+
 class KeyCodeSector(models.Model):
     key_code_id = models.AutoField(primary_key=True, db_column="ID_key_code")
     key = models.CharField(max_length=256, db_column="key")

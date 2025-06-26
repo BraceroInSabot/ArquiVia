@@ -5,7 +5,8 @@ from .views import (
     ShowEnterpriseView,
     ListEnterpriseView,
     EditEnterpriseView,
-    ActivateOrDeactivateEnterpriseVIew
+    ActivateOrDeactivateEnterpriseVIew,
+    ExcludeEnterpriseView
     )
 
 urlpatterns = [
@@ -14,4 +15,5 @@ urlpatterns = [
     path("listar", ListEnterpriseView.as_view(), name="listar-empresas"),
     path("editar", EditEnterpriseView.as_view(), name="editar-empresa"),
     path("ativar-desativar", ActivateOrDeactivateEnterpriseVIew.as_view(), name="ativar-desativar-empresa"),
+    path("excluir", ExcludeEnterpriseView.as_view(), name="excluir-empresa"),
 ]

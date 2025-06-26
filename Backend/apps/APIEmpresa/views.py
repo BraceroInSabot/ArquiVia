@@ -1,6 +1,7 @@
 from rest_framework.views import APIView, Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import Enterprise
+from django.http import HttpResponse
 
 class CreateEnterpriseView(APIView):
     permission_classes = [IsAuthenticated]
@@ -111,7 +112,9 @@ class ListEnterpriseView(APIView):
         return Response(data, status=200)
     
 class EditEnterpriseView(APIView):
-    def post(self, request: dict):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request: dict):
         ent_id = request.data.get("ent_id")
         name = request.data.get("name")
         image = request.data.get("image")
@@ -154,7 +157,9 @@ class EditEnterpriseView(APIView):
         return res
         
 class ActivateOrDeactivateEnterpriseVIew(APIView):
-    def post(self, request):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request):
         ent_id = request.data.get("enterprise_id")
         request_user = request.user
         
@@ -181,7 +186,7 @@ class ActivateOrDeactivateEnterpriseVIew(APIView):
                     }}
             return res
         
-        enterprise.is_active = True if not enterprise.is_active else enterprise.is_active = False
+        enterprise.is_active = True if not enterprise.is_active else False
         
         enterprise.save()
         
@@ -195,41 +200,46 @@ class ActivateOrDeactivateEnterpriseVIew(APIView):
         return res   
 
 class ExcludeEnterpriseView(APIView):
+    permission_classes = [IsAuthenticated]
+    
     def delete(self, request):
         ent_id = request.data.get("enterprise_id")
         request_user = request.user
         
+        print(ent_id)
+
         try:
             enterprise = Enterprise.objects.filter(ent_id=ent_id).first()
-        except:
-            res = Response()
-            res.status_code=400
-            res.data = {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": "Houve um erro na busca pela empresa. Tente novamente."
-                    }}
-            return res
+        except Exception:
+            return Response({
+                "Data": {
+                    "sucesso": False,
+                    "mensagem": "Houve um erro na busca pela empresa. Tente novamente."
+                }
+            }, status=400)
         
-        if not (Enterprise.objects.filter(owner=request_user).first()):
-            res = Response()
-            res.status_code=400
-            res.data = {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": "Usuário sem permissão."
-                    }}
-            return res
+        if not enterprise:
+            return Response({
+                "Data": {
+                    "sucesso": False,
+                    "mensagem": "Empresa não encontrada."
+                }
+            }, status=404)
+        
+        if enterprise.owner != request_user:
+            return Response({
+                "Data": {
+                    "sucesso": False,
+                    "mensagem": "Usuário sem permissão."
+                }
+            }, status=403)
         
         name = enterprise.name
         enterprise.delete()
-        enterprise.save()
         
-        res = Response()
-        res.status_code=200
-        res.data = {"Data": 
-                    { 
-                        "sucesso": True,
-                        "mensagem": f"Empresa >> {name} << excluída."
-                }}
-        return res 
+        return Response({
+            "Data": {
+                "sucesso": True,
+                "mensagem": f"Empresa >> {name} << excluída."
+            }
+        }, status=200)

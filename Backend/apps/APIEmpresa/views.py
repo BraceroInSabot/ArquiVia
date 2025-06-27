@@ -1,5 +1,6 @@
 from rest_framework.views import APIView, Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from django.db.models import Q
 from .models import Enterprise
 from django.http import HttpResponse
 
@@ -44,10 +45,9 @@ class ShowEnterpriseView(APIView):
 
         try:
             ent = Enterprise.objects.get(ent_id=ent_id)
-            print(ent)
         except Enterprise.DoesNotExist:
             res = Response()
-            res.status_code=400
+            res.status_code = 400
             res.data = {"Data": 
                         { 
                             "sucesso": False,
@@ -55,17 +55,18 @@ class ShowEnterpriseView(APIView):
                     }}
             return res
 
-        # TODO: Validar se o usuário faz parte do setor OU se é dono da empresa
-        if not (Enterprise.objects.filter(owner=request_user).first() and ent.is_active):
+        is_owner = ent.owner == request_user
+        is_linked = ent.sector_set.filter(sectoruser__user=request_user).exists()
+
+        if not (is_owner or is_linked):
             res = Response()
-            res.status_code=400
+            res.status_code = 403
             res.data = {"Data": 
                         { 
                             "sucesso": False,
                             "mensagem": "Usuário sem permissão para completar a operação."
                     }}
             return res
-
 
         data = {
             "name": ent.name,
@@ -75,7 +76,7 @@ class ShowEnterpriseView(APIView):
         }
 
         res = Response()
-        res.status_code=200
+        res.status_code = 200
         res.data = data
         return res
     
@@ -85,9 +86,10 @@ class ListEnterpriseView(APIView):
     def get(self, request):
         request_user = request.user
 
-        # TODO: Validar se o usuário faz parte do setor OU se é dono da empresa
         try:
-            ent = Enterprise.objects.filter(owner=request_user)
+            ent = Enterprise.objects.filter(
+                Q(owner=request_user) | Q(sector__sectoruser__user=request_user)
+            ).distinct()
         except Enterprise.DoesNotExist:
             return Response({
                 "Data": {
@@ -99,6 +101,7 @@ class ListEnterpriseView(APIView):
         data = {
             "Data": [
                 {
+                    "ent_id": x.ent_id,
                     "name": x.name,
                     "image": x.image,
                     "owner": x.owner.name,

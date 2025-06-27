@@ -126,15 +126,26 @@ class ListSectorsView(APIView):
                     }}
             return res 
         
-        if enterprise.owner == request.user:
-            sectors = Sector.objects.filter(enterprise=enterprise)
-        else:
-            sectors = Sector.objects.filter(enterprise=enterprise, sectoruser__user=request.user, is_active=True)
+        try:
+            if enterprise.owner == request.user:
+                sectors = Sector.objects.filter(enterprise=enterprise)
+            else:
+                sectors = Sector.objects.filter(enterprise=enterprise, sectoruser__user=request.user, is_active=True)
+        except:
+            res = Response()
+            res.status_code=403
+            res.data = {"Data":
+                        { 
+                            "sucesso": False,
+                            "mensagem": "Você não tem permissão para acessar os setores desta empresa."
+                    }}
+            return res
 
         data = []
         
         for sector in sectors:
             data.append({
+                "sector_id": sector.sector_id,
                 "name": sector.name,
                 "manager": sector.manager.name,
                 "image": sector.image,
@@ -306,7 +317,7 @@ class AddUserToSectorView(APIView):
             return res
         
         try:
-            user: UserModel = USER.objects.get(user_email=user_email)
+            user: UserModel = USER.objects.filter(email=user_email).first()
         except USER.DoesNotExist:
             res = Response()
             res.status_code=400

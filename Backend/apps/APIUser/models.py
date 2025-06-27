@@ -42,7 +42,7 @@ class PasswordResetToken(models.Model):
         Returns:
             bool: se estiver dentro do prazo, deve retornar True. Caso contrário, false.
         """
-        return ( now() - self.criado_em <= timedelta(minutes=15) )
+        return ( now() - self.created_at <= timedelta(minutes=15) )
     
     class Meta:
         db_table = "ResetToken"
@@ -51,4 +51,4 @@ class PasswordResetToken(models.Model):
         verbose_name_plural = "Redefinir Senhas"
 
     def __str__(self):
-        return (f"{self.colaborador} -- {self.token}")
+        return (f"{self.user_pk} -- {self.token}")

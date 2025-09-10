@@ -5,7 +5,7 @@ from django.db import models
 User = get_user_model()
 
 
-class Documento(models.Model):
+class Document(models.Model):
     doc_id = models.AutoField(primary_key=True, db_column='ID_document')
     title = models.CharField(max_length=200, db_column='document_title')
     context_beta = models.TextField()

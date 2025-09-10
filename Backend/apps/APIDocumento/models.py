@@ -1,4 +1,4 @@
-from apps.APISetor.models import Setor
+from apps.APISetor.models import Sector
 from django.contrib.auth import get_user_model
 from django.db import models
 
@@ -10,7 +10,7 @@ class Documento(models.Model):
     title = models.CharField(max_length=200, db_column='document_title')
     context_beta = models.TextField()
     creator = models.ForeignKey(User, on_delete=models.CASCADE, db_column='document_creator')
-    sector = models.ForeignKey(Setor, on_delete=models.CASCADE, db_column='document_sector')
+    sector = models.ForeignKey(Sector, on_delete=models.CASCADE, db_column='document_sector')
     data_criacao = models.DateTimeField(auto_now_add=True, db_column='creation_date')
 
     def __str__(self):

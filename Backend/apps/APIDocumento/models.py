@@ -11,7 +11,8 @@ class Document(models.Model):
     context_beta = models.TextField()
     creator = models.ForeignKey(User, on_delete=models.CASCADE, db_column='document_creator')
     sector = models.ForeignKey(Sector, on_delete=models.CASCADE, db_column='document_sector')
-    data_criacao = models.DateTimeField(auto_now_add=True, db_column='creation_date')
+    data_criacao = models.DateTimeField(auto_now_add=True, db_column='document_creation_date')
+    active = models.BooleanField(default=True, db_column='document_active')
 
     def __str__(self):
         return self.title 

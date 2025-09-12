@@ -133,3 +133,63 @@ class ListDocumentView(APIView):
             }
         }
         return ret
+    
+class ShowDocumentView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        document_id = request.data.get('document_id', '')
+        
+        if type(document_id) != int:
+            ret = Response()
+            ret.status_code = 400
+            ret.data = {
+                "Data": {
+                    "sucesso": False,
+                    "mensagem": "ID inválido."
+                }
+            }
+            return ret
+        
+        try:
+            document = Document.objects.get(doc_id=document_id)
+        except Document.DoesNotExist:
+            ret = Response()
+            ret.status_code = 404
+            ret.data = {
+                "Data": {
+                    "sucesso": False,
+                    "mensagem": "Documento não encontrado."
+                }
+            }
+            return ret
+        
+        if not (SectorUser.objects.filter(user=request.user, sector=document.sector).exists() 
+            or 
+            Sector.objects.filter(manager=request.user, sector_id=document.sector.sector_id).exists()):
+            ret = Response()
+            ret.status_code = 403
+            ret.data = {
+                "Data": {
+                    "sucesso": False,
+                    "mensagem": "Você não tem permissão para completar essa ação."
+                }
+            }
+            return ret
+        
+        ret = Response()
+        ret.status_code = 200
+        ret.data = {
+            "Data": {
+                "sucesso": True,
+                "mensagem": {
+                    "document_id": document.doc_id,
+                    "title": document.title,
+                    "context_beta": document.context_beta,
+                    "created_at": document.data_criacao,
+                    "sector_id": document.sector.sector_id,
+                    "sector_name": document.sector.name
+                }
+            }
+        }
+        return ret

@@ -1,5 +1,7 @@
 from typing import List, Union
+from django.contrib.auth import get_user_model
 
+User = get_user_model()
 
 class ValidateAuth:
     def __init__(self, username=None, name=None, email=None, password=None, c_password=None):
@@ -28,12 +30,15 @@ class ValidateAuth:
         return [True, "Nome válido"]
 
     def validate_email(self) -> List[Union[bool, str]]:
+        print(111)
         if not self.email:
             return [False, "E-mail não pode estar vazio"]
         if len(self.email) < 5:
             return [False, "E-mail deve ter pelo menos 5 caracteres"]
         if len(self.email) > 100:
             return [False, "E-mail não pode ter mais de 100 caracteres"]
+        if User.objects.filter(email=self.email).exists():
+            return [False, "E-mail já está em uso"]
         if "@" not in self.email or "." not in self.email:
             return [False, "E-mail deve conter '@' e '.'"]
         return [True, "E-mail válido"]

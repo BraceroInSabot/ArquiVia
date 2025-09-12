@@ -1,6 +1,6 @@
 from rest_framework.views import APIView, Response
 from django.contrib.auth import get_user_model
-from apps.APISetor.models import Sector
+from apps.APISetor.models import Sector, SectorUser
 from apps.APIDocumento.models import Document
 from rest_framework.permissions import IsAuthenticated
 
@@ -24,6 +24,28 @@ class CreateDocumentView(APIView):
                 "Data": {
                     "sucesso": False,
                     "mensagem": "Setor não encontrado."
+                }
+            }
+            return ret
+        
+        try:
+            if SectorUser.objects.filter(user=request.user, sector=sector).exists() is False:
+                ret = Response()
+                ret.status_code = 403
+                ret.data = {
+                    "Data": {
+                        "sucesso": False,
+                        "mensagem": "Usuário não pertence ao setor."
+                    }
+                }
+                return ret
+        except Exception as e:
+            ret = Response()
+            ret.status_code = 500
+            ret.data = {
+                "Data": {
+                    "sucesso": False,
+                    "mensagem": f"Erro ao verificar associação do usuário ao setor: {str(e)}"
                 }
             }
             return ret

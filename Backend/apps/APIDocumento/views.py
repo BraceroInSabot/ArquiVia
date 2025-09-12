@@ -193,3 +193,84 @@ class ShowDocumentView(APIView):
             }
         }
         return ret
+    
+class UpdateDocumentView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def put(self, request):
+        document_id = request.data.get('document_id', '')
+        new_title = request.data.get('title', '')
+        new_context_beta = request.data.get('context_beta', '')
+        
+        if type(document_id) != int:
+            ret = Response()
+            ret.status_code = 400
+            ret.data = {
+                "Data": {
+                    "sucesso": False,
+                    "mensagem": "ID inválido."
+                }
+            }
+            return ret
+
+        try:
+            document = Document.objects.get(doc_id=document_id)
+        except Document.DoesNotExist:
+            ret = Response()
+            ret.status_code = 404
+            ret.data = {
+                "Data": {
+                    "sucesso": False,
+                    "mensagem": "Documento não encontrado."
+                }
+            }
+            return ret
+        
+        try:
+            if not (SectorUser.objects.filter(user=request.user, sector=document.sector).exists() 
+                or 
+                Sector.objects.filter(manager=request.user, sector_id=document.sector.sector_id).exists()):
+                ret = Response()
+                ret.status_code = 403
+                ret.data = {
+                    "Data": {
+                        "sucesso": False,
+                        "mensagem": "Você não tem permissão para completar essa ação."
+                    }
+                }
+                return ret
+        except Exception as e:
+            ret = Response()
+            ret.status_code = 500
+            ret.data = {
+                "Data": {
+                    "sucesso": False,
+                    "mensagem": f"Erro ao verificar permissão do usuário: {str(e)}"
+                }
+            }
+            return ret
+        
+        if len(new_title) < 3 or len(new_title) > 200:
+            ret = Response()
+            ret.status_code = 400
+            ret.data = {
+                "Data": {
+                    "sucesso": False,
+                    "mensagem": "Título deve ter entre 3 e 200 caracteres."
+                }
+            }
+            return ret
+            
+        document.title = new_title
+        document.context_beta = new_context_beta
+        document.save()
+        
+        ret = Response()
+        ret.status_code = 200
+        ret.data = {
+            "Data": {
+                "sucesso": True,
+                "mensagem": "Documento atualizado com sucesso."
+            }
+        }
+        return ret

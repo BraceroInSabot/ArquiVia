@@ -119,7 +119,8 @@ class ListDocumentView(APIView):
                 "context_beta": doc.context_beta,
                 "created_at": doc.data_criacao,
                 "sector_id": doc.sector.sector_id,
-                "sector_name": doc.sector.name
+                "sector_name": doc.sector.name,
+                "is_eliminate": doc.is_eliminate                
             }
             for doc in documents
         ]
@@ -188,7 +189,8 @@ class ShowDocumentView(APIView):
                     "context_beta": document.context_beta,
                     "created_at": document.data_criacao,
                     "sector_id": document.sector.sector_id,
-                    "sector_name": document.sector.name
+                    "sector_name": document.sector.name,
+                    "is_eliminate": document.is_eliminate
                 }
             }
         }
@@ -271,6 +273,73 @@ class UpdateDocumentView(APIView):
             "Data": {
                 "sucesso": True,
                 "mensagem": "Documento atualizado com sucesso."
+            }
+        }
+        return 
+    
+class ActivateOrDeactivateDocumentView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def put(self, request):
+        document_id = request.data.get('document_id', '')
+        
+        if type(document_id) != int:
+            ret = Response()
+            ret.status_code = 400
+            ret.data = {
+                "Data": {
+                    "sucesso": False,
+                    "mensagem": "ID inválido."
+                }
+            }
+            return ret
+
+        try:
+            document = Document.objects.get(doc_id=document_id)
+        except Document.DoesNotExist:
+            ret = Response()
+            ret.status_code = 404
+            ret.data = {
+                "Data": {
+                    "sucesso": False,
+                    "mensagem": "Documento não encontrado."
+                }
+            }
+            return ret
+        
+        try:
+            if not (SectorUser.objects.filter(user=request.user, sector=document.sector).exists() 
+                or 
+                Sector.objects.filter(manager=request.user, sector_id=document.sector.sector_id).exists()):
+                ret = Response()
+                ret.status_code = 403
+                ret.data = {
+                    "Data": {
+                        "sucesso": False,
+                        "mensagem": "Você não tem permissão para completar essa ação."
+                    }
+                }
+                return ret
+        except Exception as e:
+            ret = Response()
+            ret.status_code = 500
+            ret.data = {
+                "Data": {
+                    "sucesso": False,
+                    "mensagem": f"Erro ao verificar permissão do usuário: {str(e)}"
+                }
+            }
+            return ret
+        
+        document.is_eliminate = not document.is_eliminate
+        document.save()
+        
+        ret = Response()
+        ret.status_code = 200
+        ret.data = {
+            "Data": {
+                "sucesso": True,
+                "mensagem": "Documento eliminado com sucesso."
             }
         }
         return ret

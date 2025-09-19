@@ -6,6 +6,7 @@ from .views import (
     ShowDocumentView,
     UpdateDocumentView,
     ActivateOrDeactivateDocumentView,
+    DeleteDocumentView
     )
 
 urlpatterns = [
@@ -14,4 +15,5 @@ urlpatterns = [
     path("consultar", ShowDocumentView.as_view(), name="consultar-documento"),
     path("editar", UpdateDocumentView.as_view(), name="editar-documento"),
     path("ativar-desativar", ActivateOrDeactivateDocumentView.as_view(), name="ativar-ou-desativar-documento"),
+    path("deletar", DeleteDocumentView.as_view(), name="deletar-documento"),
 ]

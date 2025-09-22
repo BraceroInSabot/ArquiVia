@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from apps.APISetor.models import Sector, SectorUser
 from apps.APIDocumento.models import Document
 from rest_framework.permissions import IsAuthenticated
+from apps.APIDocumento.classificationView.views import ClassificationViewUtil
 
 User = get_user_model()
 
@@ -69,7 +70,23 @@ class CreateDocumentView(APIView):
                 }
             }
             return ret
+        finally:
+            document.save()
         
+            classification_util = ClassificationViewUtil(document, request.user)
+            ret = classification_util.create_classification()
+            
+            if not ret:
+                ret = Response()
+                ret.status_code = 500
+                ret.data = {
+                    "Data": {
+                        "sucesso": False,
+                        "mensagem": "Erro ao criar classificação do documento. Entre em contato com o administrador."
+                    }
+                }
+                return ret
+            
         ret = Response()
         ret.status_code = 200
         ret.data = {

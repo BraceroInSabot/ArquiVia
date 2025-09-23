@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from apps.APISetor.models import Sector, SectorUser
 from apps.APIDocumento.models import Document
 from rest_framework.permissions import IsAuthenticated
-from apps.APIDocumento.classificationView.views import ClassificationViewUtil
+from apps.APIDocumento.classificationUtils.views import ClassificationViewUtil
 
 User = get_user_model()
 

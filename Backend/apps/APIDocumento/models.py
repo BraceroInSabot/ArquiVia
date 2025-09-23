@@ -22,9 +22,26 @@ class Document(models.Model):
         verbose_name = 'Document'
         verbose_name_plural = 'Documents'
         
-class Classification(models.Model):
+class Classification_Status(models.Model):
+    status_id = models.AutoField(primary_key=True, db_column='ID_status')
+    status = models.CharField(max_length=20, db_column='status')
+
+    def __str__(self):
+        return self.status 
+    
+    @classmethod
+    def get_default_status(cls):
+        return cls.objects.get_or_create(status='Em andamento')[0].pk
+    
+    class Meta:
+        db_table = 'Classification_Status'
+        verbose_name = 'Classification Status'
+        verbose_name_plural = 'Classifications Statuses'
+        
+class Classification(models.Model):   
     classification_id = models.AutoField(primary_key=True, db_column='ID_classification')
     reviewClassificationStatus = models.BooleanField(default=False, db_column='classification_review_status')
+    classification_status = models.ForeignKey(Classification_Status, on_delete=models.CASCADE, default=Classification_Status.get_default_status, db_column='classification_status', null=False)
     reviewedBy = models.ForeignKey(User, on_delete=models.CASCADE, db_column='classification_reviewed_by', related_name='reviewed_by_user')
     document = models.ForeignKey(Document, on_delete=models.CASCADE, db_column='classification_document')
     privacity = models.ForeignKey('Classification_Privacity', on_delete=models.CASCADE, db_column='classification_privacity', null=True)

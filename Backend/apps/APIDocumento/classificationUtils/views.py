@@ -28,4 +28,3 @@ class ClassificationViewUtil():
             return False
         
         return True
-    

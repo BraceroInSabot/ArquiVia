@@ -11,7 +11,7 @@ class ApidocumentoConfig(AppConfig):
         """
         Este método é executado quando a aplicação está pronta.
         """
-        from .models import models, Classification_Privacity
+        from .models import models, Classification_Privacity, Classification_Status
 
         def insert_initial_data(insert_data: List[Dict[str, Any]], model_class: Type[Model]):
             """
@@ -29,7 +29,14 @@ class ApidocumentoConfig(AppConfig):
             {'classification_privacity_id': '1', 'privacity': 'Público', 'priv_abreviation': 'PB'},
             {'classification_privacity_id': '2', 'privacity': 'Privado', 'priv_abreviation': 'PV'},
         ]
+        classification_status_data = [
+            {'status_id': '1', 'status': 'Concluído'},
+            {'status_id': '2', 'status': 'Em andamento'},
+            {'status_id': '3', 'status': 'Revisão necessária'},
+            {'status_id': '4', 'status': 'Arquivado'},
+        ]
         
         insert_initial_data(classification_privacity_data, Classification_Privacity)
+        insert_initial_data(classification_status_data, Classification_Status)
         
         

@@ -1,4 +1,5 @@
 from apps.APISetor.models import Sector
+from apps.APIEmpresa.models import Enterprise
 from django.contrib.auth import get_user_model
 from django.db import models
 
@@ -76,6 +77,8 @@ class Category(models.Model):
     category_id = models.AutoField(primary_key=True, db_column='ID_category')
     category = models.CharField(max_length=100, db_column='category_name')
     description = models.TextField(db_column='category_description', null=True, blank=True)
+    category_sector = models.ForeignKey(Sector, on_delete=models.CASCADE, db_column='category_sector', null=True, blank=True)
+    category_enterprise = models.ForeignKey(Enterprise, on_delete=models.CASCADE, db_column='category_enterprise', null=False, blank=False)
 
     def __str__(self):
         return self.category 

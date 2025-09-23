@@ -137,7 +137,8 @@ class ListDocumentView(APIView):
                 "created_at": doc.data_criacao,
                 "sector_id": doc.sector.sector_id,
                 "sector_name": doc.sector.name,
-                "is_eliminate": doc.is_eliminate                
+                "is_eliminate": doc.is_eliminate,
+                "classification": ClassificationViewUtil(doc, request.user).get_classification_by_ID(document_id=doc.doc_id)
             }
             for doc in documents
         ]
@@ -207,7 +208,8 @@ class ShowDocumentView(APIView):
                     "created_at": document.data_criacao,
                     "sector_id": document.sector.sector_id,
                     "sector_name": document.sector.name,
-                    "is_eliminate": document.is_eliminate
+                    "is_eliminate": document.is_eliminate,
+                    "classification": ClassificationViewUtil(document, request.user).get_classification_by_ID(document_id=document.doc_id)
                 }
             }
         }

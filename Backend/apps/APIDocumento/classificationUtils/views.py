@@ -27,4 +27,22 @@ class ClassificationViewUtil():
             print(e)
             return False
         
-        return True
+    def get_classification_by_ID(self, document_id: int) -> dict:
+        """
+        Retorna a classificação de um documento pelo seu ID.
+        """
+        
+        try:
+            classification = Classification.objects.get(document__doc_id=document_id)
+            return {
+                "classification_id": classification.classification_id,
+                "reviewClassificationStatus": classification.reviewClassificationStatus,
+                "classification_status": classification.classification_status.status,
+                "reviewedBy": classification.reviewedBy.name,
+                "privacity": classification.privacity.privacity,
+                "privacity_abreviation": classification.privacity.priv_abreviation
+            }
+        except Classification.DoesNotExist:
+            return {"messaage": "Classificação não encontrada."}
+        except Exception as e:
+            return {"message": "Erro ao carregar a classificação."}

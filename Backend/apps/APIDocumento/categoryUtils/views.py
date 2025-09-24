@@ -16,7 +16,6 @@ class CreateCategoryView(APIView):
         titulo: str = request.data.get('titulo')
         descricao: str = request.data.get('descricao')
         codigo_setor: str = request.data.get('codigo_setor')
-        codigo_classificacao: str = request.data.get('codigo_classificacao')
         
         if len(titulo) < 3 or len(titulo) > 100:
             ret = Response()
@@ -54,9 +53,21 @@ class CreateCategoryView(APIView):
             }
             return ret
         
-        
-        # print(not vinculo.is_adm, setor.manager != user, Enterprise.objects.get(owner=user) != setor.enterprise, vinculo is None)
-        if  setor.manager != user and Enterprise.objects.get(owner=user) != setor.enterprise and vinculo is None: #type: ignore
+        try: 
+            # print(not vinculo.is_adm, setor.manager != user, Enterprise.objects.get(owner=user) != setor.enterprise, vinculo is None)
+            if  setor.manager != user and Enterprise.objects.get(owner=user) != setor.enterprise and vinculo is None: #type: ignore
+                ret = Response()
+                ret.status_code = 403
+                ret.data = {
+                    "Data": {
+                        "sucesso": False,
+                        "mensagem": "Você não tem permissão para criar categorias nesse setor."
+                    }
+                }
+                
+                if not vinculo.is_adm:
+                    return ret
+        except Enterprise.DoesNotExist:
             ret = Response()
             ret.status_code = 403
             ret.data = {
@@ -65,9 +76,16 @@ class CreateCategoryView(APIView):
                     "mensagem": "Você não tem permissão para criar categorias nesse setor."
                 }
             }
-            
-            if not vinculo.is_adm:
-                return ret
+            return ret
+        except:
+            ret = Response()
+            ret.status_code = 500
+            ret.data = {
+                "Data": {
+                    "sucesso": False,
+                    "mensagem": "Ocorreu um erro ao criar a categoria. Tente novamente mais tarde."
+                }
+            }
                 
 
         try:
@@ -159,12 +177,12 @@ class ShowCategoryView(APIView):
             "titulo": category.category,
             "descricao": category.description,
             "setor": {
-                "sector_id": category.category_sector.sector_id,
-                "sector_name": category.category_sector.name
+                "sector_id": category.category_sector.sector_id, #type: ignore
+                "sector_name": category.category_sector.name #type: ignore
             } if category.category_sector else None,
             "empresa": {
-                "enterprise_id": category.category_enterprise.ent_id,
-                "enterprise_name": category.category_enterprise.name
+                "enterprise_id": category.category_enterprise.ent_id, #type: ignore
+                "enterprise_name": category.category_enterprise.name #type: ignore
             } if category.category_enterprise else None
         }
         

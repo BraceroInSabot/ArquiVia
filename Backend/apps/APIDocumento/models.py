@@ -73,6 +73,21 @@ class Classification_Privacity(models.Model):
         verbose_name = 'Classification Privacity'
         verbose_name_plural = 'Classifications Privacies'
 
+class Classification_Category(models.Model):
+    classification = models.ForeignKey(Classification, on_delete=models.CASCADE, db_column='classification_id')
+    category = models.ForeignKey('Category', on_delete=models.CASCADE, db_column='category_id')
+
+    def __str__(self):
+        return f"{self.classification.document.title} - {self.category.category}" 
+    
+    class Meta:
+        db_table = 'Classification_Category'
+        verbose_name = 'Classification Category'
+        verbose_name_plural = 'Classifications Categories'
+        constraints = [
+            models.UniqueConstraint(fields=['classification', 'category'], name='unique_classification_category_primary_key')
+        ]
+
 class Category(models.Model):
     category_id = models.AutoField(primary_key=True, db_column='ID_category')
     category = models.CharField(max_length=100, db_column='category_name')

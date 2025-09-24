@@ -76,7 +76,7 @@ class CreateDocumentView(APIView):
             classification_util = ClassificationViewUtil(document, request.user)
             ret = classification_util.create_classification()
             
-            if not ret:
+            if ret:
                 ret = Response()
                 ret.status_code = 500
                 ret.data = {

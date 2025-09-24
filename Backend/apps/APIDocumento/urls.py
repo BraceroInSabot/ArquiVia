@@ -10,6 +10,7 @@ from .views import (
     )
 
 from .classificationUtils.urls import classification_urlpatterns
+from .categoryUtils.urls import category_urlpatterns
 
 urlpatterns = [
     path("criar", CreateDocumentView.as_view(), name="criar-documento"),
@@ -18,4 +19,4 @@ urlpatterns = [
     path("editar", UpdateDocumentView.as_view(), name="editar-documento"),
     path("ativar-desativar", ActivateOrDeactivateDocumentView.as_view(), name="ativar-ou-desativar-documento"),
     path("deletar", DeleteDocumentView.as_view(), name="deletar-documento"),
-] + classification_urlpatterns
+] + classification_urlpatterns + category_urlpatterns

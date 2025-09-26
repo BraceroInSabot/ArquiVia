@@ -195,3 +195,49 @@ class ShowCategoryView(APIView):
             }
         }
         return ret
+
+class ListCategoryView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        user = request.user
+        categories = Category.objects.all()
+        category_list = []
+        
+        for category in categories:
+            vinculo: Type[SectorUser] = SectorUser.objects.filter(user=user, sector=category.category_sector).first() #type: ignore
+            
+            if vinculo is None and category.category_sector.manager != user and Enterprise.objects.get(owner=user) != category.category_enterprise: #type: ignore
+                ret = Response()
+                ret.status_code = 403
+                ret.data = {
+                    "Data": {
+                        "sucesso": False,
+                        "mensagem": "Você não tem permissão para visualizar essa categoria."
+                    }
+                }
+            
+            category_list.append({
+                "category_id": category.category_id,
+                "titulo": category.category,
+                "descricao": category.description,
+                "setor": {
+                    "sector_id": category.category_sector.sector_id, #type: ignore
+                    "sector_name": category.category_sector.name #type: ignore
+                } if category.category_sector else None,
+                "empresa": {
+                    "enterprise_id": category.category_enterprise.ent_id, #type: ignore
+                    "enterprise_name": category.category_enterprise.name #type: ignore
+                } if category.category_enterprise else None
+            })
+        
+        ret = Response()
+        ret.status_code = 200
+        ret.data = {
+            "Data": {
+                "sucesso": True,
+                "mensagem": category_list
+            }
+        }
+        return ret  
+                

@@ -240,4 +240,109 @@ class ListCategoryView(APIView):
             }
         }
         return ret  
+
+class UpdateCategoryView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request):
+        user: Type[User] = request.user #type: ignore
+        category_id: str = request.data.get('category_id')
+        title: str = request.data.get('title')
+        description: str = request.data.get('description')
+        
+        if len(title) < 3 or len(title) > 100:
+            ret = Response()
+            ret.status_code = 400
+            ret.data = {
+                "Data": {
+                    "sucesso": False,
+                    "mensagem": "O título deve ter entre 3 e 100 caracteres."
+                }
+            }
+            return ret
+        
+        if len(description) > 1000:
+            ret = Response()
+            ret.status_code = 400
+            ret.data = {
+                "Data": {
+                    "sucesso": False,
+                    "mensagem": "Você ultrapassou o limite de caracteres para a descrição. Reformule o texto e tente novamente."
+                }
+            }
+            return ret
+
+        try:
+            category: Type[Category] = Category.objects.get(category_id=category_id) #type: ignore
+        except Category.DoesNotExist:
+            ret = Response()
+            ret.status_code = 404
+            ret.data = {
+                "Data": {
+                    "sucesso": False,
+                    "mensagem": "Categoria não encontrada."
+                }
+            }
+            return ret
+        
+        try: 
+            vinculo: Type[SectorUser] = SectorUser.objects.filter(user=user, sector=category.category_sector).first() #type: ignore
+            setor: Type[Sector] = category.category_sector #type: ignore
+            if  setor.manager != user and Enterprise.objects.get(owner=user) != setor.enterprise and vinculo is None: #type: ignore
+                ret = Response()
+                ret.status_code = 403
+                ret.data = {
+                    "Data": {
+                        "sucesso": False,
+                        "mensagem": "Você não tem permissão para editar essa categoria."
+                    }
+                }
                 
+                if not vinculo.is_adm:
+                    return ret
+        except Enterprise.DoesNotExist:
+            ret = Response()
+            ret.status_code = 403
+            ret.data = {
+                "Data": {
+                    "sucesso": False,
+                    "mensagem": "Você não tem permissão para editar essa categoria."
+                }
+            }
+            return ret
+        except Exception as e:
+            ret = Response()
+            ret.status_code = 500
+            ret.data = {
+                "Data": {
+                    "sucesso": False,
+                    "mensagem": f"Ocorreu um erro ao editar a categoria. Tente novamente mais tarde {e}."
+                }
+            }
+            return ret
+        
+        try:
+            category.category = title
+            category.description = description
+            category.save()
+            
+        except Exception as e:
+            ret = Response()
+            ret.status_code = 500
+            ret.data = {
+                "Data": {
+                    "sucesso": False,
+                    "mensagem": "Ocorreu um erro ao editar a categoria. Tente novamente mais tarde."
+                }
+            }
+            return ret
+        
+        ret = Response()
+        ret.status_code = 200
+        ret.data = {
+            "Data": {
+                "sucesso": True,
+                "mensagem": "Categoria editada com sucesso."
+            }
+        }
+        return ret

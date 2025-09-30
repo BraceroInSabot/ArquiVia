@@ -5,6 +5,7 @@ from rest_framework.views import APIView, Response
 from rest_framework.permissions import IsAuthenticated
 from apps.APISetor.models import Sector, SectorUser
 from apps.APIEmpresa.models import Enterprise
+from django.db.models import Q
 
 User = get_user_model()
 
@@ -201,35 +202,63 @@ class ListCategoryView(APIView):
     
     def get(self, request):
         user = request.user
-        categories = Category.objects.all()
-        category_list = []
+        authority_level: bool = request.data.get('authority_level')
         
-        for category in categories:
-            vinculo: Type[SectorUser] = SectorUser.objects.filter(user=user, sector=category.category_sector).first() #type: ignore
-            
-            if vinculo is None and category.category_sector.manager != user and Enterprise.objects.get(owner=user) != category.category_enterprise: #type: ignore
-                ret = Response()
-                ret.status_code = 403
-                ret.data = {
-                    "Data": {
-                        "sucesso": False,
-                        "mensagem": "Você não tem permissão para visualizar essa categoria."
-                    }
+        category_list = []
+        category = []
+        
+        base_queryset = Category.objects.select_related('category_sector', 'category_enterprise')
+        print(authority_level)
+        
+        if authority_level:
+            queryset = base_queryset.filter(
+                Q(category_enterprise__owner=user) | Q(category_sector__manager=user)
+            ).distinct()
+        else:
+            user_sectors = SectorUser.objects.filter(user=user).values_list('sector_id', flat=True)
+            queryset = base_queryset.filter(category_sector__sector_id__in=user_sectors)
+        
+        try:
+            category_list = []
+            for c in queryset:
+                category_data = {
+                    "category_id": c.category_id,
+                    "titulo": c.category,
+                    "descricao": c.description,
+                    "setor": None,
+                    "empresa": None
                 }
-            
-            category_list.append({
-                "category_id": category.category_id,
-                "titulo": category.category,
-                "descricao": category.description,
-                "setor": {
-                    "sector_id": category.category_sector.sector_id, #type: ignore
-                    "sector_name": category.category_sector.name #type: ignore
-                } if category.category_sector else None,
-                "empresa": {
-                    "enterprise_id": category.category_enterprise.ent_id, #type: ignore
-                    "enterprise_name": category.category_enterprise.name #type: ignore
-                } if category.category_enterprise else None
-            })
+                if c.category_sector:
+                    category_data["setor"] = {
+                        "sector_id": c.category_sector.sector_id,
+                        "sector_name": c.category_sector.name
+                    }
+                if c.category_enterprise:
+                    category_data["empresa"] = {
+                        "enterprise_id": c.category_enterprise.ent_id,
+                        "enterprise_name": c.category_enterprise.name
+                    }
+                category_list.append(category_data)
+        except (Enterprise.DoesNotExist, SectorUser.DoesNotExist):
+            ret = Response()
+            ret.status_code = 403
+            ret.data = {
+                "Data": {
+                    "sucesso": False,
+                    "mensagem": "Nenhuma categoria encontrada."
+                }
+            }
+            return ret
+        except Exception as e:
+            ret = Response()
+            ret.status_code = 500
+            ret.data = {
+                "Data": {
+                    "sucesso": False,
+                    "mensagem": f"Ocorreu um erro ao listar as categorias. Tente novamente mais tarde {e}."
+                }
+            }
+            return ret
         
         ret = Response()
         ret.status_code = 200

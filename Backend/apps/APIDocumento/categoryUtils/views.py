@@ -346,3 +346,83 @@ class UpdateCategoryView(APIView):
             }
         }
         return ret
+    
+class DeleteCategoryView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def delete(self, request):
+        user: Type[User] = request.user #type: ignore
+        category_id: str = request.data.get('category_id')
+        
+        try:
+            category: Type[Category] = Category.objects.get(category_id=category_id) #type: ignore
+        except Category.DoesNotExist:
+            ret = Response()
+            ret.status_code = 404
+            ret.data = {
+                "Data": {
+                    "sucesso": False,
+                    "mensagem": "Categoria não encontrada."
+                }
+            }
+            return ret
+        
+        try: 
+            vinculo: Type[SectorUser] = SectorUser.objects.filter(user=user, sector=category.category_sector).first() #type: ignore
+            setor: Type[Sector] = category.category_sector #type: ignore
+            if  setor.manager != user and Enterprise.objects.get(owner=user) != setor.enterprise and vinculo is None: #type: ignore
+                ret = Response()
+                ret.status_code = 403
+                ret.data = {
+                    "Data": {
+                        "sucesso": False,
+                        "mensagem": "Você não tem permissão para deletar essa categoria."
+                    }
+                }
+                
+                if not vinculo.is_adm:
+                    return ret
+        except Enterprise.DoesNotExist:
+            ret = Response()
+            ret.status_code = 403
+            ret.data = {
+                "Data": {
+                    "sucesso": False,
+                    "mensagem": "Você não tem permissão para deletar essa categoria."
+                }
+            }
+            return ret
+        except Exception as e:
+            ret = Response()
+            ret.status_code = 500
+            ret.data = {
+                "Data": {
+                    "sucesso": False,
+                    "mensagem": f"Ocorreu um erro ao deletar a categoria. Tente novamente mais tarde {e}."
+                }
+            }
+            return ret
+        
+        try:
+            category.delete()
+            
+        except Exception as e:
+            ret = Response()
+            ret.status_code = 500
+            ret.data = {
+                "Data": {
+                    "sucesso": False,
+                    "mensagem": "Ocorreu um erro ao deletar a categoria. Tente novamente mais tarde."
+                }
+            }
+            return ret
+        
+        ret = Response()
+        ret.status_code = 200
+        ret.data = {
+            "Data": {
+                "sucesso": True,
+                "mensagem": "Categoria deletada com sucesso."
+            }
+        }
+        return ret

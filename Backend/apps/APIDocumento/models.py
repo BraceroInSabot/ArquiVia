@@ -1,4 +1,5 @@
 from apps.APISetor.models import Sector
+from apps.APIEmpresa.models import Enterprise
 from django.contrib.auth import get_user_model
 from django.db import models
 
@@ -61,7 +62,7 @@ class Classification_Privacity(models.Model):
     ]
     
     classification_privacity_id = models.AutoField(primary_key=True, db_column='ID_class_priv')
-    privacity = models.CharField(max_length=20, choices=privacity_choices, db_column='privacity')
+    privacity = models.CharField(max_length=20, choices=privacity_choices, db_column='privacity_name')
     priv_abreviation = models.CharField(max_length=2, default=None, null=True, db_column='abreviation')
 
     def __str__(self):
@@ -71,3 +72,31 @@ class Classification_Privacity(models.Model):
         db_table = 'Classification_Privacity'
         verbose_name = 'Classification Privacity'
         verbose_name_plural = 'Classifications Privacies'
+
+class Classification_Category(models.Model):
+    class_category_id = models.AutoField(primary_key=True, db_column='ID_class_category')
+    classification = models.ForeignKey(Classification, on_delete=models.CASCADE, db_column='classification_id')
+    category = models.ForeignKey('Category', on_delete=models.CASCADE, db_column='category_id')
+
+    def __str__(self):
+        return f"{self.classification.document.title} - {self.category.category}" 
+    
+    class Meta:
+        db_table = 'Classification_Category'
+        verbose_name = 'Classification Category'
+        verbose_name_plural = 'Classifications Categories'
+
+class Category(models.Model):
+    category_id = models.AutoField(primary_key=True, db_column='ID_category')
+    category = models.CharField(max_length=100, db_column='category_name')
+    description = models.TextField(db_column='category_description', null=True, blank=True)
+    category_sector = models.ForeignKey(Sector, on_delete=models.CASCADE, db_column='category_sector', null=True, blank=True)
+    category_enterprise = models.ForeignKey(Enterprise, on_delete=models.CASCADE, db_column='category_enterprise', null=False, blank=False)
+
+    def __str__(self):
+        return self.category 
+    
+    class Meta:
+        db_table = 'Category'
+        verbose_name = 'Category'
+        verbose_name_plural = 'Categories'

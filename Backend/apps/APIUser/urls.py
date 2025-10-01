@@ -1,5 +1,7 @@
+# DJANGO
 from django.urls import path
 
+# PROJECT
 from .views import ( 
     LoginTokenObtainPairView, 
     LoginTokenRefreshPairView, 
@@ -7,15 +9,18 @@ from .views import (
     RegisterTokenView, 
     RequisicaoRedefinicaoSenhaView,
     ValidarTokenRedefinicaoValidoView,
-    RedefinirSenhaView )
+    RedefinirSenhaView 
+)
 
 urlpatterns = [
-    path("entrar", LoginTokenObtainPairView.as_view(), name="entrar"),
-    path("atualizar-token", LoginTokenRefreshPairView.as_view(), name="atualizar-token"),
-    path("sair", LogoutTokenView.as_view(), name='sair'),
-    path("criar-conta", RegisterTokenView.as_view(), name='criar'),
+    # Authentication
+    path("entrar", LoginTokenObtainPairView.as_view()),
+    path("atualizar-token", LoginTokenRefreshPairView.as_view()),
+    path("sair", LogoutTokenView.as_view()),
+    path("criar-conta", RegisterTokenView.as_view()),
 ] + [
-    path("esqueci-senha", RequisicaoRedefinicaoSenhaView.as_view(), name='esqueci-senha'),
-    path("validar-token-senha/<str:token>", ValidarTokenRedefinicaoValidoView.as_view(), name="validar-token-senha"),
-    path("redefinir-senha/<str:token>", RedefinirSenhaView.as_view(), name='redefinir-senha'),
+    # Password Reset
+    path("esqueci-senha", RequisicaoRedefinicaoSenhaView.as_view()),
+    path("validar-token-senha/<str:token>", ValidarTokenRedefinicaoValidoView.as_view()),
+    path("redefinir-senha/<str:token>", RedefinirSenhaView.as_view()),
 ]

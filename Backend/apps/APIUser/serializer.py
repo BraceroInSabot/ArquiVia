@@ -1,12 +1,17 @@
-from rest_framework import serializers,status
-from django.contrib.auth import get_user_model
+# DRF
 from rest_framework.response import Response
+from rest_framework import serializers,status
+
+# DJANGO
+from django.contrib.auth import get_user_model
+
+# PROJECT
 from apps.APIUser.utils.validate_user import ValidateAuth
 
 # Typing
-from django.http import HttpResponse
-from typing  import List, Dict
 from django.conf import settings
+from typing  import Dict, Type, Any
+from .models import AbsUser as UserType
 
 User = get_user_model()
 
@@ -21,7 +26,19 @@ class RegistroUsuarioSerializer(serializers.ModelSerializer):
         model = User
         fields = ['username', 'name', 'email', 'password', 'cpassword']
 
-    def validate(self, attrs):
+    def validate(self, attrs: dict) -> dict | serializers.ValidationError:
+        """
+        Validate the user data before creating a new user.
+        
+        Args:
+            attrs (dict): The attributes to validate.
+
+        Raises:
+            serializers.ValidationError: If validation fails. Appoint the field and the error.
+
+        Returns:
+            Returns the validated attributes if validation is successful.
+        """
         validation = ValidateAuth(
             username=attrs.get('username'),
             name=attrs.get('name'),
@@ -31,8 +48,8 @@ class RegistroUsuarioSerializer(serializers.ModelSerializer):
         ).validate()
 
         if isinstance(validation, list):
-            attribute = validation[1][0]
-            error = validation[1][1]
+            attribute = validation[1][0] #type: ignore
+            error = validation[1][1] #type: ignore
             raise serializers.ValidationError(
                 {"Data": 
                         { 
@@ -52,14 +69,18 @@ class RegistroUsuarioSerializer(serializers.ModelSerializer):
 
         return attrs
 
-    def create(self, validated_data):
-        validated_data.pop('cpassword')
+    def create(self, validated_data: Dict[str, Any]) -> Type[UserType]: 
+        """
+        Create a new user instance with the validated data.
+        
+        Args:
+            validated_data (dict): The validated data for creating the user.
 
-        user = User(
-            username=validated_data['username'],
-            name=validated_data['name'],
-            email=validated_data['email'],
-        )
-        user.set_password(validated_data['password'])
-        user.save()
-        return user
+        Returns:
+            User: The created user instance.
+        """
+        validated_data.pop('cpassword', None)
+        user = User.objects.create_user(**validated_data)
+        
+        return user #type: ignore
+    

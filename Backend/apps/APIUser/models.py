@@ -5,8 +5,52 @@ from datetime import timedelta
 # DJANGO
 from django.db import models
 from django.utils.timezone import now
+from django.contrib.auth.models import BaseUserManager
 from django.contrib.auth.models import AbstractUser, PermissionsMixin
 
+class AbsUserManager(BaseUserManager):
+    def create_user(self, username, email, name, password=None, **extra_fields): 
+        """
+        Create and save a User with the given username, email, name, and password.
+        
+        Args:
+            username (str): User username
+            email (str): User e-mail
+            name (str): User name
+            password (str): User password. Defaults to None.
+            **extra_fields: Additional fields for the user model.
+        
+        Raises:
+            ValueError: If the email is not provided.
+        
+        Returns:
+            User: The created user instance.
+        """       
+        if not email:
+            raise ValueError('O Email é um campo obrigatório')
+        
+        email = self.normalize_email(email)
+        user = self.model(username=username, email=email, name=name, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, username, email, name, password=None, **extra_fields):
+        """
+        Return a error since superusers are not supported.
+
+        Args:
+            username (str): User username
+            email (str): User e-mail
+            name (str): User name
+            password (str): User password. Defaults to None.
+
+        Raises:
+            NotImplementedError: Create superuser is not supported.
+        """
+        raise NotImplementedError("Método não suportado.")
+    
+    
 class AbsUser(AbstractUser, PermissionsMixin):
     first_name = None
     last_name = None
@@ -22,6 +66,7 @@ class AbsUser(AbstractUser, PermissionsMixin):
     date_joined = models.DateTimeField(auto_now=True, db_column='data_cadastro_usuario')
     last_login = models.DateTimeField(null=True, db_column='data_ultimo_login_usuario')
     is_active = models.BooleanField(default=True, db_column='esta_ativo_usuario')
+    objects = AbsUserManager() #type: ignore
 
     class Meta:
         db_table = "User"
@@ -32,6 +77,8 @@ class AbsUser(AbstractUser, PermissionsMixin):
     def __str__(self):
         return self.name
 
+
+    
 
 class PasswordResetToken(models.Model):
     reset_id = models.AutoField(primary_key=True, db_column='codigo_redefinicao')

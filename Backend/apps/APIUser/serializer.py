@@ -80,7 +80,9 @@ class RegistroUsuarioSerializer(serializers.ModelSerializer):
             User: The created user instance.
         """
         validated_data.pop('cpassword', None)
-        user = User.objects.create_user(**validated_data)
+        validated_data.pop('is_staff', None)
+        validated_data.pop('is_superuser', None)
+        user = User.objects.create_user(**validated_data) #type: ignore
         
         return user #type: ignore
     

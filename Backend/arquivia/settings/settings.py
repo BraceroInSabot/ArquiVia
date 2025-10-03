@@ -48,7 +48,7 @@ MIDDLEWARE = [
 
 
 
-ROOT_URLCONF = "core.urls"
+ROOT_URLCONF = "arquivia.urls"
 
 import os
 
@@ -70,7 +70,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "core.wsgi.application"
+WSGI_APPLICATION = "arquivia.wsgi.application"
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -108,3 +108,39 @@ class ResponseType(TypedDict):
 RESPONSE_PATTERN = ResponseType
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+from typing import Dict, List, Union
+
+def default_response(success: bool, 
+                     message: str,
+                     data: Union[Dict[str, str], List[Dict[str, str]], bool] = False) -> Dict[str,
+                                                                                              Union[bool,
+                                                                                                    str,
+                                                                                                    Dict[str, str],
+                                                                                                    List[Dict[str, str]
+                                                                                                         ]
+                                                                                                    ]
+                                                                                              ]:
+    """
+    Defines a standard response dictionary.
+    
+    Args:
+        success (bool): Indicates if the operation was successful.
+        message (str): Message describing the result of the operation.
+        data (Union[Dict[str, str], List[Dict[str, str]], bool], optional): Additional data to include in the response. Defaults to False.
+
+    Returns:
+        Dict[str, Union[bool, str, Dict[str, str], List[Dict[str, str]]]]: Standardized response dictionary.
+    """
+    
+    if data:
+        return {
+            "sucesso": success,
+            "mensagem": message,
+            "data": data
+        }
+        
+    return {
+        "sucesso": success,
+        "mensagem": message
+    }

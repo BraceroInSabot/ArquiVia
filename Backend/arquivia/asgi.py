@@ -15,8 +15,8 @@ from dotenv import load_dotenv
 load_dotenv(".env/.env")
 
 if os.getenv("DEBUG"):
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings.dev")
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "arquivia.settings.dev")
 else:
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings.prod")
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "arquivia.settings.prod")
 
 application = get_asgi_application()

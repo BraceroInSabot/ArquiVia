@@ -10,9 +10,9 @@ load_dotenv(".env/.env")
 def main():
     """Run administrative tasks."""
     if os.getenv("DEBUG"):
-        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings.dev")
+        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "arquivia.settings.dev")
     else:
-        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings.prod")
+        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "arquivia.settings.prod")
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

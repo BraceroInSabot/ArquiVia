@@ -93,12 +93,12 @@ class LoginTokenRefreshPairView(TokenRefreshView):
 
         try:
             try:
-                token_refresh: str = request.COOKIES.get('refresh_token')
-                request.data['refresh'] = token_refresh
+                token_refresh: str = request.COOKIES.get('refresh_token') # type: ignore
+                request.data['refresh'] = token_refresh # type: ignore
                 
-                res: HttpResponse = super().post(request, *args, **kwargs)
+                res: HttpResponse = super().post(request, *args, **kwargs) # type: ignore
 
-                tokens: dict = res.data
+                tokens: dict = res.data # type: ignore
                 token_access: str = tokens['access']
             except:
                 res: HttpResponse = Response()
@@ -125,7 +125,7 @@ class LoginTokenRefreshPairView(TokenRefreshView):
             return response
 
 class RegisterTokenView(APIView):
-    permission_classes: AllowAny = [AllowAny]
+    permission_classes: AllowAny = [AllowAny] #type: ignore
 
     def post(self, request: dict) -> HttpResponse:
         """
@@ -137,7 +137,7 @@ class RegisterTokenView(APIView):
         Returns:
             HttpResponse: Response to the request
         """
-        serializer = RegistroUsuarioSerializer(data=request.data)
+        serializer = RegistroUsuarioSerializer(data=request.data) # type: ignore
 
         if serializer.is_valid():                
             serializer.save()
@@ -150,7 +150,7 @@ class RegisterTokenView(APIView):
         return Response(default_response(success=False, message="Não foi possível cadastrar o seu usuário.", data=[err for err in serializer.errors.values()][0]), status=400) #type: ignore
 
 class LogoutTokenView(APIView):
-    permission_classes: AllowAny = [AllowAny]
+    permission_classes: AllowAny = [AllowAny] # type: ignore
 
     def post(self, request: dict) -> HttpResponse:
         """
@@ -174,123 +174,123 @@ class LogoutTokenView(APIView):
         try:
             res: HttpResponse = Response(status=200)
             res.data = default_response(success=True, message="Usuário deslogado com sucesso!")
-            res.delete_cookie('access_token', path='/', samesite='None')
-            res.delete_cookie('refresh_token', path='/', samesite='None')
+            res.delete_cookie('access_token', path='/', samesite='None') # type: ignore
+            res.delete_cookie('refresh_token', path='/', samesite='None') # type: ignore
             return res
         except:
             response: HttpResponse = Response(status=400)
             response.data = default_response(success=False, message="Erro ao deslogar usuário.")
             return response
 
-# RESET DE SENHA
+# RESET DE SENHA (LEGADO)
+# TODO: REMOVER OU ATUALIZAR
 
-class RequisicaoRedefinicaoSenhaView(APIView):
-    permission_classes = [AllowAny]
+# class RequisicaoRedefinicaoSenhaView(APIView):
+#     permission_classes = [AllowAny]
 
-    def enviar_email_recuperacao_senha(self, destinatario, usuario, url=None, token="ERRO AO GERAR O TOKEN, ENTRE EM CONTATO COM O PROVEDOR."):
-        try:
-            assunto = "Esqueci minha senha - AnnotaPS"
-            remetente = settings.EMAIL_HOST_USER
+#     def enviar_email_recuperacao_senha(self, destinatario, usuario, url=None, token="ERRO AO GERAR O TOKEN, ENTRE EM CONTATO COM O PROVEDOR."):
+#         try:
+#             assunto = "Esqueci minha senha - AnnotaPS"
+#             remetente = settings.EMAIL_HOST_USER
             
-            # Renderiza o template com os dados
-            html_content = render_to_string([
-                "email_esqueci_senha.html"
-                ], 
-                {
-                "nome": usuario.nome,
-                "url": str(url),  # Substitua pela URL de redefinição real
-                "token": token
-                },
-            )
-            text_content = strip_tags(html_content)  # Remove HTML para fallback
+#             # Renderiza o template com os dados
+#             html_content = render_to_string([
+#                 "email_esqueci_senha.html"
+#                 ], 
+#                 {
+#                 "nome": usuario.nome,
+#                 "url": str(url),  # Substitua pela URL de redefinição real
+#                 "token": token
+#                 },
+#             )
+#             text_content = strip_tags(html_content)  # Remove HTML para fallback
             
-            email = EmailMultiAlternatives(
-                subject=assunto,
-                body=text_content,  # Conteúdo sem HTML
-                from_email=remetente,
-                to=[destinatario]
-            )
-            email.attach_alternative(html_content, "text/html")  # Adiciona versão HTML
-            email.send()
-            return True
-        except Exception as e:
-            print(f"Erro ao enviar e-mail: {e}")
-            return False
+#             email = EmailMultiAlternatives(
+#                 subject=assunto,
+#                 body=text_content,  # Conteúdo sem HTML
+#                 from_email=remetente,
+#                 to=[destinatario]
+#             )
+#             email.attach_alternative(html_content, "text/html")  # Adiciona versão HTML
+#             email.send()
+#             return True
+#         except Exception as e:
+#             print(f"Erro ao enviar e-mail: {e}")
+#             return False
 
-    def post(self, request):
-        """Além de ser utilizado na tela de autenticação, também é utilizado na tela de gestão de setor pelo Gestor.
+#     def post(self, request):
+#         """Além de ser utilizado na tela de autenticação, também é utilizado na tela de gestão de setor pelo Gestor.
 
-        Args:
-            request (HTTPrequest): requisição feita pelo host.
+#         Args:
+#             request (HTTPrequest): requisição feita pelo host.
 
-        Returns:
-            Response (200 || 401): Resposta da requisição
-        """
-        email = request.data.get('emailUsuario')
-        cEmail = request.data.get('emailGestor')
+#         Returns:
+#             Response (200 || 401): Resposta da requisição
+#         """
+#         email = request.data.get('emailUsuario')
+#         cEmail = request.data.get('emailGestor')
         
-        usuario = Colaborador.objects.filter(email=email).first()
-        if usuario == None:
-            return Response(data={"Falha": [False, "Email do Usuário não encontrado. Verifique o seu e-mail."]}, status=200)
+#         usuario = Colaborador.objects.filter(email=email).first()
+#         if usuario == None:
+#             return Response(data={"Falha": [False, "Email do Usuário não encontrado. Verifique o seu e-mail."]}, status=200)
 
-        gestor = Colaborador.objects.filter(email=cEmail).first()
-        if gestor == None:
-            return Response(data={"Falha": [False, "Email do Gestor (a) não encontrado."]}, status=401)
+#         gestor = Colaborador.objects.filter(email=cEmail).first()
+#         if gestor == None:
+#             return Response(data={"Falha": [False, "Email do Gestor (a) não encontrado."]}, status=401)
 
-        try:
-            token = PasswordResetToken.objects.create(colaborador=usuario, token=str(uuid4()))
-            url = f"{settings.FRONTEND_URL}/redefinir-senha/{token.token}"
+#         try:
+#             token = PasswordResetToken.objects.create(colaborador=usuario, token=str(uuid4()))
+#             url = f"{settings.FRONTEND_URL}/redefinir-senha/{token.token}"
 
-            if self.enviar_email_recuperacao_senha(email, usuario, url=url, token=token):
-                return Response(data={"Sucesso": [True, "Email enviado com sucesso!"]}, status=200)
-            else:
-                return Response(data={"Falha": "Email não enviado"}, status=401)
+#             if self.enviar_email_recuperacao_senha(email, usuario, url=url, token=token):
+#                 return Response(data={"Sucesso": [True, "Email enviado com sucesso!"]}, status=200)
+#             else:
+#                 return Response(data={"Falha": "Email não enviado"}, status=401)
         
-        except Colaborador_Setor.DoesNotExist:
-            return Response(data={"Falha": "Email não encontrado."}, status=404)
+#         except Colaborador_Setor.DoesNotExist:
+#             return Response(data={"Falha": "Email não encontrado."}, status=404)
         
-        except Exception as e:
-            return Response(data={"Falha": "Houve uma falha ao enviar o email."}, status=500)
+#         except Exception as e:
+#             return Response(data={"Falha": "Houve uma falha ao enviar o email."}, status=500)
 
-class ValidarTokenRedefinicaoValidoView(APIView):
-    permission_classes = [AllowAny]
+# class ValidarTokenRedefinicaoValidoView(APIView):
+#     permission_classes = [AllowAny]
     
-    def get(self, request, token):
-        """Verificação de validade do Token gerado
+#     def get(self, request, token):
+#         """Verificação de validade do Token gerado
 
-        Args:
-            token (str): token gerado pelo usuário
+#         Args:
+#             token (str): token gerado pelo usuário
 
-        Returns:
-            HTTP 200: Token válido
-            HTTP 400: Token inválido ou expirado 
-        """
+#         Returns:
+#             HTTP 200: Token válido
+#             HTTP 400: Token inválido ou expirado 
+#         """
 
-        reset_token = PasswordResetToken.objects.filter(token=token).first()
+#         reset_token = PasswordResetToken.objects.filter(token=token).first()
 
-        if not reset_token or not reset_token.is_token_valid():
-            return Response({"Alerta": "Token inválido ou expirado"}, status=status.HTTP_400_BAD_REQUEST)
+#         if not reset_token or not reset_token.is_token_valid():
+#             return Response({"Alerta": "Token inválido ou expirado"}, status=status.HTTP_400_BAD_REQUEST)
         
-        return Response({"Alerta": "Token válido"}, status=status.HTTP_200_OK)
+#         return Response({"Alerta": "Token válido"}, status=status.HTTP_200_OK)
     
-class RedefinirSenhaView(APIView):
-    permission_classes = [AllowAny]
+# class RedefinirSenhaView(APIView):
+#     permission_classes = [AllowAny]
 
-    def post(self, request, *args, **kwargs):
-        token = request.data.get("token")
-        nova_senha = request.data.get("password")
+#     def post(self, request, *args, **kwargs):
+#         token = request.data.get("token")
+#         nova_senha = request.data.get("password")
 
-        token_validacao = PasswordResetToken.objects.filter(token=token).first()
-        if not token_validacao or not token_validacao.is_token_valid():
-            print(token_validacao, token_validacao.is_token_valid())
-            return Response({"message": "Token inválido ou expirado."}, status=status.HTTP_400_BAD_REQUEST)
+#         token_validacao = PasswordResetToken.objects.filter(token=token).first()
+#         if not token_validacao or not token_validacao.is_token_valid():
+#             print(token_validacao, token_validacao.is_token_valid())
+#             return Response({"message": "Token inválido ou expirado."}, status=status.HTTP_400_BAD_REQUEST)
         
-        try:
-            usuario = token_validacao.colaborador
-            usuario.password = make_password(nova_senha)
-            usuario.save()
+#         try:
+#             usuario = token_validacao.colaborador
+#             usuario.password = make_password(nova_senha)
+#             usuario.save()
 
-            return Response({"Alerta": "Senha redefinida!"})
-        except:
-            return Response({"Alerta": "Não foi possível salvar a nova senha."})
-        
+#             return Response({"Alerta": "Senha redefinida!"})
+#         except:
+#             return Response({"Alerta": "Não foi possível salvar a nova senha."})

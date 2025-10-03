@@ -46,25 +46,11 @@ class RegistroUsuarioSerializer(serializers.ModelSerializer):
             password=attrs.get('password'),
             c_password=attrs.get('cpassword')
         ).validate()
-
-        if isinstance(validation, list):
-            attribute = validation[1][0] #type: ignore
-            error = validation[1][1] #type: ignore
-            raise serializers.ValidationError(
-                {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": f"Erro na validação do campo {attribute}: {error}"
-                    }}
-            )
         
-        if User.objects.filter(username=attrs.get('username')).exists():
+        if isinstance(validation, list) and len(validation) > 0:
+            print(validation)
             raise serializers.ValidationError(
-                {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": "Usuário com o mesmo nome já existe."
-                    }}
+                [err for err in validation]
             )
 
         return attrs

@@ -1,3 +1,4 @@
+from typing import Dict
 from django.utils.decorators import method_decorator
 from django.utils.html import strip_tags
 from django.views.decorators.csrf import csrf_protect
@@ -17,49 +18,46 @@ from uuid import uuid4
 from rest_framework import status
 from django.contrib.auth.hashers import make_password
 
+# DJANGO
+from apps.core.utils import default_response
+
 # Typing
 from django.http import HttpResponse
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
+from pdb import set_trace as stop
 class LoginTokenObtainPairView(TokenObtainPairView):
     permission_classes = [AllowAny]
 
     def post(self, request: dict, *args, **kwargs) -> HttpResponse:
-        """Obtém o Token do usuário a partir de autenticação do usuário em client-side. Armazena o token em Coookies.
+        """
+        Obtains the user's Token from user authentication in client-side. Stores the token in Cookies.
 
         Args:
-            request: requisição realizada
+            request: user request
+        
+        Returns:
+            HttpResponse: Response to the request
         """
-
-        response: HttpResponse = super().post(request, *args, **kwargs)
+        response: HttpResponse = super().post(request, *args, **kwargs) # type: ignore
 
         try:
-            tokens: dict = response.data
+            tokens: dict = response.data # type: ignore
 
             access_token: str = tokens['access']
             refresh_token: str = tokens['refresh']
             res: HttpResponse = Response()
 
-            try:
-                res.set_cookie(
-                    key='access_token',
-                    value=access_token,
-                    httponly=True,
-                    secure=True,
-                    samesite='',
-                    path='/',
-                )
-            except Exception as e:
-                res.status_code=400
-                res.data = {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": "Houve erros internos, contate o suporte!"
-                    }}
-                
-                return res
+            res.set_cookie(
+                key='access_token',
+                value=access_token,
+                httponly=True,
+                secure=True,
+                samesite='',
+                path='/',
+            )
             
             res.set_cookie(
                 key='refresh_token',
@@ -70,49 +68,42 @@ class LoginTokenObtainPairView(TokenObtainPairView):
                 path='/',
             )
             
-            res.data = {"Data": 
-            { 
-                "sucesso": True,
-                "mensagem": "Usuário autenticado com sucesso"
-            }}
-
             res.status_code=200
+            res.data = default_response(success=True, message="Usuário autenticado com sucesso!")  
+
+            return res      
+        except:
+            res.status_code=400
+            res.data = default_response(success=False, message="Houve erros internos, contate o suporte!") 
+            
             return res
         
-        except Exception as e:
-            res.status_code=400
-            res.data = {"Data": 
-                    { 
-                        "sucesso": False,
-                        "mensagem": "Houve erros internos ao, contate o suporte!"
-                }}   
-            return
-
 class LoginTokenRefreshPairView(TokenRefreshView):
 
     def post(self, request: dict, *args, **kwargs) -> HttpResponse:
         """
-        Faz a revitalização do Token, quando possível.
+        Does the token refresh for the user, generating a new access token.
 
         Args:
-            request: requisição realizada
+            request: user request
+            
+        Returns:
+            HttpResponse: Response to the request
         """
 
         try:
             try:
                 token_refresh: str = request.COOKIES.get('refresh_token')
                 request.data['refresh'] = token_refresh
-
+                
                 res: HttpResponse = super().post(request, *args, **kwargs)
 
                 tokens: dict = res.data
                 token_access: str = tokens['access']
             except:
-                return Response({"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": "Erro ao consumir o Token. Tente novamente."
-                    }})
+                res: HttpResponse = Response()
+                res.status_code=400
+                res.data = default_response(success=False, message="Token de renovação inválido ou expirado, faça login novamente!")
             
             res: HttpResponse = Response()
 
@@ -125,20 +116,12 @@ class LoginTokenRefreshPairView(TokenRefreshView):
                 path='/'
             )
 
-            res.data = {"Data": 
-                        { 
-                            "sucesso": True,
-                            "mensagem": "Token revitalizado!"
-                    }}
+            res.data = default_response(success=True, message="Token renovado com sucesso!")
 
             return res
         except:
-            response = Response(status=400)
-            response.data = {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": "Houve erros internos, contate o suporte!"
-                    }}   
+            response = Response(status=500)
+            response.data = default_response(success=False, message="Houve erros internos na aplicação.")
             return response
 
 class RegisterTokenView(APIView):
@@ -146,37 +129,38 @@ class RegisterTokenView(APIView):
 
     def post(self, request: dict) -> HttpResponse:
         """
-        Realiza a criação de um novo usuário para o sistema.
+        Create a new user in the system.
 
         Args:
-            request: requisição realizada
+            request: user request
+        
+        Returns:
+            HttpResponse: Response to the request
         """
-        serializer: object = RegistroUsuarioSerializer(data=request.data)
+        serializer = RegistroUsuarioSerializer(data=request.data)
 
         if serializer.is_valid():                
             serializer.save()
 
             response: HttpResponse = Response(status=200)
-            response.data = {"Data": 
-                        { 
-                            "sucesso": True,
-                            "mensagem": "Usuário criado com sucesso!"
-                    }}
+            response.data = default_response(success=True, message="Usuário cadastrado com sucesso!")
             
             return response
 
-        
-        return Response((serializer.errors), status=400)
+        return Response(default_response(success=False, message="Não foi possível cadastrar o seu usuário.", data=[err for err in serializer.errors.values()][0]), status=400) #type: ignore
 
 class LogoutTokenView(APIView):
     permission_classes: AllowAny = [AllowAny]
 
     def post(self, request: dict) -> HttpResponse:
         """
-        Realiza a remoção dos tokens de acessos.
-
+        Logs out the user by deleting the access and refresh tokens from cookies.
+        
         Args:
-            request: requisição realizada.
+            request (dict): The user request.
+        
+        Returns:
+            HttpResponse: Response to the request.
         """
         try:
             user: User = request.user # type: ignore
@@ -184,30 +168,18 @@ class LogoutTokenView(APIView):
             user.save()
         except:
             response: HttpResponse = Response(status=400)
-            response.data = {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": "Erro ao processar data de saída."
-                    }}    
+            response.data = default_response(success=False, message="Erro ao registrar data de saída do usuário.")  
             return response
         
         try:
             res: HttpResponse = Response(status=200)
-            res.data = {"Data": 
-                        { 
-                            "sucesso": True,
-                            "mensagem": "Logoff realizado!"
-                    }}
+            res.data = default_response(success=True, message="Usuário deslogado com sucesso!")
             res.delete_cookie('access_token', path='/', samesite='None')
             res.delete_cookie('refresh_token', path='/', samesite='None')
             return res
         except:
             response: HttpResponse = Response(status=400)
-            response.data = {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": "Erro ao deslogar usuário."
-                    }}   
+            response.data = default_response(success=False, message="Erro ao deslogar usuário.")
             return response
 
 # RESET DE SENHA

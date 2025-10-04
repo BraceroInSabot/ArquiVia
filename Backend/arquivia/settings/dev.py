@@ -59,5 +59,8 @@ FRONTEND_URL = "http://127.0.0.1:3000"
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
-    "USER_ID_FIELD": "user_id"
+    "USER_ID_FIELD": "user_id",
+     "AUTH_ERROR_MESSAGES": {
+        'no_active_account': 'As credenciais fornecidas estão incorretas ou a conta está inativa.'
+    }
 }

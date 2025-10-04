@@ -41,42 +41,24 @@ class LoginTokenObtainPairView(TokenObtainPairView):
         Returns:
             HttpResponse: Response to the request
         """
-        response: HttpResponse = super().post(request, *args, **kwargs) # type: ignore
+        response = super().post(request, *args, **kwargs) # type: ignore
 
-        try:
-            tokens: dict = response.data # type: ignore
-
-            access_token: str = tokens['access']
-            refresh_token: str = tokens['refresh']
-            res: HttpResponse = Response()
-
-            res.set_cookie(
-                key='access_token',
-                value=access_token,
-                httponly=True,
-                secure=True,
-                samesite='',
-                path='/',
+        if response.status_code == 200: 
+            tokens = response.data
+            
+            response.set_cookie(
+                key='access_token', value=tokens['access'], # type: ignore
+                httponly=True, secure=True, samesite='Lax'
+            )
+            response.set_cookie(
+                key='refresh_token', value=tokens['refresh'], # type: ignore
+                httponly=True, secure=True, samesite='Lax'
             )
             
-            res.set_cookie(
-                key='refresh_token',
-                value=refresh_token,
-                httponly=True,
-                secure=True,
-                samesite='',
-                path='/',
-            )
-            
-            res.status_code=200
-            res.data = default_response(success=True, message="Usuário autenticado com sucesso!")  
+            response.data = default_response(success=True, message="Usuário autenticado com sucesso!")
 
-            return res      
-        except:
-            res.status_code=400
-            res.data = default_response(success=False, message="Houve erros internos, contate o suporte!") 
-            
-            return res
+        return response
+
         
 class LoginTokenRefreshPairView(TokenRefreshView):
 

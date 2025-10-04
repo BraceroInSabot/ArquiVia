@@ -26,5 +26,8 @@ DATABASES = {
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=4),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
-    "USER_ID_FIELD": "user_id"
+    "USER_ID_FIELD": "user_id",
+     "AUTH_ERROR_MESSAGES": {
+        'no_active_account': 'As credenciais fornecidas estão incorretas ou a conta está inativa.'
+    }
 }

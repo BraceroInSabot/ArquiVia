@@ -12,7 +12,7 @@ import os
 from django.core.asgi import get_asgi_application
 from dotenv import load_dotenv
 
-load_dotenv(".env/.env")
+load_dotenv(".env")
 
 if os.getenv("DEBUG"):
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "arquivia.settings.dev")

@@ -148,6 +148,10 @@ class LogoutTokenView(APIView):
             user: User = request.user # type: ignore
             user.last_login  = timezone.now().astimezone(timezone.get_current_timezone())
             user.save()
+        except (User.DoesNotExist, NotImplementedError):
+            response: HttpResponse = Response(status=403)
+            response.data = default_response(success=False, message="Usuário não encontrado.")  
+            return response
         except:
             response: HttpResponse = Response(status=400)
             response.data = default_response(success=False, message="Erro ao registrar data de saída do usuário.")  

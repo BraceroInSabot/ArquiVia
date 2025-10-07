@@ -57,15 +57,15 @@ class AbsUser(AbstractUser, PermissionsMixin):
     is_superuser = None
     is_staff = None
 
-    user_id = models.AutoField(primary_key=True, db_column='codigo_usuario')
-    name = models.CharField(max_length=100, db_column='nome_usuario')
-    username = models.CharField(max_length=50, unique=True, db_column='usuario_usuario')
-    email = models.EmailField(unique=True, blank=False, null=False, db_column='email_usuario')
-    password = models.CharField(max_length=256, db_column='senha_usuario')
-    image = models.CharField(max_length=255, default='', db_column="imagem_usuario")
-    date_joined = models.DateTimeField(auto_now=True, db_column='data_cadastro_usuario')
-    last_login = models.DateTimeField(null=True, db_column='data_ultimo_login_usuario')
-    is_active = models.BooleanField(default=True, db_column='esta_ativo_usuario')
+    user_id = models.AutoField(primary_key=True, db_column='PK_user')
+    name = models.CharField(max_length=100, db_column='name_user')
+    username = models.CharField(max_length=50, unique=True, db_column='username_user')
+    email = models.EmailField(unique=True, blank=False, null=False, db_column='email_user')
+    password = models.CharField(max_length=256, db_column='password_user')
+    image = models.CharField(max_length=255, default='', db_column="image_user")
+    date_joined = models.DateTimeField(auto_now=True, db_column='date_created_at_user')
+    last_login = models.DateTimeField(null=True, db_column='date_last_login_user')
+    is_active = models.BooleanField(default=True, db_column='is_active_user')
     objects = AbsUserManager() #type: ignore
 
     class Meta:
@@ -82,7 +82,7 @@ class AbsUser(AbstractUser, PermissionsMixin):
 
 class PasswordResetToken(models.Model):
     reset_id = models.AutoField(primary_key=True, db_column='codigo_redefinicao')
-    user_pk = models.ForeignKey(AbsUser, on_delete=models.CASCADE, db_column='FK_codigo_usuario_redefinicao')
+    user_pk = models.ForeignKey(AbsUser, on_delete=models.CASCADE, db_column='FK_codigo_user_redefinicao')
     token = models.CharField(max_length=48, unique=True, default=uuid.uuid4, db_column='token_redefinicao') # type: ignore
     created_at = models.DateTimeField(auto_now_add=True, db_column='data_criacao_redefinicao')
 

@@ -3,6 +3,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 INSTALLED_APPS =  [
+    "apps.core",
     "apps.APIUser",
     "apps.APIEmpresa",
     "apps.APISetor",
@@ -29,10 +30,6 @@ REST_FRAMEWORK = {
     }
 }
 
-SIMPLE_JWT = {
-    "USER_ID_FIELD": "user_id",
-}
-
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -48,7 +45,7 @@ MIDDLEWARE = [
 
 
 
-ROOT_URLCONF = "core.urls"
+ROOT_URLCONF = "arquivia.urls"
 
 import os
 
@@ -70,7 +67,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "core.wsgi.application"
+WSGI_APPLICATION = "arquivia.wsgi.application"
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -108,3 +105,4 @@ class ResponseType(TypedDict):
 RESPONSE_PATTERN = ResponseType
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+

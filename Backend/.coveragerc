@@ -1,0 +1,20 @@
+# Backend/.coveragerc
+
+[run]
+# Omitir arquivos/pastas da medição de cobertura
+omit =
+    # Não incluir o ambiente virtual
+    .venv/*
+    # Não incluir os arquivos de teste no relatório
+    */tests/*
+    # Não incluir os arquivos de migração do Django
+    */migrations/*
+    # Arquivos de configuração e inicialização
+    manage.py
+    */settings/*
+    */urls.py
+    */wsgi.py
+    */asgi.py
+    *__init__.py
+    */apps.py
+    */admin.py

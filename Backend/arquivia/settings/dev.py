@@ -1,8 +1,9 @@
 from .settings import *
 from dotenv import load_dotenv
 import os
+from datetime import timedelta
 
-load_dotenv()
+load_dotenv(".env")
 
 SECRET_KEY = os.getenv("S_KEY")
 
@@ -54,3 +55,12 @@ EMAIL_HOST_PASSWORD = os.getenv("EMAIL_PASSWORD")
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 FRONTEND_URL = "http://127.0.0.1:3000"
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    "USER_ID_FIELD": "user_id",
+     "AUTH_ERROR_MESSAGES": {
+        'no_active_account': 'As credenciais fornecidas estão incorretas ou a conta está inativa.'
+    }
+}

@@ -59,48 +59,53 @@ class CreateEnterpriseView(APIView):
         res.data = default_response(success=True, message="Empresa criada com sucesso!", data=enterprise_data) #type: ignore
         return res
 
-class ShowEnterpriseView(APIView):
+class RetrieveEnterpriseView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
-        ent_id = request.data.get("enterprise_id")
-        request_user = request.user
+        """
+        Returns the object by consulting it ID
+        
+        Args:
+            request (dict): user request
+
+        Returns:
+            Response (HttpResponse): HttpResponse with status and message
+        """
+        ent_id: str = request.data.get("enterprise_id")
+        request_user: Type[User] = request.user # type: ignore
 
         try:
-            ent = Enterprise.objects.get(ent_id=ent_id)
+            ent: Type[Enterprise] = Enterprise.objects.get(enterprise_id=ent_id) # type: ignore
+        
         except Enterprise.DoesNotExist:
-            res = Response()
-            res.status_code = 400
-            res.data = {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": "Empresa não encontrada"
-                    }}
+            res: HttpResponse = Response()
+            res.status_code = 404
+            res.data = default_response(success=False, message="Empresa não encontrada.") 
+            
             return res
 
-        is_owner = ent.owner == request_user
-        is_linked = ent.sector_set.filter(sectoruser__user=request_user).exists()
+        is_owner: bool = ent.owner == request_user
+        is_linked: bool = ent.enterprises.filter(sectoruser__user=request_user).exists() # type: ignore
 
         if not (is_owner or is_linked):
             res = Response()
             res.status_code = 403
-            res.data = {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": "Usuário sem permissão para completar a operação."
-                    }}
+            res.data = default_response(success=False, message="Usuário sem permissão para completar a operação.") 
+            
             return res
 
         data = {
+            "enterprise_id": ent.enterprise_id,
             "name": ent.name,
             "image": ent.image,
-            "owner": ent.owner.name,
+            "owner": ent.owner.name, #type: ignore
             "active": ent.is_active
         }
 
         res = Response()
         res.status_code = 200
-        res.data = data
+        res.data = default_response(success=True, data=data)
         return res
     
 class ListEnterpriseView(APIView):

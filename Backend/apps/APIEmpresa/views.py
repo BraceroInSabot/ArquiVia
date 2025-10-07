@@ -9,6 +9,7 @@ from django.http import HttpResponse
 
 # PROJECT
 from .models import Enterprise
+from .serializers import EnterpriseSerializer
 from apps.core.utils import default_response
 
 # TYPING
@@ -31,33 +32,23 @@ class CreateEnterpriseView(APIView):
         """
         name: str = request.data.get("name")
         owner: Type[User] = request.user # type: ignore
-        image:str = request.data.get("image")
 
+        serializer = EnterpriseSerializer(data=request.data)
+        
         try:
-            ent: Type[Enterprise] = Enterprise( # type: ignore
-                name=name,
-                image=image,
-                owner=owner
-            )
-            ent.save() # type: ignore
-        except:
+            if serializer.is_valid():
+                serializer.save(owner=owner)
+                res: Type[HttpResponse] = Response() # type: ignore
+                res.status_code=201
+                res.data = default_response(success=True, message="Empresa criada com sucesso!", data=serializer.data) #type: ignore
+                
+                return res
+        except:    
             res: Type[HttpResponse] = Response() # type: ignore
             res.status_code=400
-            res.data = default_response(success=False, message="Erro ao criar empresa. Tente novamente.") # type: ignore
+            res.data = default_response(success=False, message="Erro ao criar empresa. Verifique os dados enviados.", data=serializer.errors) # type: ignore
             
             return res
-    
-        enterprise_data = {
-            "enterprise_id": ent.enterprise_id,
-            "name": ent.name,
-            "image": ent.image,
-            "owner": ent.owner.name, # type: ignore
-            "active": ent.is_active
-            }
-        res: Type[HttpResponse] = Response() # type: ignore
-        res.status_code=201
-        res.data = default_response(success=True, message="Empresa criada com sucesso!", data=enterprise_data) #type: ignore
-        return res
 
 class RetrieveEnterpriseView(APIView):
     permission_classes = [IsAuthenticated]

@@ -26,8 +26,8 @@ class Sector(models.Model):
 class SectorUser(models.Model):
     sector_user_id = models.BigAutoField(primary_key=True, db_column="ID_sector_user")
     is_adm = models.BooleanField(default=False, db_column="is_administrator")
-    sector = models.ForeignKey(Sector, on_delete=models.CASCADE, db_column="PK_sector")
-    user = models.ForeignKey(User, on_delete=models.CASCADE, db_column="PK_user")
+    sector = models.ForeignKey(Sector, on_delete=models.CASCADE, db_column="FK_sector", related_name="sector_links")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, db_column="FK_user", related_name="user_links")
     
     class Meta:
         db_table = "SectorUser"

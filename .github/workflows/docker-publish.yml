@@ -35,6 +35,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Debug Secrets Availability
+        run: |
+          echo "Verificando a existência dos segredos..."
+          if [ -z "${{ secrets.SSH_HOST }}" ]; then echo "ERRO: O segredo SSH_HOST está VAZIO."; else echo "OK: SSH_HOST está configurado."; fi
+          if [ -z "${{ secrets.SSH_USER }}" ]; then echo "ERRO: O segredo SSH_USER está VAZIO."; else echo "OK: SSH_USER está configurado."; fi
+          if [ -z "${{ secrets.SSH_PORT }}" ]; then echo "ERRO: O segredo SSH_PORT está VAZIO."; else echo "OK: SSH_PORT está configurado."; fi
+          if [ -z "${{ secrets.SSH_KEY }}" ]; then echo "ERRO: O segredo SSH_KEY está VAZIO."; else echo "OK: SSH_KEY está configurado."; fi
+
       - name: SSH and Deploy
         uses: appleboy/ssh-action@v1.0.3
         with:

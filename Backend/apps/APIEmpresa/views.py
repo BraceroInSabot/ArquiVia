@@ -1,5 +1,5 @@
 # DRF
-from typing import Type
+from typing import Tuple, Type
 from rest_framework.views import APIView, Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
@@ -12,6 +12,7 @@ from django.shortcuts import get_object_or_404 # Adicionar esta importação
 from .models import Enterprise
 from .serializers import EnterpriseSerializer
 from apps.core.utils import default_response
+from apps.APISetor.models import Sector, SectorUser
 
 # TYPING
 from django.contrib.auth import get_user_model
@@ -56,7 +57,16 @@ class RetrieveEnterpriseView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request, pk):
-        # ... (docstring)
+        """
+        Retrieve a single enterprise data.
+
+        Args:
+            request (dict): user request 
+            pk (int): enterprise primary key / code
+
+        Returns:
+            Response: HttpResponse with status and message
+        """
         request_user: Type[User] = request.user # type: ignore
 
         try:
@@ -87,40 +97,45 @@ class RetrieveEnterpriseView(APIView):
         res.status_code = 200
         res.data = default_response(success=True, data=serializer.data)
         return res
-    
+
 class ListEnterpriseView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
+        """
+        Retrieve many enterprises data wich are linked with the user.
+
+        Args:
+            request (dict): user request 
+
+        Returns:
+            Response: HttpResponse with status and message
+        """
         request_user = request.user
 
+        # Q -> Query
+        query: Q = (
+            # O usuário é dono da empresa?
+            Q(owner=request_user) | 
+            # O usuário é gerente de algum setor?
+            Q(enterprises__manager=request_user) |
+            # O usuário faz parte de algum setor relacionado à empresa?
+            Q(enterprises__sector_links__user=request_user)
+        )
+
         try:
-            ent = Enterprise.objects.filter(
-                Q(owner=request_user) | Q(sector__sectoruser__user=request_user)
-            ).distinct()
-        except Enterprise.DoesNotExist:
-            return Response({
-                "Data": {
-                    "sucesso": False,
-                    "mensagem": "Erro ao listar empresas."
-                }
-            }, status=400)
+            enterprises = Enterprise.objects.filter(query).prefetch_related('owner').distinct()
 
-        data = {
-            "Data": [
-                {
-                    "ent_id": x.ent_id,
-                    "name": x.name,
-                    "image": x.image,
-                    "owner": x.owner.name,
-                    "active": x.is_active,
-                    "creation_date": x.created_at.strftime("%H:%M - %d/%m/%Y")
-                }
-                for x in ent
-            ]
-        }
-
-        return Response(data, status=200)
+            serializer = EnterpriseSerializer(enterprises, many=True)
+        except:
+            res: HttpResponse = Response()
+            res.status_code = 500
+            res.data = default_response(success=False, message="Houve um erro interno. Tente novamente.")
+            
+        res: HttpResponse = Response()
+        res.status_code = 200
+        res.data = default_response(success=True, data=serializer.data)
+        return res
     
 class EditEnterpriseView(APIView):
     permission_classes = [IsAuthenticated]

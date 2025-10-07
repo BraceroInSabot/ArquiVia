@@ -62,7 +62,7 @@ class CreateEnterpriseView(APIView):
 class RetrieveEnterpriseView(APIView):
     permission_classes = [IsAuthenticated]
     
-    def get(self, request):
+    def get(self, request, pk):
         """
         Returns the object by consulting it ID
         
@@ -72,16 +72,21 @@ class RetrieveEnterpriseView(APIView):
         Returns:
             Response (HttpResponse): HttpResponse with status and message
         """
-        ent_id: str = request.data.get("enterprise_id")
         request_user: Type[User] = request.user # type: ignore
 
         try:
-            ent: Type[Enterprise] = Enterprise.objects.get(enterprise_id=ent_id) # type: ignore
+            ent: Type[Enterprise] = Enterprise.objects.get(enterprise_id=pk) # type: ignore
         
-        except Enterprise.DoesNotExist:
+        except Enterprise.DoesNotExist: 
             res: HttpResponse = Response()
             res.status_code = 404
             res.data = default_response(success=False, message="Empresa não encontrada.") 
+            
+            return res
+        except:
+            res: HttpResponse = Response()
+            res.status_code = 500
+            res.data = default_response(success=False, message="Houve um erro interno. Tente novamente.")
             
             return res
 

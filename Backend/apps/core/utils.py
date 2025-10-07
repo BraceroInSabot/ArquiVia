@@ -1,7 +1,7 @@
 from typing import Dict, List, Union
 
 def default_response(success: bool, 
-                     message: str,
+                     message: str = "",
                      data: Union[Dict[str, str], List[Dict[str, str] | str], bool] = False) -> Dict[str,
                                                                                               Union[bool,
                                                                                                     str,

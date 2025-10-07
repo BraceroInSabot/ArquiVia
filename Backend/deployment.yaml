@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: arquivia-app-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: arquivia-app
+  template:
+    metadata:
+      labels:
+        app: arquivia-app
+    spec:
+      containers:
+        - name: arquivia-app-container
+          image: arquivia-app:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000

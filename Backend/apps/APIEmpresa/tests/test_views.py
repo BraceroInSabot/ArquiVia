@@ -1,3 +1,4 @@
+from typing import Dict, List
 import pytest
 from rest_framework.test import APIClient
 from django.urls import reverse
@@ -8,6 +9,50 @@ from pytest_mock import MockerFixture # type: ignore
 from apps.APIEmpresa.models import Enterprise
 
 User = get_user_model()
+
+class UtilsTest():
+    def create_many_users(self, units: int) -> List[str]:
+        password_test: str = "Test#10"
+        usernames: List[str] = [] 
+        
+        for u in range(units):
+            username: str = f"test{u*10}"
+            user: User = User.objects.create_user( # type: ignore
+                username=username,
+                name="This is a Test",
+                email=f"test{u*10}@gmail.com",
+                password=password_test,
+            )
+            
+            usernames.append(username)
+            
+        return usernames
+        
+    def create_and_login_user(self):
+        global client
+         
+        user: User = User.objects.create_user( # type: ignore
+            username="test",
+            name="This is a Test",
+            email="test@gmail.com",
+            password="Test-10#",
+        )
+        
+        client = APIClient()
+        client.force_authenticate(user=user)
+        return
+        
+    def create_enterprise(self):
+        valid_payload: Dict[str, str]= {
+            "name": "Test Enterprise 123 Arquivia Testing",
+            "image": "http://example.com/image.png"
+        }
+        
+        url_create: str = reverse("criar-empresa")
+        response: DRFResponse = client.post(url_create, valid_payload, format='json') # type: ignore
+        
+        return response
+        
 
 @pytest.mark.django_db
 class TestCreateEnterpriseAPI:
@@ -109,4 +154,154 @@ class TestCreateEnterpriseAPI:
         
         assert response.status_code == 400
         assert response.data["sucesso"] == False # type: ignore
+
+@pytest.mark.django_db
+class TestRetrieveEnterpriseAPI:
+    
+    # Success
+    
+    def test_retrieve_enterprise_data_success(self):
+        """
+        Test if the API is working by retrieving the enterprise data for user.
+        
+        Args:
+            self: The test instance.
+
+        Returns:
+            None
+        """
+        
+        user: User = User.objects.create_user( # type: ignore
+            username="test",
+            name="This is a Test",
+            email="test@gmail.com",
+            password="Test-10#",
+        )
+        
+        client = APIClient()
+        client.force_authenticate(user=user)
+        
+        valid_payload: Dict[str, str]= {
+            "name": "Test Enterprise 123 Arquivia Testing",
+            "image": "http://example.com/image.png"
+        }
+        
+        url_create: str = reverse("criar-empresa")
+        response: DRFResponse = client.post(url_create, valid_payload, format='json') # type: ignore
+        
+        valid_enterprise: int = response.data["data"]["enterprise_id"] #type: ignore
+        
+        url_retrieve: str = reverse("consultar-empresa", kwargs={'pk': valid_enterprise})
+            
+        response: DRFResponse = client.get(url_retrieve, {"enterprise_id": valid_enterprise}, format="json") #type: ignore
+        
+        assert response.status_code == 200
+        assert response.data['sucesso'] == True # type: ignore
+        assert response.data['data']['enterprise_id'] == 1 # type: ignore
+        
+    # Failures
+    
+    def test_retrieve_enterprise_data_for_anonymous_fails(self):
+        """
+        Test if non logged users can read Enterprise info.
+        
+        Args:
+            self: The test instance.
+
+        Returns:
+            None
+        """
+        UtilsTest().create_and_login_user()
+        res = UtilsTest().create_enterprise()
+        
+        valid_enterprise: int = res.data["data"]["enterprise_id"] #type: ignore
+        
+        client = APIClient()
+        
+        url_retrieve: str = reverse("consultar-empresa", kwargs={'pk': valid_enterprise})
+            
+        response: DRFResponse = client.get(url_retrieve, {"enterprise_id": valid_enterprise}, format="json") #type: ignore
+        
+        assert response.status_code == 401
+        assert response.data['sucesso'] == False # type: ignore
+        assert response.data['mensagem'] == 'As credenciais de autenticação não foram fornecidas.' #type: ignore
+        
+    def test_retrieve_enterprise_data_for_non_linked_users_fails(self):
+        """
+        Test if another users, wich are not linked to enterprise, can access the enterprise data.
+        
+        Args:
+            self: The test instance.
+
+        Returns:
+            None
+        """
+        create_users = UtilsTest().create_many_users(2)
+        
+        client = APIClient()
+        client.force_authenticate(User.objects.get(username=create_users[0])) # type: ignore
+        
+        response_1: DRFResponse = UtilsTest().create_enterprise()
+        
+        client = APIClient()
+        client.force_authenticate(User.objects.get(username=create_users[1])) # type: ignore
+        
+        valid_enterprise = response_1.data["data"]["enterprise_id"] #type: ignore
+        
+        url_retrieve: str = reverse("consultar-empresa", kwargs={'pk': valid_enterprise})
+            
+        response: DRFResponse = client.get(url_retrieve, {"enterprise_id": valid_enterprise}, format="json") #type: ignore
+        
+        assert response.status_code == 403
+        assert response.data['sucesso'] == False # type: ignore
+        assert response.data['mensagem'] == 'Usuário sem permissão para completar a operação.' # type: ignore
+        
+    def test_retrieve_enterprise_data_with_broken_operation_fails(self, mocker: MockerFixture):
+        """
+        Test what would be the return for client-side when backend brokes.
+        
+        Args:
+            self: The test instance.
+
+        Returns:
+            None
+        """
+        UtilsTest().create_and_login_user()
+        response: DRFResponse = UtilsTest().create_enterprise()
+                
+        valid_enterprise: int = response.data["data"]["enterprise_id"] #type: ignore
+        
+        url_retrieve: str = reverse("consultar-empresa", kwargs={'pk': valid_enterprise})
+            
+        mocker.patch(
+            'apps.APIEmpresa.models.Enterprise.objects.get', 
+            side_effect=Exception("Simulated Database Query Error")
+        )
+        
+        response: DRFResponse = client.get(url_retrieve, format="json") #type: ignore
+        
+        
+        assert response.status_code == 500
+        assert response.data["sucesso"] == False # type: ignore
+        assert response.data["mensagem"] == "Houve um erro interno. Tente novamente." # type: ignore
+        
+    def test_non_existent_enterprise_fails(self):
+        """
+        Test if user can query non existent enterprises.
+        
+        Args:
+            self: The test instance.
+
+        Returns:
+            None
+        """
+        UtilsTest().create_and_login_user()
+        UtilsTest().create_enterprise()
+        
+        url_retrieve: str = reverse("consultar-empresa", kwargs={'pk': 500})
+            
+        response: DRFResponse = client.get(url_retrieve, {"enterprise_id": 500}, format="json") #type: ignore
+        
+        assert response.status_code == 404
+        assert response.data['sucesso'] == False # type: ignore
         

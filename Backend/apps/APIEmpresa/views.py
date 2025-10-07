@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 # DJANGO
 from django.db.models import Q
 from django.http import HttpResponse
+from django.shortcuts import get_object_or_404 # Adicionar esta importação
 
 # PROJECT
 from .models import Enterprise
@@ -50,35 +51,25 @@ class CreateEnterpriseView(APIView):
             
             return res
 
+
 class RetrieveEnterpriseView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request, pk):
-        """
-        Returns the object by consulting it ID
-        
-        Args:
-            request (dict): user request
-
-        Returns:
-            Response (HttpResponse): HttpResponse with status and message
-        """
+        # ... (docstring)
         request_user: Type[User] = request.user # type: ignore
 
         try:
-            ent: Type[Enterprise] = Enterprise.objects.get(enterprise_id=pk) # type: ignore
-        
-        except Enterprise.DoesNotExist: 
+            ent = Enterprise.objects.get(enterprise_id=pk)
+        except Enterprise.DoesNotExist:
             res: HttpResponse = Response()
             res.status_code = 404
-            res.data = default_response(success=False, message="Empresa não encontrada.") 
-            
+            res.data = default_response(success=False, message="Empresa não encontrada.")
             return res
         except:
             res: HttpResponse = Response()
             res.status_code = 500
             res.data = default_response(success=False, message="Houve um erro interno. Tente novamente.")
-            
             return res
 
         is_owner: bool = ent.owner == request_user
@@ -88,20 +79,13 @@ class RetrieveEnterpriseView(APIView):
             res = Response()
             res.status_code = 403
             res.data = default_response(success=False, message="Usuário sem permissão para completar a operação.") 
-            
             return res
 
-        data = {
-            "enterprise_id": ent.enterprise_id,
-            "name": ent.name,
-            "image": ent.image,
-            "owner": ent.owner.name, #type: ignore
-            "active": ent.is_active
-        }
+        serializer = EnterpriseSerializer(ent)
 
         res = Response()
         res.status_code = 200
-        res.data = default_response(success=True, data=data)
+        res.data = default_response(success=True, data=serializer.data)
         return res
     
 class ListEnterpriseView(APIView):

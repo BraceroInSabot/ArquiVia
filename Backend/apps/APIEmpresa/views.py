@@ -11,6 +11,10 @@ from django.http import HttpResponse
 from .models import Enterprise
 from apps.core.utils import default_response
 
+# TYPING
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class CreateEnterpriseView(APIView):
     permission_classes = [IsAuthenticated]
@@ -26,20 +30,20 @@ class CreateEnterpriseView(APIView):
             Response: HttpResponse with status and message
         """
         name: str = request.data.get("name")
-        owner: object = request.user
+        owner: Type[User] = request.user # type: ignore
         image:str = request.data.get("image")
 
         try:
-            ent: Type[Enterprise] = Enterprise(
+            ent: Type[Enterprise] = Enterprise( # type: ignore
                 name=name,
                 image=image,
                 owner=owner
             )
-            ent.save()
+            ent.save() # type: ignore
         except:
-            res: Type[HttpResponse] = Response()
+            res: Type[HttpResponse] = Response() # type: ignore
             res.status_code=400
-            res.data = default_response(success=False, message="Erro ao criar empresa. Tente novamente.")
+            res.data = default_response(success=False, message="Erro ao criar empresa. Tente novamente.") # type: ignore
             
             return res
     
@@ -47,12 +51,12 @@ class CreateEnterpriseView(APIView):
             "enterprise_id": ent.enterprise_id,
             "name": ent.name,
             "image": ent.image,
-            "owner": ent.owner.name,
+            "owner": ent.owner.name, # type: ignore
             "active": ent.is_active
             }
-        res: Type[HttpResponse] = Response()
+        res: Type[HttpResponse] = Response() # type: ignore
         res.status_code=201
-        res.data = default_response(success=True, message="Empresa criada com sucesso!", data=enterprise_data)
+        res.data = default_response(success=True, message="Empresa criada com sucesso!", data=enterprise_data) #type: ignore
         return res
 
 class ShowEnterpriseView(APIView):

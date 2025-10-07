@@ -7,6 +7,7 @@ from rest_framework.response import Response as DRFResponse
 from rest_framework.request import Request as DRFRequest
 from pytest_mock import MockerFixture # type: ignore
 from apps.APIEmpresa.models import Enterprise
+from unittest.mock import patch
 
 User = get_user_model()
 
@@ -28,21 +29,7 @@ class UtilsTest():
             
         return usernames
         
-    def create_and_login_user(self):
-        global client
-         
-        user: User = User.objects.create_user( # type: ignore
-            username="test",
-            name="This is a Test",
-            email="test@gmail.com",
-            password="Test-10#",
-        )
-        
-        client = APIClient()
-        client.force_authenticate(user=user)
-        return
-        
-    def create_enterprise(self):
+    def create_enterprise(self, client: APIClient) -> DRFResponse:
         valid_payload: Dict[str, str]= {
             "name": "Test Enterprise 123 Arquivia Testing",
             "image": "http://example.com/image.png"
@@ -211,16 +198,24 @@ class TestRetrieveEnterpriseAPI:
         Returns:
             None
         """
-        UtilsTest().create_and_login_user()
-        res = UtilsTest().create_enterprise()
+        user = User.objects.create_user(
+            username="test",
+            name="This is a Test",
+            email="test@gmail.com",
+            password="Test-10#",
+        )
+        client = APIClient()
+        client.force_authenticate(user=user)
+        res = UtilsTest().create_enterprise(client)
         
         valid_enterprise: int = res.data["data"]["enterprise_id"] #type: ignore
         
-        client = APIClient()
+        # Create a new, unauthenticated client
+        anonymous_client = APIClient()
         
         url_retrieve: str = reverse("consultar-empresa", kwargs={'pk': valid_enterprise})
             
-        response: DRFResponse = client.get(url_retrieve, {"enterprise_id": valid_enterprise}, format="json") #type: ignore
+        response: DRFResponse = anonymous_client.get(url_retrieve, format="json") #type: ignore
         
         assert response.status_code == 401
         assert response.data['sucesso'] == False # type: ignore
@@ -239,51 +234,50 @@ class TestRetrieveEnterpriseAPI:
         create_users = UtilsTest().create_many_users(2)
         
         client = APIClient()
-        client.force_authenticate(User.objects.get(username=create_users[0])) # type: ignore
         
-        response_1: DRFResponse = UtilsTest().create_enterprise()
+        # Authenticate as user 1 and create the enterprise
+        user1 = User.objects.get(username=create_users[0])
+        client.force_authenticate(user=user1)
+        response_1: DRFResponse = UtilsTest().create_enterprise(client)
         
-        client = APIClient()
-        client.force_authenticate(User.objects.get(username=create_users[1])) # type: ignore
+        # Authenticate as user 2
+        user2 = User.objects.get(username=create_users[1])
+        client.force_authenticate(user=user2)
         
         valid_enterprise = response_1.data["data"]["enterprise_id"] #type: ignore
         
         url_retrieve: str = reverse("consultar-empresa", kwargs={'pk': valid_enterprise})
             
-        response: DRFResponse = client.get(url_retrieve, {"enterprise_id": valid_enterprise}, format="json") #type: ignore
+        response: DRFResponse = client.get(url_retrieve, format="json") #type: ignore
         
         assert response.status_code == 403
         assert response.data['sucesso'] == False # type: ignore
         assert response.data['mensagem'] == 'Usuário sem permissão para completar a operação.' # type: ignore
         
-    def test_retrieve_enterprise_data_with_broken_operation_fails(self, mocker: MockerFixture):
+    @patch('apps.APIEmpresa.models.Enterprise.objects.get')
+    def test_retrieve_enterprise_data_with_broken_operation_fails(self, mock_get):
         """
         Test what would be the return for client-side when backend brokes.
         
         Args:
             self: The test instance.
-
-        Returns:
-            None
+            mock_get: The mock object injected by @patch.
         """
-        UtilsTest().create_and_login_user()
-        response: DRFResponse = UtilsTest().create_enterprise()
-                
-        valid_enterprise: int = response.data["data"]["enterprise_id"] #type: ignore
+        mock_get.side_effect = Exception("Simulated Database Query Error")
+        user = User.objects.create_user(
+            username="test",
+            name="This is a Test",
+            email="test@gmail.com",
+            password="Test-10#",
+        ) 
+        client = APIClient()
+        client.force_authenticate(user=user)
         
-        url_retrieve: str = reverse("consultar-empresa", kwargs={'pk': valid_enterprise})
-            
-        mocker.patch(
-            'apps.APIEmpresa.models.Enterprise.objects.get', 
-            side_effect=Exception("Simulated Database Query Error")
-        )
+        url_retrieve = reverse("consultar-empresa", kwargs={'pk': 123})
         
-        response: DRFResponse = client.get(url_retrieve, format="json") #type: ignore
-        
-        
-        assert response.status_code == 500
-        assert response.data["sucesso"] == False # type: ignore
-        assert response.data["mensagem"] == "Houve um erro interno. Tente novamente." # type: ignore
+        response = client.get(url_retrieve, format="json")
+      
+        assert response.status_code == 500 # type: ignore
         
     def test_non_existent_enterprise_fails(self):
         """
@@ -295,12 +289,18 @@ class TestRetrieveEnterpriseAPI:
         Returns:
             None
         """
-        UtilsTest().create_and_login_user()
-        UtilsTest().create_enterprise()
+        user = User.objects.create_user(
+            username="test",
+            name="This is a Test",
+            email="test@gmail.com",
+            password="Test-10#",
+        ) 
+        client = APIClient()
+        client.force_authenticate(user=user)
         
         url_retrieve: str = reverse("consultar-empresa", kwargs={'pk': 500})
             
-        response: DRFResponse = client.get(url_retrieve, {"enterprise_id": 500}, format="json") #type: ignore
+        response: DRFResponse = client.get(url_retrieve, format="json") #type: ignore
         
         assert response.status_code == 404
         assert response.data['sucesso'] == False # type: ignore

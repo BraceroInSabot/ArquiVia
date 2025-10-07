@@ -11,7 +11,7 @@ from .views import (
 
 urlpatterns = [
     path("criar", CreateEnterpriseView.as_view(), name="criar-empresa"),
-    path("consultar", RetrieveEnterpriseView.as_view(), name="consultar-empresa"),
+    path("consultar/<int:pk>", RetrieveEnterpriseView.as_view(), name="consultar-empresa"),
     path("visualizar", ListEnterpriseView.as_view(), name="visualizar-empresas"),
     path("alterar", EditEnterpriseView.as_view(), name="alterar-empresa"),
     path("ativar-desativar", ActivateOrDeactivateEnterpriseVIew.as_view(), name="ativar-desativar-empresa"),

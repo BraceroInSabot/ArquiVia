@@ -1,40 +1,59 @@
+# DRF
+from typing import Type
 from rest_framework.views import APIView, Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
+
+# DJANGO
 from django.db.models import Q
-from .models import Enterprise
 from django.http import HttpResponse
+
+# PROJECT
+from .models import Enterprise
+from apps.core.utils import default_response
+
 
 class CreateEnterpriseView(APIView):
     permission_classes = [IsAuthenticated]
+    
     def post(self, request):
-        name = request.data.get("name")
-        owner = request.user
-        image = request.data.get("image")
+        """
+        Create a new Enterprise.
+
+        Args:
+            request (dict): user request
+
+        Returns:
+            Response: HttpResponse with status and message
+        """
+        name: str = request.data.get("name")
+        owner: object = request.user
+        image:str = request.data.get("image")
 
         try:
-            ent = Enterprise(
+            ent: Type[Enterprise] = Enterprise(
                 name=name,
                 image=image,
                 owner=owner
             )
             ent.save()
         except:
-            res = Response()
+            res: Type[HttpResponse] = Response()
             res.status_code=400
-            res.data = {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": "Erro ao completar a operação, tente novamente."
-                    }}
+            res.data = default_response(success=False, message="Erro ao criar empresa. Tente novamente.")
+            
             return res
     
-
-        return Response(
-            {"Data": 
-                        { 
-                            "sucesso": True,
-                            "mensagem": "Empresa criada com sucesso!"
-                    }}, status=200)
+        enterprise_data = {
+            "enterprise_id": ent.enterprise_id,
+            "name": ent.name,
+            "image": ent.image,
+            "owner": ent.owner.name,
+            "active": ent.is_active
+            }
+        res: Type[HttpResponse] = Response()
+        res.status_code=201
+        res.data = default_response(success=True, message="Empresa criada com sucesso!", data=enterprise_data)
+        return res
 
 class ShowEnterpriseView(APIView):
     permission_classes = [IsAuthenticated]

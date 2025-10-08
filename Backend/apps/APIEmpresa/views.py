@@ -83,7 +83,7 @@ class RetrieveEnterpriseView(APIView):
             return res
 
         is_owner: bool = ent.owner == request_user
-        is_linked: bool = ent.enterprises.filter(sectoruser__user=request_user).exists() # type: ignore
+        is_linked: bool = ent.enterprises.filter(sector_links__user=request_user).exists() # type: ignore
 
         if not (is_owner or is_linked):
             res = Response()

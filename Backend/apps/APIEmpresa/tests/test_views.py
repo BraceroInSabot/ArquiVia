@@ -370,7 +370,7 @@ class TestListEnterpriseAPI:
     
     # Success
     
-    def test_visibility_for_owner(self, api_client, scenario_data: Dict[str, object]):
+    def test_visibility_for_owner_success(self, api_client, scenario_data: Dict[str, object]):
         """
         Test if owner can only see enterprises wich are only yours.
         
@@ -396,7 +396,7 @@ class TestListEnterpriseAPI:
         assert "Outra Empresa do Dono 1" in enterprise_names
         assert "Empresa do Dono 2" not in enterprise_names 
 
-    def test_visibility_for_sector_manager(self, api_client, scenario_data: Dict[str, object]):
+    def test_visibility_for_sector_manager_success(self, api_client, scenario_data: Dict[str, object]):
         """
         Test if manager can see enterprises wich he is linked.
         
@@ -417,7 +417,7 @@ class TestListEnterpriseAPI:
         assert len(response.data['data']) == 1
         assert response.data['data'][0]['name'] == "Empresa do Dono 1"
 
-    def test_visibility_for_sector_worker(self, api_client, scenario_data: Dict[str, object]):
+    def test_visibility_for_sector_worker_success(self, api_client, scenario_data: Dict[str, object]):
         """
         Test if worker can see the enterprise wich he is linked.
         
@@ -438,7 +438,7 @@ class TestListEnterpriseAPI:
         assert len(response.data['data']) == 1
         assert response.data['data'][0]['name'] == "Empresa do Dono 1"
 
-    def test_visibility_for_outsider_owner(self, api_client, scenario_data: Dict[str, object]):
+    def test_visibility_for_outsider_owner_success(self, api_client, scenario_data: Dict[str, object]):
         """
         Test if 2º owner can see only his enterprise.
         

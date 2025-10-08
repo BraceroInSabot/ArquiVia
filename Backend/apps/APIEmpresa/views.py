@@ -140,46 +140,46 @@ class ListEnterpriseView(APIView):
 class EditEnterpriseView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def put(self, request: dict):
-        ent_id = request.data.get("ent_id")
-        name = request.data.get("name")
+    def put(self, request):
+        """
+        Edit the selected enterprise data by  it ID.
+        
+        Args:
+            request (dict): user request 
+
+        Returns:
+            Response: HttpResponse with status and message
+        """
+        enterprise_id: int = request.data.get("enterprise_id")
+        name: str = request.data.get("name")
         image = request.data.get("image")
         request_user = request.user
         
         try:
-            enterprise = Enterprise.objects.filter(ent_id=ent_id).first()
+            enterprise: Enterprise = Enterprise.objects.filter(enterprise_id=enterprise_id).first() #type: ignore
         except:
             res = Response()
             res.status_code=400
-            res.data = {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": "Houve um erro na busca pela empresa. Tente novamente."
-                    }}
+            res.data =  default_response(success=False, message="Houve um erro na busca pela empresa. Tente novamente.")
+            
             return res
         
-        # TODO: Validar se o usuário faz parte do setor OU se é dono da empresa
-        if not (Enterprise.objects.filter(owner=request_user).first() and enterprise.is_active):
+        if not (Enterprise.objects.filter(owner=request_user, enterprise_id=enterprise_id).exists() and enterprise.is_active):
             res = Response()
             res.status_code=400
-            res.data = {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": "Usuário sem permissão."
-                    }}
+            res.data =  default_response(success=False, message="Usuário sem permissão ou a empresa está desativada.")
+
             return res
 
         enterprise.name = name
-        enterprise.image = image
+        if image is not None or image == "":
+            enterprise.image = image
         enterprise.save()
         
         res = Response()
         res.status_code=200
-        res.data = {"Data": 
-                    { 
-                        "sucesso": True,
-                        "mensagem": "Alteração realizada com sucesso!"
-                }}
+        res.data = default_response(success=True, message="Alteração realizada com sucesso!")
+
         return res
         
 class ActivateOrDeactivateEnterpriseVIew(APIView):

@@ -1,248 +1,271 @@
+# DRF
+from typing import Tuple, Type
 from rest_framework.views import APIView, Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
+
+# DJANGO
 from django.db.models import Q
-from .models import Enterprise
 from django.http import HttpResponse
+from django.shortcuts import get_object_or_404 # Adicionar esta importação
+
+# PROJECT
+from .models import Enterprise
+from .serializers import EnterpriseSerializer, EnterpriseToggleActiveSerializer
+from apps.core.utils import default_response
+from apps.APISetor.models import Sector, SectorUser
+
+# TYPING
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class CreateEnterpriseView(APIView):
     permission_classes = [IsAuthenticated]
-    def post(self, request):
-        name = request.data.get("name")
-        owner = request.user
-        image = request.data.get("image")
-
-        try:
-            ent = Enterprise(
-                name=name,
-                image=image,
-                owner=owner
-            )
-            ent.save()
-        except:
-            res = Response()
-            res.status_code=400
-            res.data = {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": "Erro ao completar a operação, tente novamente."
-                    }}
-            return res
     
+    def post(self, request):
+        """
+        Create a new Enterprise.
 
-        return Response(
-            {"Data": 
-                        { 
-                            "sucesso": True,
-                            "mensagem": "Empresa criada com sucesso!"
-                    }}, status=200)
+        Args:
+            request (dict): user request
 
-class ShowEnterpriseView(APIView):
+        Returns:
+            Response: HttpResponse with status and message
+        """
+        name: str = request.data.get("name")
+        owner: Type[User] = request.user # type: ignore
+
+        serializer = EnterpriseSerializer(data=request.data)
+        
+        try:
+            if serializer.is_valid():
+                serializer.save(owner=owner)
+                res: Type[HttpResponse] = Response() # type: ignore
+                res.status_code=201
+                res.data = default_response(success=True, message="Empresa criada com sucesso!", data=serializer.data) #type: ignore
+                
+                return res
+        except:    
+            res: Type[HttpResponse] = Response() # type: ignore
+            res.status_code=400
+            res.data = default_response(success=False, message="Erro ao criar empresa. Verifique os dados enviados.", data=serializer.errors) # type: ignore
+            
+            return res
+
+
+class RetrieveEnterpriseView(APIView):
     permission_classes = [IsAuthenticated]
     
-    def get(self, request):
-        ent_id = request.data.get("enterprise_id")
-        request_user = request.user
+    def get(self, request, pk):
+        """
+        Retrieve a single enterprise data.
+
+        Args:
+            request (dict): user request 
+            pk (int): enterprise primary key / code
+
+        Returns:
+            Response: HttpResponse with status and message
+        """
+        request_user: Type[User] = request.user # type: ignore
 
         try:
-            ent = Enterprise.objects.get(ent_id=ent_id)
+            ent = Enterprise.objects.get(enterprise_id=pk)
         except Enterprise.DoesNotExist:
-            res = Response()
-            res.status_code = 400
-            res.data = {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": "Empresa não encontrada"
-                    }}
+            res: HttpResponse = Response()
+            res.status_code = 404
+            res.data = default_response(success=False, message="Empresa não encontrada.")
+            return res
+        except:
+            res: HttpResponse = Response()
+            res.status_code = 500
+            res.data = default_response(success=False, message="Houve um erro interno. Tente novamente.")
             return res
 
-        is_owner = ent.owner == request_user
-        is_linked = ent.sector_set.filter(sectoruser__user=request_user).exists()
+        is_owner: bool = ent.owner == request_user
+        is_linked: bool = ent.enterprises.filter(sector_links__user=request_user).exists() # type: ignore
 
         if not (is_owner or is_linked):
             res = Response()
             res.status_code = 403
-            res.data = {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": "Usuário sem permissão para completar a operação."
-                    }}
+            res.data = default_response(success=False, message="Usuário sem permissão para completar a operação.") 
             return res
 
-        data = {
-            "name": ent.name,
-            "image": ent.image,
-            "owner": ent.owner.name,
-            "active": ent.is_active
-        }
+        serializer = EnterpriseSerializer(ent)
 
         res = Response()
         res.status_code = 200
-        res.data = data
+        res.data = default_response(success=True, data=serializer.data)
         return res
-    
+
 class ListEnterpriseView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
+        """
+        Retrieve many enterprises data wich are linked with the user.
+
+        Args:
+            request (dict): user request 
+
+        Returns:
+            Response: HttpResponse with status and message
+        """
         request_user = request.user
 
+        # Q -> Query
+        query: Q = (
+            # O usuário é dono da empresa?
+            Q(owner=request_user) | 
+            # O usuário é gerente de algum setor?
+            Q(enterprises__manager=request_user) |
+            # O usuário faz parte de algum setor relacionado à empresa?
+            Q(enterprises__sector_links__user=request_user)
+        )
+
         try:
-            ent = Enterprise.objects.filter(
-                Q(owner=request_user) | Q(sector__sectoruser__user=request_user)
-            ).distinct()
-        except Enterprise.DoesNotExist:
-            return Response({
-                "Data": {
-                    "sucesso": False,
-                    "mensagem": "Erro ao listar empresas."
-                }
-            }, status=400)
+            enterprises = Enterprise.objects.filter(query).prefetch_related('owner').distinct()
 
-        data = {
-            "Data": [
-                {
-                    "ent_id": x.ent_id,
-                    "name": x.name,
-                    "image": x.image,
-                    "owner": x.owner.name,
-                    "active": x.is_active,
-                    "creation_date": x.created_at.strftime("%H:%M - %d/%m/%Y")
-                }
-                for x in ent
-            ]
-        }
-
-        return Response(data, status=200)
+            serializer = EnterpriseSerializer(enterprises, many=True)
+        except:
+            res: HttpResponse = Response()
+            res.status_code = 500
+            res.data = default_response(success=False, message="Houve um erro interno. Tente novamente.")
+            
+        res: HttpResponse = Response()
+        res.status_code = 200
+        res.data = default_response(success=True, data=serializer.data)
+        return res
     
 class EditEnterpriseView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def put(self, request: dict):
-        ent_id = request.data.get("ent_id")
-        name = request.data.get("name")
-        image = request.data.get("image")
+    def put(self, request, pk):
+        """
+        Edit the selected enterprise data by its ID.
+        
+        Args:
+            request (dict): user request 
+            pk (int): enterprise primary key / code
+
+        Returns:
+            Response: HttpResponse with status and message
+        """
         request_user = request.user
         
         try:
-            enterprise = Enterprise.objects.filter(ent_id=ent_id).first()
-        except:
+            enterprise = Enterprise.objects.get(enterprise_id=pk)
+
+            if enterprise.owner != request_user:
+                res = Response()
+                res.status_code = 403
+                res.data = default_response(success=False, message="Usuário sem permissão para editar esta empresa.")
+                return res
+
+            serializer = EnterpriseSerializer(enterprise, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                
+                res = Response()
+                res.status_code = 200
+                res.data = default_response(success=True, message="Alteração realizada com sucesso!", data=serializer.data)
+                return res
+            
             res = Response()
-            res.status_code=400
-            res.data = {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": "Houve um erro na busca pela empresa. Tente novamente."
-                    }}
-            return res
-        
-        # TODO: Validar se o usuário faz parte do setor OU se é dono da empresa
-        if not (Enterprise.objects.filter(owner=request_user).first() and enterprise.is_active):
-            res = Response()
-            res.status_code=400
-            res.data = {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": "Usuário sem permissão."
-                    }}
+            res.status_code = 400
+            res.data = default_response(success=False, message="Dados inválidos.", data=serializer.errors)
             return res
 
-        enterprise.name = name
-        enterprise.image = image
-        enterprise.save()
-        
-        res = Response()
-        res.status_code=200
-        res.data = {"Data": 
-                    { 
-                        "sucesso": True,
-                        "mensagem": "Alteração realizada com sucesso!"
-                }}
-        return res
+        except Enterprise.DoesNotExist:
+            res = Response()
+            res.status_code = 404
+            res.data = default_response(success=False, message="Empresa não encontrada.")
+            return res
+        except Exception as e:
+            res = Response()
+            res.status_code = 500
+            res.data = default_response(success=False, message="Houve um erro interno. Tente novamente.")
+            return res
         
 class ActivateOrDeactivateEnterpriseVIew(APIView):
     permission_classes = [IsAuthenticated]
 
-    def put(self, request):
-        ent_id = request.data.get("enterprise_id")
+    def put(self, request, pk):
+        """
+        Alter the is_active attribute of object if User is the owner.
+
+        Args:
+            request (dict): user request 
+            pk (int): enterprise primary key / code
+
+        Returns:
+            Response: HttpResponse with status and message
+        """
         request_user = request.user
         
         try:
-            enterprise = Enterprise.objects.filter(ent_id=ent_id).first()
+            enterprise: Enterprise = Enterprise.objects.get(owner=request.user, enterprise_id=pk) # type: ignore
+        except:
+            res: HttpResponse = Response()
+            res.status_code=404
+            res.data = default_response(success=False, message="Houve um erro na busca pela empresa. Tente novamente.") 
+            
+            return res
+        
+        try:
+            enterprise.is_active = not enterprise.is_active
+            enterprise.save()
         except:
             res = Response()
             res.status_code=400
-            res.data = {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": "Houve um erro na busca pela empresa. Tente novamente."
-                    }}
+            res.data = default_response(success=False, message="Houve erros internos. Tente novamente mais tarde.") 
+
             return res
         
-        # TODO: Validar se o usuário faz parte do setor OU se é dono da empresa
-        if not (Enterprise.objects.filter(owner=request_user).first()):
-            res = Response()
-            res.status_code=400
-            res.data = {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": "Usuário sem permissão."
-                    }}
-            return res
+        serializer = EnterpriseToggleActiveSerializer(enterprise)
         
-        enterprise.is_active = True if not enterprise.is_active else False
-        
-        enterprise.save()
-        
-        res = Response()
+        res: HttpResponse = Response()
         res.status_code=200
-        res.data = {"Data": 
-                    { 
-                        "sucesso": True,
-                        "mensagem": f"{'Empresa ativada' if enterprise.is_active else 'Empresa desativada'} com sucesso!"
-                }}
+        res.data = default_response(success=True, message="Operação realizada!", data=serializer.data) 
+        
         return res   
 
 class ExcludeEnterpriseView(APIView):
     permission_classes = [IsAuthenticated]
     
-    def delete(self, request):
-        ent_id = request.data.get("enterprise_id")
+    def delete(self, request, pk):
+        """
+        Exclude the enterprise if the user is the owner.
+
+        Args:
+            request (dict): user request 
+            pk (int): enterprise primary key / code
+
+        Returns:
+            Response: HttpResponse with status and message
+        """
         request_user = request.user
-        
-        print(ent_id)
 
         try:
-            enterprise = Enterprise.objects.filter(ent_id=ent_id).first()
+            enterprise = Enterprise.objects.get(owner=request_user, enterprise_id=pk)
         except Exception:
-            return Response({
-                "Data": {
-                    "sucesso": False,
-                    "mensagem": "Houve um erro na busca pela empresa. Tente novamente."
-                }
-            }, status=400)
+            res: HttpResponse = Response()
+            res.status_code = 404
+            res.data = default_response(success=False, message="Houve um erro na busca pela empresa. Tente novamente.")
+            
+            return res
         
-        if not enterprise:
-            return Response({
-                "Data": {
-                    "sucesso": False,
-                    "mensagem": "Empresa não encontrada."
-                }
-            }, status=404)
+        try:
+            enterprise.delete()
+        except:
+            res: HttpResponse = Response()
+            res.status_code = 400
+            res.data = default_response(success=False, message="Houve erros internos. Tente novamente mais tarde.")
+            
+            return res
+            
+        res: HttpResponse = Response()
+        res.status_code = 200
+        res.data = default_response(success=True, message="Empresa excluída permanentemente pelo dono.")
         
-        if enterprise.owner != request_user:
-            return Response({
-                "Data": {
-                    "sucesso": False,
-                    "mensagem": "Usuário sem permissão."
-                }
-            }, status=403)
-        
-        name = enterprise.name
-        enterprise.delete()
-        
-        return Response({
-            "Data": {
-                "sucesso": True,
-                "mensagem": f"Empresa >> {name} << excluída."
-            }
-        }, status=200)
+        return res

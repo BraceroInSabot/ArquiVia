@@ -20,7 +20,7 @@ class CreateSectorView(APIView):
         enterprise = request.data.get("enterprise_id")
         
         try:
-            enterprise: Enterprise = Enterprise.objects.filter(ent_id=enterprise).first()          
+            enterprise: Enterprise = Enterprise.objects.filter(enterprise_id=enterprise).first() # type: ignore    
         except Enterprise.DoesNotExist:
             res = Response()
             res.status_code=400

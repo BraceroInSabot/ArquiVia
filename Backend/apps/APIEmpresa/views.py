@@ -204,19 +204,12 @@ class ActivateOrDeactivateEnterpriseVIew(APIView):
         request_user = request.user
         
         try:
-            enterprise: Enterprise = Enterprise.objects.filter(enterprise_id=pk).first() # type: ignore
+            enterprise: Enterprise = Enterprise.objects.get(owner=request.user, enterprise_id=pk) # type: ignore
         except:
             res: HttpResponse = Response()
             res.status_code=404
             res.data = default_response(success=False, message="Houve um erro na busca pela empresa. Tente novamente.") 
             
-            return res
-        
-        if not (Enterprise.objects.filter(owner=request_user, enterprise_id=pk).exists()):
-            res = Response()
-            res.status_code=403
-            res.data = default_response(success=False, message="Usuário sem permissão.") 
-
             return res
         
         try:

@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404 # Adicionar esta importação
 
 # PROJECT
 from .models import Enterprise
-from .serializers import EnterpriseSerializer
+from .serializers import EnterpriseSerializer, EnterpriseToggleActiveSerializer
 from apps.core.utils import default_response
 from apps.APISetor.models import Sector, SectorUser
 
@@ -190,44 +190,51 @@ class EditEnterpriseView(APIView):
 class ActivateOrDeactivateEnterpriseVIew(APIView):
     permission_classes = [IsAuthenticated]
 
-    def put(self, request):
-        ent_id = request.data.get("enterprise_id")
+    def put(self, request, pk):
+        """
+        Alter the is_active attribute of object if User is the owner.
+
+        Args:
+            request (dict): user request 
+            pk (int): enterprise primary key / code
+
+        Returns:
+            Response: HttpResponse with status and message
+        """
         request_user = request.user
         
         try:
-            enterprise = Enterprise.objects.filter(ent_id=ent_id).first()
+            enterprise: Enterprise = Enterprise.objects.filter(enterprise_id=pk).first() # type: ignore
+        except:
+            res: HttpResponse = Response()
+            res.status_code=404
+            res.data = default_response(success=False, message="Houve um erro na busca pela empresa. Tente novamente.") 
+            
+            return res
+        
+        if not (Enterprise.objects.filter(owner=request_user, enterprise_id=pk).exists()):
+            res = Response()
+            res.status_code=403
+            res.data = default_response(success=False, message="Usuário sem permissão.") 
+
+            return res
+        
+        try:
+            enterprise.is_active = not enterprise.is_active
+            enterprise.save()
         except:
             res = Response()
             res.status_code=400
-            res.data = {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": "Houve um erro na busca pela empresa. Tente novamente."
-                    }}
+            res.data = default_response(success=False, message="Houve erros internos. Tente novamente mais tarde.") 
+
             return res
         
-        # TODO: Validar se o usuário faz parte do setor OU se é dono da empresa
-        if not (Enterprise.objects.filter(owner=request_user).first()):
-            res = Response()
-            res.status_code=400
-            res.data = {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": "Usuário sem permissão."
-                    }}
-            return res
+        serializer = EnterpriseToggleActiveSerializer(enterprise)
         
-        enterprise.is_active = True if not enterprise.is_active else False
-        
-        enterprise.save()
-        
-        res = Response()
+        res: HttpResponse = Response()
         res.status_code=200
-        res.data = {"Data": 
-                    { 
-                        "sucesso": True,
-                        "mensagem": f"{'Empresa ativada' if enterprise.is_active else 'Empresa desativada'} com sucesso!"
-                }}
+        res.data = default_response(success=True, message="Operação realizada!", data=serializer.data) 
+        
         return res   
 
 class ExcludeEnterpriseView(APIView):

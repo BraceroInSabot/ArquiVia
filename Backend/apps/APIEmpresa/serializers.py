@@ -27,3 +27,8 @@ class EnterpriseSerializer(serializers.ModelSerializer):
             'is_active', 
             'created_at'
         ]
+
+class EnterpriseToggleActiveSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Enterprise
+        fields = ['enterprise_id', 'is_active']

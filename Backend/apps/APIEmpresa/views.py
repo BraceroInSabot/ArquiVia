@@ -233,44 +233,39 @@ class ActivateOrDeactivateEnterpriseVIew(APIView):
 class ExcludeEnterpriseView(APIView):
     permission_classes = [IsAuthenticated]
     
-    def delete(self, request):
-        ent_id = request.data.get("enterprise_id")
+    def delete(self, request, pk):
+        """
+        Exclude the enterprise if the user is the owner.
+
+        Args:
+            request (dict): user request 
+            pk (int): enterprise primary key / code
+
+        Returns:
+            Response: HttpResponse with status and message
+        """
         request_user = request.user
-        
-        print(ent_id)
 
         try:
-            enterprise = Enterprise.objects.filter(ent_id=ent_id).first()
+            enterprise = Enterprise.objects.get(owner=request_user, enterprise_id=pk)
         except Exception:
-            return Response({
-                "Data": {
-                    "sucesso": False,
-                    "mensagem": "Houve um erro na busca pela empresa. Tente novamente."
-                }
-            }, status=400)
+            res: HttpResponse = Response()
+            res.status_code = 404
+            res.data = default_response(success=False, message="Houve um erro na busca pela empresa. Tente novamente.")
+            
+            return res
         
-        if not enterprise:
-            return Response({
-                "Data": {
-                    "sucesso": False,
-                    "mensagem": "Empresa não encontrada."
-                }
-            }, status=404)
+        try:
+            enterprise.delete()
+        except:
+            res: HttpResponse = Response()
+            res.status_code = 400
+            res.data = default_response(success=False, message="Houve erros internos. Tente novamente mais tarde.")
+            
+            return res
+            
+        res: HttpResponse = Response()
+        res.status_code = 200
+        res.data = default_response(success=True, message="Empresa excluída permanentemente pelo dono.")
         
-        if enterprise.owner != request_user:
-            return Response({
-                "Data": {
-                    "sucesso": False,
-                    "mensagem": "Usuário sem permissão."
-                }
-            }, status=403)
-        
-        name = enterprise.name
-        enterprise.delete()
-        
-        return Response({
-            "Data": {
-                "sucesso": True,
-                "mensagem": f"Empresa >> {name} << excluída."
-            }
-        }, status=200)
+        return res

@@ -123,14 +123,9 @@ class ListEnterpriseView(APIView):
             Q(enterprises__sector_links__user=request_user)
         )
 
-        try:
-            enterprises = Enterprise.objects.filter(query).prefetch_related('owner').distinct()
+        enterprises = Enterprise.objects.filter(query).prefetch_related('owner').distinct()
 
-            serializer = EnterpriseSerializer(enterprises, many=True)
-        except:
-            res: HttpResponse = Response()
-            res.status_code = 500
-            res.data = default_response(success=False, message="Houve um erro interno. Tente novamente.")
+        serializer = EnterpriseSerializer(enterprises, many=True)
             
         res: HttpResponse = Response()
         res.status_code = 200

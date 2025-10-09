@@ -140,47 +140,52 @@ class ListEnterpriseView(APIView):
 class EditEnterpriseView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def put(self, request):
+    def put(self, request, pk):
         """
-        Edit the selected enterprise data by  it ID.
+        Edit the selected enterprise data by its ID.
         
         Args:
             request (dict): user request 
+            pk (int): enterprise primary key / code
 
         Returns:
             Response: HttpResponse with status and message
         """
-        enterprise_id: int = request.data.get("enterprise_id")
-        name: str = request.data.get("name")
-        image = request.data.get("image")
         request_user = request.user
         
         try:
-            enterprise: Enterprise = Enterprise.objects.filter(enterprise_id=enterprise_id).first() #type: ignore
-        except:
-            res = Response()
-            res.status_code=400
-            res.data =  default_response(success=False, message="Houve um erro na busca pela empresa. Tente novamente.")
+            enterprise = Enterprise.objects.get(enterprise_id=pk)
+
+            if enterprise.owner != request_user:
+                res = Response()
+                res.status_code = 403
+                res.data = default_response(success=False, message="Usuário sem permissão para editar esta empresa.")
+                return res
+
+            serializer = EnterpriseSerializer(enterprise, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                
+                res = Response()
+                res.status_code = 200
+                res.data = default_response(success=True, message="Alteração realizada com sucesso!", data=serializer.data)
+                return res
             
-            return res
-        
-        if not (Enterprise.objects.filter(owner=request_user, enterprise_id=enterprise_id).exists() and enterprise.is_active):
             res = Response()
-            res.status_code=400
-            res.data =  default_response(success=False, message="Usuário sem permissão ou a empresa está desativada.")
-
+            res.status_code = 400
+            res.data = default_response(success=False, message="Dados inválidos.", data=serializer.errors)
             return res
 
-        enterprise.name = name
-        if image is not None or image == "":
-            enterprise.image = image
-        enterprise.save()
-        
-        res = Response()
-        res.status_code=200
-        res.data = default_response(success=True, message="Alteração realizada com sucesso!")
-
-        return res
+        except Enterprise.DoesNotExist:
+            res = Response()
+            res.status_code = 404
+            res.data = default_response(success=False, message="Empresa não encontrada.")
+            return res
+        except Exception as e:
+            res = Response()
+            res.status_code = 500
+            res.data = default_response(success=False, message="Houve um erro interno. Tente novamente.")
+            return res
         
 class ActivateOrDeactivateEnterpriseVIew(APIView):
     permission_classes = [IsAuthenticated]

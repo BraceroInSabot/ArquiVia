@@ -623,6 +623,177 @@ class TestEditEnterpriseAPI:
 
         assert response.status_code == 500 # type: ignore
         assert response.data['sucesso'] == False # type: ignore
+    
+@pytest.mark.django_db    
+class TestActivateOrDeactivateAPI:
+    # Backgroud
+    
+    @pytest.fixture
+    def api_client(self):
+        """
+        Returns a API CLIENT for use.
         
+        Args:
+            self: The test instance.
+
+        Returns:
+            None
+        """
+        return APIClient()
+
+    @pytest.fixture
+    def scenario_data(self):
+        """
+        Create a scenario where one owner have access to a activated and deactivade enterprise and another owner have only one activated enterprise.
+        
+        Args:
+            self: The test instance.
+
+        Returns:
+            None
+        """
+        # 1. Criar os 2 usuários
+        owner1 = User.objects.create_user(username="owner1", password="pw", name="Owner 1", email="owner1@e.com")
+        owner2 = User.objects.create_user(username="owner2", password="pw", name="Owner 2", email="owner2@e.com")
+
+        # 2. Criar as empresas
+        enterprise1 = Enterprise.objects.create(name="Empresa do Dono 1", owner=owner1, is_active=False)
+        enterprise2 = Enterprise.objects.create(name="Outra Empresa do Dono 1", owner=owner1, is_active=True)
+        # Empresa Dono 2
+        enterprise3 = Enterprise.objects.create(name="Empresa do Dono 2", owner=owner2)
+
+        return {
+            "owner1": owner1,
+            "owner2": owner2,
+            "enterprise1": enterprise1,
+            "enterprise2": enterprise2,
+            "enterprise3": enterprise3
+        }
+    
+    # Success
+     
+    def test_activate_deactivate_enterprise_success(self, api_client: APIClient, scenario_data: dict):
+        """
+        Test if the user can deactivate a active enterprise normally.
+        
+        Args:
+            self: The test instance.
+            api_cliente (APIClient) : api client for log in use
+            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
+            
+        Return:
+            None
+        """
+        # Deactivate
+        
+        owner = scenario_data['owner1']
+        enterprise_activated = scenario_data['enterprise2']
+        
+        api_client.force_authenticate(user=owner)
+        
+        url = reverse("ativar-desativar-empresa", kwargs={'pk': enterprise_activated.enterprise_id})
+
+        response = api_client.put(url, format="json")
+        
+        assert response.status_code == 200 # type: ignore
+        assert response.data['sucesso'] == True # type: ignore
+        enterprise_activated.refresh_from_db()
+        assert not enterprise_activated.is_active
+        
+        # Activated
+        
+        enterprise_deactivated = scenario_data['enterprise2']
+        
+        url = reverse("ativar-desativar-empresa", kwargs={'pk': enterprise_deactivated.enterprise_id})
+        
+        response = api_client.put(url, format='json')
+        
+        assert response.status_code == 200 # type: ignore
+        assert response.data['sucesso'] == True # type: ignore
+        enterprise_activated.refresh_from_db()
+        assert enterprise_activated.is_active
+    
+    # Failures
+    
+    def test_deactivate_wrong_enterprise_fails(self, api_client: APIClient, scenario_data: dict):
+        """
+        Test if the user inform a invalid pk to URL.
+        
+        Args:
+            self: The test instance.
+            api_cliente (APIClient) : api client for log in use
+            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
+            
+        Return:
+            None
+        """
+        owner = scenario_data['owner1']
+        enterprise_activated = scenario_data['enterprise1']
+        
+        api_client.force_authenticate(user=owner)
+        
+        url = reverse("ativar-desativar-empresa", kwargs={'pk': 540})
+
+        response = api_client.put(url, format="json")
+        
+        assert response.status_code == 404 # type: ignore
+        assert response.data['sucesso'] == False # type: ignore
+        assert not enterprise_activated.is_active        
+        
+    def test_deactivate_non_owner_enterprise_fails(self, api_client: APIClient, scenario_data: dict):
+        """
+        Test if the user wich isnt owner of determined enterprise cannot change its status.
+        
+        Args:
+            self: The test instance.
+            api_cliente (APIClient) : api client for log in use
+            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
+            
+        Return:
+            None
+        """
+        owner2 = scenario_data['owner2']
+        enterprise_activated = scenario_data["enterprise2"]
+        
+        api_client.force_authenticate(user=owner2)
+        
+        url = reverse("ativar-desativar-empresa", kwargs={'pk': enterprise_activated.enterprise_id})
+
+        response = api_client.put(url, format="json")
+        
+        assert response.status_code == 404 # type: ignore
+        assert response.data['sucesso'] == False # type: ignore
+        assert enterprise_activated.is_active
+        
+    def test_broken_operation_on_deactivation_process_fails(self, api_client: APIClient, mocker: MockerFixture, scenario_data: dict):
+        """
+        Test the return of the application when something gone wrong during operation process.
+        
+        Args:
+            self: The test instance.
+            api_cliente (APIClient) : api client for log in use
+            mocker (MockerFixture): intend to be a failure on a determinated method
+            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
+            
+        Return:
+            None
+        """
+        owner = scenario_data['owner1']
+        enterprise_activated = scenario_data["enterprise2"]
+        
+        api_client.force_authenticate(user=owner)
+        
+        mocked_get = mocker.patch(
+            'apps.APIEmpresa.views.Enterprise.save',
+            side_effect=Exception("Simulated Database Query Error")
+        )
+        
+        url = reverse("ativar-desativar-empresa", kwargs={'pk': enterprise_activated.enterprise_id})
+
+        response = api_client.put(url, format="json")
+        
+        assert response.status_code == 400 # type: ignore
+        assert response.data['sucesso'] == False # type: ignore
+        assert enterprise_activated.is_active
         
         

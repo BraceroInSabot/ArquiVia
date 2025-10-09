@@ -15,5 +15,5 @@ urlpatterns = [
     path("visualizar", ListEnterpriseView.as_view(), name="visualizar-empresas"),
     path("alterar/<int:pk>", EditEnterpriseView.as_view(), name="alterar-empresa"),
     path("ativar-desativar/<int:pk>", ActivateOrDeactivateEnterpriseVIew.as_view(), name="ativar-desativar-empresa"),
-    path("excluir", ExcludeEnterpriseView.as_view(), name="excluir-empresa"),
+    path("excluir/<int:pk>", ExcludeEnterpriseView.as_view(), name="excluir-empresa"),
 ]

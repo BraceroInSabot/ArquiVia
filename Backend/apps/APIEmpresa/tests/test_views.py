@@ -796,4 +796,168 @@ class TestActivateOrDeactivateAPI:
         assert response.data['sucesso'] == False # type: ignore
         assert enterprise_activated.is_active
         
+@pytest.mark.django_db
+class TestExcludeEnterpriseAPI:
+    # Background
+    
+    @pytest.fixture
+    def api_client(self):
+        """
+        Returns a API CLIENT for use.
+        
+        Args:
+            self: The test instance.
+
+        Returns:
+            None
+        """
+        return APIClient()
+
+    @pytest.fixture
+    def scenario_data(self):
+        """
+        Create a scenario where one owner have access to a activated and deactivade enterprise and another owner have only one activated enterprise.
+        
+        Args:
+            self: The test instance.
+
+        Returns:
+            None
+        """
+        # 1. Criar os 2 usuários
+        owner1 = User.objects.create_user(username="owner1", password="pw", name="Owner 1", email="owner1@e.com")
+        owner2 = User.objects.create_user(username="owner2", password="pw", name="Owner 2", email="owner2@e.com")
+
+        # 2. Criar as empresas
+        enterprise1 = Enterprise.objects.create(name="Empresa do Dono 1", owner=owner1, is_active=False)
+        enterprise2 = Enterprise.objects.create(name="Outra Empresa do Dono 1", owner=owner1, is_active=True)
+        # Empresa Dono 2
+        enterprise3 = Enterprise.objects.create(name="Empresa do Dono 2", owner=owner2)
+        
+        # 3. Criar os setores
+        sector = Sector.objects.create(name="Setor Test", manager=owner1, enterprise=enterprise1)
+
+        return {
+            "owner1": owner1,
+            "owner2": owner2,
+            "enterprise1": enterprise1,
+            "enterprise2": enterprise2,
+            "enterprise3": enterprise3,
+            "sector1": sector
+        }
+    
+    def test_exclude_enterprise_success(self, api_client: APIClient, scenario_data: dict):
+        """
+        Test if user can exclude his own enterprise.
+        
+        Args:
+            self: The test instance.
+            api_cliente (APIClient) : api client for log in use
+            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
+            
+        Return:
+            None
+        """
+        owner = scenario_data['owner1']
+        enterprise_exclude = scenario_data['enterprise1']
+        sector_exclude_verify = scenario_data['sector1']
+        
+        api_client.force_authenticate(user=owner)
+        
+        url = reverse("excluir-empresa", kwargs={'pk': enterprise_exclude.enterprise_id})
+
+        response = api_client.delete(url, format="json")
+        
+        assert response.status_code == 200 # type: ignore
+        assert response.data['sucesso'] == True # type: ignore
+        assert not Enterprise.objects.filter(enterprise_id=enterprise_exclude.enterprise_id).exists()
+        assert not Sector.objects.filter(sector_id=sector_exclude_verify.sector_id).exists()
+        
+        # Failures
+        
+    def test_invalid_enterprise_fails(self, api_client: APIClient, scenario_data: dict):
+        """
+        Test the return for a invalid enterprise.
+        
+        Args:
+            self: The test instance.
+            api_cliente (APIClient) : api client for log in use
+            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
+            
+        Return:
+            None
+        """
+        owner = scenario_data['owner1']
+        enterprise_exclude = scenario_data['enterprise1']
+        sector_exclude_verify = scenario_data['sector1']
+        
+        api_client.force_authenticate(user=owner)
+        
+        url = reverse("excluir-empresa", kwargs={'pk': 8575})
+
+        response = api_client.delete(url, format="json")
+        
+        assert response.status_code == 404 # type: ignore
+        assert response.data['sucesso'] == False # type: ignore
+        assert Enterprise.objects.filter(enterprise_id=enterprise_exclude.enterprise_id).exists()
+        assert Sector.objects.filter(sector_id=sector_exclude_verify.sector_id).exists()
+    
+    def test_invalid_owner_enterprise_fails(self, api_client: APIClient, scenario_data: dict):
+        """
+        Test if user can exclude other users enterprises.
+        
+        Args:
+            self: The test instance.
+            api_cliente (APIClient) : api client for log in use
+            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
+            
+        Return:
+            None
+        """        
+        owner2 = scenario_data['owner2']
+        enterprise_exclude = scenario_data['enterprise1']
+        sector_exclude_verify = scenario_data['sector1']
+        
+        api_client.force_authenticate(user=owner2)
+        
+        url = reverse("excluir-empresa", kwargs={'pk': enterprise_exclude.enterprise_id})
+
+        response = api_client.delete(url, format="json")
+        
+        assert response.status_code == 404 #type: ignore
+        assert response.data['sucesso'] == False # type: ignore
+        assert Enterprise.objects.filter(enterprise_id=enterprise_exclude.enterprise_id).exists()
+        assert Sector.objects.filter(sector_id=sector_exclude_verify.sector_id).exists()
+    
+    def test_broken_operation_for_exclude_enterprise_fails(self, api_client: APIClient, mocker: MockerFixture, scenario_data: dict):
+        """
+        Test the return of the application when something gone wrong during operation process.
+        
+        Args:
+            self: The test instance.
+            api_cliente (APIClient) : api client for log in use
+            mocker (MockerFixture): intend to be a failure on a determinated method
+            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
+            
+        Return:
+            None
+        """
+        owner = scenario_data['owner1']
+        enterprise_exclude = scenario_data["enterprise2"]
+        
+        api_client.force_authenticate(user=owner)
+        
+        mocked_get = mocker.patch(
+            'apps.APIEmpresa.views.Enterprise.delete',
+            side_effect=Exception("Simulated Database Query Error")
+        )
+        
+        url = reverse("excluir-empresa", kwargs={'pk': enterprise_exclude.enterprise_id})
+
+        response = api_client.delete(url, format="json")
+        
+        assert response.status_code == 400 # type: ignore
+        assert response.data['sucesso'] == False # type: ignore
+        assert Enterprise.objects.filter(enterprise_id=enterprise_exclude.enterprise_id).exists()
+        
         

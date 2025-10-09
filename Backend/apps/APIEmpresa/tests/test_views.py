@@ -458,3 +458,171 @@ class TestListEnterpriseAPI:
         assert response.status_code == 200
         assert len(response.data['data']) == 1
         assert response.data['data'][0]['name'] == "Empresa do Dono 2" 
+
+@pytest.mark.django_db
+class TestEditEnterpriseAPI:
+    # Backgroud
+    
+    @pytest.fixture
+    def api_client(self):
+        """
+        Returns a API CLIENT for use.
+        
+        Args:
+            self: The test instance.
+
+        Returns:
+            None
+        """
+        return APIClient()
+
+    @pytest.fixture
+    def scenario_data(self):
+        """
+        Create a scenario with multiple users, enterprises and sectors for enterprises
+        visibility tests and permissions.
+        
+        Args:
+            self: The test instance.
+
+        Returns:
+            None
+        """
+        # 1. Criar os 5 usuários
+        owner1 = User.objects.create_user(username="owner1", password="pw", name="Owner 1", email="owner1@e.com")
+        manager = User.objects.create_user(username="manager", password="pw", name="Manager", email="manager@e.com")
+        worker = User.objects.create_user(username="worker", password="pw", name="Worker", email="worker@e.com")
+        admin_worker = User.objects.create_user(username="admin_worker", password="pw", name="Admin Worker", email="adminworker@e.com")
+        owner2 = User.objects.create_user(username="owner2", password="pw", name="Owner 2", email="owner2@e.com")
+
+        # 2. Criar as empresas
+        enterprise1 = Enterprise.objects.create(name="Empresa do Dono 1", owner=owner1)
+        # Empresa Dono 2
+        enterprise2 = Enterprise.objects.create(name="Empresa do Dono 2", owner=owner2)
+
+        # 3. Criar o setor e vincular à empresa e ao gestor
+        sector1 = Sector.objects.create(name="Setor Principal", enterprise=enterprise1, manager=manager)
+
+        # 4. Vincular os colaboradores ao setor
+        SectorUser.objects.create(user=worker, sector=sector1, is_adm=False)
+        SectorUser.objects.create(user=admin_worker, sector=sector1, is_adm=True)
+
+        # 5. Retornar todos os objetos criados para que os testes possam usá-los
+        return {
+            "owner1": owner1,
+            "manager": manager,
+            "worker": worker,
+            "admin_worker": admin_worker,
+            "owner2": owner2,
+            "enterprise1": enterprise1,
+            "enterprise2": enterprise2,
+        }
+        
+    # Success
+    
+    def test_edit_enterprise_by_owner_success(self, api_client: APIClient, scenario_data: dict) -> None:
+        owner = scenario_data["owner1"]
+        enterprise_to_edit = scenario_data["enterprise1"]
+        api_client.force_authenticate(user=owner)
+        
+        url = reverse("alterar-empresa", kwargs={'pk': enterprise_to_edit.pk})
+        
+        valid_payload = {
+            "name": "Novo Nome da Empresa",
+            "image": "novo_logo.png"
+        }
+
+        response = api_client.put(url, valid_payload, format="json")
+
+        assert response.status_code == 200 # type: ignore
+        assert response.data['sucesso'] is True # type: ignore
+        
+        enterprise_to_edit.refresh_from_db()
+        assert enterprise_to_edit.name == "Novo Nome da Empresa"
+
+    # Failures
+    
+    def test_edit_enterprise_by_anonymous_fails(self, api_client: APIClient, scenario_data: dict) -> None:
+        enterprise_to_edit = scenario_data["enterprise1"]
+        url = reverse("alterar-empresa", kwargs={'pk': enterprise_to_edit.pk})
+        payload = {"name": "Tentativa de Edição"}
+
+        response = api_client.put(url, payload, format="json")
+
+        assert response.status_code == 401 # type: ignore
+        assert response.data['mensagem'] == 'As credenciais de autenticação não foram fornecidas.' # type: ignore
+
+    @pytest.mark.parametrize("role", ["manager", "worker", "admin_worker"])
+    def test_edit_enterprise_by_non_owner_roles_fails(self, api_client: APIClient, scenario_data: dict, role: str) -> None:
+        user = scenario_data[role]
+        enterprise_to_edit = scenario_data["enterprise1"]
+        api_client.force_authenticate(user=user)
+        
+        url = reverse("alterar-empresa", kwargs={'pk': enterprise_to_edit.pk})
+        payload = {"name": f"Tentativa de Edição por {role}"}
+        
+        response = api_client.put(url, payload, format="json")
+
+        assert response.status_code == 403 # type: ignore
+        assert response.data['sucesso'] == False # type: ignore
+
+    def test_edit_enterprise_with_invalid_data_type_fails(self, api_client: APIClient, scenario_data: dict) -> None:
+        owner = scenario_data["owner1"]
+        enterprise_to_edit = scenario_data["enterprise1"]
+        api_client.force_authenticate(user=owner)
+
+        url = reverse("alterar-empresa", kwargs={'pk': enterprise_to_edit.pk})
+        
+        invalid_payload = {
+            "name": "123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789",
+            "image": "logo.png"
+        }
+
+        response = api_client.put(url, invalid_payload, format="json")
+
+        assert response.status_code == 400 # type: ignore
+        assert response.data['sucesso'] == False # type: ignore
+        assert "Dados inválidos" in str(response.data['mensagem']) # type: ignore
+        
+    def test_edit_enterprise_not_exist_fails(self, api_client: APIClient, scenario_data: dict):
+        owner = scenario_data['owner1']
+        api_client.force_authenticate(user=owner)
+
+        url = reverse("alterar-empresa", kwargs={'pk': 500})
+        
+        invalid_payload = {
+            "name": "Não atualiza por favor",
+            "image": "logo.png"
+        }
+
+        response = api_client.put(url, invalid_payload, format="json")
+
+        assert response.status_code == 404 # type: ignore
+        assert response.data['sucesso'] == False # type: ignore
+        
+    def test_edit_enterprise_with_broken_operation_fails(self, api_client: APIClient, scenario_data: dict, mocker: MockerFixture):
+        owner = scenario_data['owner1']
+        enterprise_to_edit = scenario_data['enterprise1']
+        
+        api_client.force_authenticate(user=owner)
+        
+        invalid_payload = {
+            "name": "Não atualiza por favor",
+            "image": "logo.png"
+        }
+        
+        url = reverse("alterar-empresa", kwargs={'pk': enterprise_to_edit.enterprise_id})
+        
+        mocked_get = mocker.patch(
+            'apps.APIEmpresa.views.Enterprise.objects.get',
+            side_effect=Exception("Simulated Database Query Error")
+        )
+
+
+        response = api_client.put(url, invalid_payload, format="json")
+
+        assert response.status_code == 500 # type: ignore
+        assert response.data['sucesso'] == False # type: ignore
+        
+        
+        

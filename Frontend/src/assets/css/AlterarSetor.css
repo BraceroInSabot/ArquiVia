@@ -1,8 +1,0 @@
-.campos-input {
-    display: flex;
-    justify-content: space-between;
-}
-
-.campos-input > input {
-    width: 40%;
-}

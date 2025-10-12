@@ -4,7 +4,10 @@ const IndexPage = () => {
   const navigate = useNavigate(); 
 
   const goToLoginPage = () => {
-    navigate('/login'); 
+    navigate('/entrar'); 
+  };
+  const goToRegisterPage = () => {
+    navigate('/registrar')
   };
 
   return (
@@ -12,7 +15,7 @@ const IndexPage = () => {
       <h2>Página Inicial</h2>
       <p>Bem-vindo ao ArquiVia.</p>
       <button onClick={goToLoginPage}>Entrar</button>
-      <button>Registrar</button>
+      <button onClick={goToRegisterPage}>Registrar</button>
     </div>
   );
 };

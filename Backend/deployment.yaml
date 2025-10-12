@@ -15,6 +15,6 @@ spec:
       containers:
         - name: arquivia-app-container
           image: arquivia-app:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 8000

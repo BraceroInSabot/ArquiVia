@@ -12,4 +12,4 @@ COPY Backend/. /app/
 
 EXPOSE 8000
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "core.wsgi:application"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "arquivia.wsgi:application"]

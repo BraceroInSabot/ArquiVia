@@ -14,10 +14,10 @@ spec:
     spec:
       containers:
         - name: arquivia-app-container
-          image: arquivia-app:latest
+          image: bracer2003/arquivia-app:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8000
           envFrom:
             - secretRef:
-              name: django-env
+                name: django-env

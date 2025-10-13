@@ -11,7 +11,7 @@ const LoginPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   const goToRegisterPage = () => {
-    navigate('/register');
+    navigate('/registrar');
   };
 
   const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -23,8 +23,7 @@ const LoginPage = () => {
       const api_response = await userService.login({username, password})
 
       console.log('Login bem-sucedido:', api_response.data);
-      alert('Login efetuado com sucesso!');
-      // navigate('/empresas');
+      navigate('/menu');
 
     } catch (err: any) {
       const errorMessage = err.response?.data?.detail || 'Usuário ou senha inválidos.';

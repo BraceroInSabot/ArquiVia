@@ -53,5 +53,5 @@ jobs:
           script: |
             echo "✅ Conectado ao servidor!"
             echo "🚀 Reiniciando o deployment no Kubernetes..."
-            microk8s kubectl set image deployment/arquivia-app-deployment arquivia-app-container=bracer2003/arquivia-app:${{ github.sha }}
+            kubectl set image deployment/arquivia-app-deployment arquivia-app-container=bracer2003/arquivia-app:${{ github.sha }}
             echo "🎉 Comando de rollout enviado com sucesso!"

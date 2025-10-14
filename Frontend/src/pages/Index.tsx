@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 const IndexPage = () => {
+  const { username } = useAuth();
   const navigate = useNavigate(); 
 
   const goToLoginPage = () => {
@@ -9,13 +11,26 @@ const IndexPage = () => {
   const goToRegisterPage = () => {
     navigate('/registrar')
   };
+  const goToIndexPage = () => {
+    navigate('/menu')
+  };
+
 
   return (
     <div>
       <h2>Página Inicial</h2>
-      <p>Bem-vindo ao ArquiVia.</p>
-      <button onClick={goToLoginPage}>Entrar</button>
-      <button onClick={goToRegisterPage}>Registrar</button>
+      {username ? (
+        <div>
+          <p>Bem-vindo de volta, {username}!</p>
+          <button onClick={goToIndexPage}>Acessar Painel</button>
+        </div>
+      ) : (
+        <div>
+          <p>Bem-vindo ao ArquiVia. Por favor, faça o login.</p>
+          <button onClick={goToLoginPage}>Entrar</button>
+          <button onClick={goToRegisterPage}>Registrar</button>
+        </div>
+      )}
     </div>
   );
 };

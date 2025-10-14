@@ -28,11 +28,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": {
         "rest_framework.permissions.IsAuthenticated",
     },
-<<<<<<< HEAD
     'EXCEPTION_HANDLER': 'apps.core.exceptions.custom_exception_handler',
-=======
-    'EXCEPTION_HANDLER': 'apps.core.utils.custom_exception_handler',
->>>>>>> INFRAESTRUTURAFRONTEND
 }
 
 MIDDLEWARE = [

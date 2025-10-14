@@ -9,7 +9,7 @@ const LoginPage = () => {
 
   useEffect(() => {
     if (username) {
-      navigate("/menu");
+      navigate("/painel");
     }
   }, [username, navigate]);
 

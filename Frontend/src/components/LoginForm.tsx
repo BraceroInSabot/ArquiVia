@@ -26,7 +26,7 @@ const LoginForm = ({ login, navigate }: LoginFormProps) => {
 
             console.log('Login bem-sucedido:', api_response.data);
             login(username);
-            navigate('/menu');
+            navigate('/painel');
 
         } catch (err: any) {
             const errorMessage = err.response?.data?.detail || 'Usuário ou senha inválidos.';

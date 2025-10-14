@@ -13,7 +13,7 @@ const IndexPage = () => {
     navigate('/registrar')
   };
   const goToIndexPage = () => {
-    navigate('/menu')
+    navigate('/painel')
   };
 
 

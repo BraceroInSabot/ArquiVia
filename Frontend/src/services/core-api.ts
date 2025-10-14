@@ -22,6 +22,20 @@ export interface RegisterCredentials {
   cpassword: string;
 }
 
+export interface Enterprise {
+  enterprise_id: number;
+  name: string;
+  image: string;
+  owner: number;
+  owner_name: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface CreateEnterprise {
+  name: string;
+  image: string;
+}
 
 const api = axios.create({
   baseURL: URL, // A URL base do seu backend Django

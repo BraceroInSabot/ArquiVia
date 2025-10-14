@@ -4,15 +4,21 @@ import IndexPage from './pages/Index';
 import LoginPage from './pages/Login';
 import RegisterPage from './pages/Register';
 import EnterpriseIndexPage from './pages/EnterpriseIndexPage';
+import ProtectedRoute from './utils/protected_route';
 
 function ArquiVia() {
   return (
     <div>
       <Routes>
+        {/* Tratamento de rotas públicas. Todos usuários podem acessar. */}
         <Route path="/" element={<IndexPage />} />
         <Route path="/entrar" element={<LoginPage />} />
         <Route path="/registrar" element={<RegisterPage />} />
-        <Route path="/menu" element={<EnterpriseIndexPage />} />
+
+        {/* Tratamento de rotas privadas. Somente usuários logados podem fazer o acesso. */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/menu" element={<EnterpriseIndexPage />} />
+        </Route>
       </Routes>
     </div>
   );

@@ -27,7 +27,8 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_PERMISSION_CLASSES": {
         "rest_framework.permissions.IsAuthenticated",
-    }
+    },
+    'EXCEPTION_HANDLER': 'apps.core.utils.custom_exception_handler',
 }
 
 MIDDLEWARE = [
@@ -95,14 +96,6 @@ USE_TZ = True
 STATIC_URL = "static/"
 
 AUTH_USER_MODEL = "APIUser.AbsUser"
-
-from typing import TypedDict
-
-class ResponseType(TypedDict):
-    sucesso: bool
-    mensagem: str
-
-RESPONSE_PATTERN = ResponseType
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

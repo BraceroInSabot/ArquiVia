@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import LogoutButton from "../components/LogoutButton";
 
 const IndexPage = () => {
   const { username } = useAuth();
@@ -23,6 +24,7 @@ const IndexPage = () => {
         <div>
           <p>Bem-vindo de volta, {username}!</p>
           <button onClick={goToIndexPage}>Acessar Painel</button>
+          <LogoutButton />
         </div>
       ) : (
         <div>

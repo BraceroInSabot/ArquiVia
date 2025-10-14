@@ -79,7 +79,7 @@ class TestLoginAPI:
         assert response.data['sucesso'] is False # type: ignore
         assert response.data['mensagem'] == "Usuário e/ou senha incorreto(s)" # type: ignore
 
-    def test_login_cookies_missing(self, mocker: MockerFixture) -> None:
+    def test_login_cookies_missing_fails(self, mocker: MockerFixture) -> None:
         """
         Tests if the view returns a 400 error if there is an
         internal failure when trying to set the cookies.
@@ -112,6 +112,9 @@ class TestLoginAPI:
         client = APIClient()
 
         response: DRFResponse = client.post(url, login_payload, format='json') # type: ignore
+
+        with open("log.txt", "w") as f:
+            f.write(str(response.data))
 
         assert response.status_code == 401 # type: ignore
         assert response.data['sucesso'] is False # type: ignore

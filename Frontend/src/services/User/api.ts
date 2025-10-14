@@ -16,7 +16,13 @@ const userService = {
    */
   register(register_credentials: RegisterCredentials) {
     return api.post('/usuario/criar-conta', register_credentials);
-  }
+  },
+  /**
+   * Realiza o logout (saída) da conta do usuário
+   */
+  logout() {
+    return api.post('/usuario/sair');
+  },
 };
 
 export default userService;

@@ -1,4 +1,4 @@
-import type { LoginCredentials } from '../core-api';
+import type { LoginCredentials, RegisterCredentials } from '../core-api';
 import api from '../core-api'
 
 const userService = {
@@ -10,6 +10,13 @@ const userService = {
   login(credentials: LoginCredentials) {
     return api.post('/usuario/entrar', credentials);
   },
+  /**
+   * Realiza a criação de conta do usuário.
+   * @param register_credentials - um objeto contendo os dados do usuário a serem validados
+   */
+  register(register_credentials: RegisterCredentials) {
+    return api.post('/usuario/criar-conta', register_credentials);
+  }
 };
 
 export default userService;

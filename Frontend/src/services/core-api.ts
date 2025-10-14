@@ -14,6 +14,15 @@ export interface LoginCredentials {
   password: string;
 }
 
+export interface RegisterCredentials {
+  username: string;
+  name: string;
+  email: string;
+  password: string;
+  cpassword: string;
+}
+
+
 const api = axios.create({
   baseURL: URL, // A URL base do seu backend Django
   withCredentials: true, // Essencial para enviar cookies de autenticação

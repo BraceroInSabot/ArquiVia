@@ -32,6 +32,12 @@ export interface Enterprise {
   created_at: string;
 }
 
+export interface ManyEnterprises {
+  sucesso: boolean;
+  mensagem: string;
+  data: Enterprise[];
+}
+
 export interface CreateEnterprise {
   name: string;
   image: string;

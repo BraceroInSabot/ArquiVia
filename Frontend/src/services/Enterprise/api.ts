@@ -1,12 +1,12 @@
 import api from '../core-api';
-import type { Enterprise, CreateEnterprise } from '../core-api';
+import type { Enterprise, CreateEnterprise, ManyEnterprises } from '../core-api';
 
 const enterpriseService = {
     /**
    * Busca a lista de todas as empresas que o usuário possui vinculo..
    */
-    getEnterprises(): Promise<{ data: Enterprise[] }> {
-        return api.get('/empresa/visualizar');
+    getEnterprises(): Promise<{ data: ManyEnterprises }> {
+        return api.get<ManyEnterprises>('/empresa/visualizar');
     },
 
     /**

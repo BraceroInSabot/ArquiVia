@@ -71,4 +71,13 @@ class RegistroUsuarioSerializer(serializers.ModelSerializer):
         user = User.objects.create_user(**validated_data) #type: ignore
         
         return user #type: ignore
-    
+
+class UserDetailSerializer(serializers.ModelSerializer):
+    """
+    Serializer para exibir os detalhes de um usuário de forma segura.
+    """
+    class Meta:
+        model = User
+        # Defina os campos que você quer que sejam visíveis na API
+        fields = ['user_id', 'username', 'name', 'email', 'image']
+        read_only_fields = ['user_id', 'username', 'name', 'email', 'image']

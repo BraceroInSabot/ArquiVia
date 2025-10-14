@@ -6,7 +6,9 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework.views import Response, APIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .serializer import RegistroUsuarioSerializer
+
+from apps.APIEmpresa.models import Enterprise
+from .serializer import RegistroUsuarioSerializer, UserDetailSerializer
 from django.shortcuts import render
 from django.utils import timezone
 from django.conf import settings
@@ -17,6 +19,8 @@ from django.template.loaders.cached import Loader
 from uuid import uuid4
 from rest_framework import status
 from django.contrib.auth.hashers import make_password
+
+from django.db.models import Q
 
 # DJANGO
 from apps.core.utils import default_response
@@ -167,6 +171,51 @@ class LogoutTokenView(APIView):
             response: HttpResponse = Response(status=400)
             response.data = default_response(success=False, message="Erro ao deslogar usuário.")
             return response
+
+class RetrieveUserView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request: dict, username: str):
+        request_user = request.user # type:ignore
+        
+        try:
+            target_user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            res: HttpResponse = Response()
+            res.status_code = 404
+            res.data = default_response(success=False, message="Usuário não encontrado.")
+            return res
+        
+        if target_user == request_user:
+            is_linked = True
+        else:
+            request_user_enterprise_ids = Enterprise.objects.filter(
+                Q(owner=request_user) |
+                Q(enterprises__manager=request_user) |
+                Q(enterprises__sector_links__user=request_user)
+            ).values_list('pk', flat=True).distinct()
+            
+            is_linked = Enterprise.objects.filter(
+                pk__in=request_user_enterprise_ids
+            ).filter(
+                Q(owner=target_user) |
+                Q(enterprises__manager=target_user) |
+                Q(enterprises__sector_links__user=target_user)
+            ).exists()
+        
+        if not is_linked:
+            res: HttpResponse = Response()
+            res.status_code = 403
+            res.data = default_response(success=False, message="Você não tem permissão para visualizar este usuário.")
+            return res
+
+        serializer = UserDetailSerializer(target_user)
+        res: HttpResponse = Response()
+        res.status_code = 200
+        res.data = default_response(success=True, data=serializer.data)
+        return res
+            
+        
 
 # RESET DE SENHA (LEGADO)
 # TODO: REMOVER OU ATUALIZAR

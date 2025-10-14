@@ -1,3 +1,4 @@
+from rest_framework.views import exception_handler as drf_exception_handler
 from typing import Dict, List, Union
 
 def default_response(success: bool, 
@@ -32,3 +33,17 @@ def default_response(success: bool,
         "sucesso": success,
         "mensagem": message
     }
+    
+
+
+def custom_exception_handler(exc, context):
+    """
+    Manipulador de exceção customizado para o DRF que padroniza todas 
+    as respostas de erro da API.
+    """
+    response = drf_exception_handler(exc, context)
+
+    if response is not None:
+        response.data = default_response(success=False, message=exc.detail)
+
+    return response

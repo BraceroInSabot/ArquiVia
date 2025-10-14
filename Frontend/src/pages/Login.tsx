@@ -2,8 +2,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import userService from '../services/User/api'; 
+import { useAuth } from '../contexts/AuthContext';
 
 const LoginPage = () => {
+  const { login } = useAuth();
+ 
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -23,6 +26,7 @@ const LoginPage = () => {
       const api_response = await userService.login({username, password})
 
       console.log('Login bem-sucedido:', api_response.data);
+      login(username);
       navigate('/menu');
 
     } catch (err: any) {

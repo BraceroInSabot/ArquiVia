@@ -60,11 +60,11 @@ class LoginTokenObtainPairView(TokenObtainPairView):
             print(self.DEBUG)
             response.set_cookie(
                 key='access_token', value=tokens['access'], # type: ignore
-                httponly=True, secure=self.DEBUG, samesite='None'
+                httponly=True, secure=self.DEBUG, samesite='Lax'
             )
             response.set_cookie(
                 key='refresh_token', value=tokens['refresh'], # type: ignore
-                httponly=True, secure=self.DEBUG, samesite='None'
+                httponly=True, secure=self.DEBUG, samesite='Lax'
             )
             
             response.data = default_response(success=True, message="Usuário autenticado com sucesso!")
@@ -109,7 +109,7 @@ class LoginTokenRefreshPairView(TokenRefreshView):
                 value=token_access,
                 httponly=True,
                 secure=self.DEBUG,
-                samesite='None',
+                samesite='Lax',
                 path='/'
             )
 
@@ -175,8 +175,8 @@ class LogoutTokenView(APIView):
         try:
             res: HttpResponse = Response(status=200)
             res.data = default_response(success=True, message="Usuário deslogado com sucesso!")
-            res.delete_cookie('access_token', path='/', samesite='None') # type: ignore
-            res.delete_cookie('refresh_token', path='/', samesite='None') # type: ignore
+            res.delete_cookie('access_token', path='/', samesite='Lax') # type: ignore
+            res.delete_cookie('refresh_token', path='/', samesite='Lax') # type: ignore
             return res
         except:
             response: HttpResponse = Response(status=400)
@@ -234,7 +234,7 @@ class RetrieveUserView(APIView):
 # class RequisicaoRedefinicaoSenhaView(APIView):
 #     permission_classes = [AllowAny]
 
-#     def enviar_email_recuperacao_senha(self, destinatario, usuario, url=None, token="ERRO AO GERAR O TOKEN, ENTRE EM CONTATO COM O PROVEDOR."):
+#     def enviar_email_recuperacao_senha(self, destinatario, usuario, url=Lax, token="ERRO AO GERAR O TOKEN, ENTRE EM CONTATO COM O PROVEDOR."):
 #         try:
 #             assunto = "Esqueci minha senha - AnnotaPS"
 #             remetente = settings.EMAIL_HOST_USER
@@ -277,11 +277,11 @@ class RetrieveUserView(APIView):
 #         cEmail = request.data.get('emailGestor')
         
 #         usuario = Colaborador.objects.filter(email=email).first()
-#         if usuario == None:
+#         if usuario == Lax:
 #             return Response(data={"Falha": [False, "Email do Usuário não encontrado. Verifique o seu e-mail."]}, status=200)
 
 #         gestor = Colaborador.objects.filter(email=cEmail).first()
-#         if gestor == None:
+#         if gestor == Lax:
 #             return Response(data={"Falha": [False, "Email do Gestor (a) não encontrado."]}, status=401)
 
 #         try:

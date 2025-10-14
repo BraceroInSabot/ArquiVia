@@ -3,8 +3,9 @@ import { Routes, Route } from 'react-router-dom';
 import IndexPage from './pages/Index';
 import LoginPage from './pages/Login';
 import RegisterPage from './pages/Register';
-import EnterpriseIndexPage from './pages/EnterpriseIndexPage';
+import PanelPage from './pages/PanelPage';
 import ProtectedRoute from './utils/protected_route';
+import EnterprisePage from './pages/EnterprisePage';
 
 function ArquiVia() {
   return (
@@ -17,7 +18,8 @@ function ArquiVia() {
 
         {/* Tratamento de rotas privadas. Somente usuários logados podem fazer o acesso. */}
         <Route element={<ProtectedRoute />}>
-          <Route path="/menu" element={<EnterpriseIndexPage />} />
+          <Route path="/painel" element={<PanelPage />} />
+          <Route path="/empresas" element={<EnterprisePage />} />
         </Route>
       </Routes>
     </div>

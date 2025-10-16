@@ -4,8 +4,7 @@ metadata:
   name: arquivia-app-ingress
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
-  nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-  nginx.ingress.kubernetes.io/proxy-set-headers: "ingress-nginx/custom-headers"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
 spec:
   tls:
     - hosts:

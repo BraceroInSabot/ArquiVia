@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE: string = "http://179.125.60.185:8081/"
+const BASE: string = "https://bracero.com.br/"
 const VERSION: string = "api/v2/"
 const URL: string = BASE + VERSION
 

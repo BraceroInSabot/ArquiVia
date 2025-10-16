@@ -7,10 +7,10 @@ metadata:
 spec:
   tls:
     - hosts:
-        - arquivia.duckdns.org
+        - bracero.com.br
       secretName: arquivia-tls-secret
   rules:
-    - host: arquivia.duckdns.org
+    - host: bracero.com.br
       http:
         paths:
           - path: /
@@ -19,4 +19,4 @@ spec:
               service:
                 name: arquivia-app-service
                 port:
-                  number: 8081
+                  number: 8000

@@ -29,19 +29,10 @@ from apps.core.utils import default_response
 from django.http import HttpResponse
 from django.contrib.auth import get_user_model
 
-# NATIVE
-from os import getenv
-
-# V ENV
-from dotenv import load_dotenv
-
 User = get_user_model()
 
-from pdb import set_trace as stop
 class LoginTokenObtainPairView(TokenObtainPairView):
     permission_classes = [AllowAny]
-    load_dotenv(".env")
-    DEBUG = not getenv("DEBUG")
 
     def post(self, request: dict, *args, **kwargs) -> HttpResponse:
         """
@@ -57,14 +48,13 @@ class LoginTokenObtainPairView(TokenObtainPairView):
 
         if response.status_code == 200: 
             tokens = response.data
-            print(self.DEBUG)
             response.set_cookie(
                 key='access_token', value=tokens['access'], # type: ignore
-                httponly=True, secure=self.DEBUG, samesite='Lax'
+                httponly=True, secure=True, samesite='Npne'
             )
             response.set_cookie(
                 key='refresh_token', value=tokens['refresh'], # type: ignore
-                httponly=True, secure=self.DEBUG, samesite='Lax'
+                httponly=True, secure=True, samesite='Npne'
             )
             
             response.data = default_response(success=True, message="Usuário autenticado com sucesso!")
@@ -74,8 +64,6 @@ class LoginTokenObtainPairView(TokenObtainPairView):
         
 class LoginTokenRefreshPairView(TokenRefreshView):
     permission_classes = [AllowAny]
-    load_dotenv(".env")
-    DEBUG = not getenv("DEBUG")
 
     def post(self, request: dict, *args, **kwargs) -> HttpResponse:
         """
@@ -108,7 +96,7 @@ class LoginTokenRefreshPairView(TokenRefreshView):
                 key='access_token',
                 value=token_access,
                 httponly=True,
-                secure=self.DEBUG,
+                secure=True,
                 samesite='Lax',
                 path='/'
             )

@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudflare-ddns-updater
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cloudflare-ddns-updater
+  template:
+    metadata:
+      labels:
+        app: cloudflare-ddns-updater
+    spec:
+      containers:
+        - name: updater
+          image: oznu/cloudflare-ddns:latest
+          env:
+            - name: API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: cloudflare-api-token
+                  key: token
+            - name: ZONE
+              value: "bracero.com.br"

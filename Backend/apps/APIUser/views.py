@@ -50,11 +50,11 @@ class LoginTokenObtainPairView(TokenObtainPairView):
             tokens = response.data
             response.set_cookie(
                 key='access_token', value=tokens['access'], # type: ignore
-                httponly=True, secure=True, samesite='Npne'
+                httponly=True, secure=True, samesite='None'
             )
             response.set_cookie(
                 key='refresh_token', value=tokens['refresh'], # type: ignore
-                httponly=True, secure=True, samesite='Npne'
+                httponly=True, secure=True, samesite='None'
             )
             
             response.data = default_response(success=True, message="Usuário autenticado com sucesso!")

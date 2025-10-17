@@ -1,8 +1,14 @@
+import os
 from pathlib import Path
+from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 INSTALLED_APPS =  [
+    "rest_framework_simplejwt",
+    "rest_framework",
+    "corsheaders",
+] + [
     "apps.core",
     "apps.APIUser",
     "apps.APIEmpresa",
@@ -15,10 +21,6 @@ INSTALLED_APPS =  [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-] + [
-    "rest_framework_simplejwt",
-    "rest_framework",
-    "corsheaders",
 ]
 
 REST_FRAMEWORK = {
@@ -32,9 +34,9 @@ REST_FRAMEWORK = {
 }
 
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -42,11 +44,30 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ] 
 
-
-
 ROOT_URLCONF = "arquivia.urls"
 
-import os
+ALLOWED_HOSTS = [
+    "bracero.com.br",
+]
+
+CORS_ALLOWED_ORIGINS = [
+    "https://bracero.com.br",
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://bracero.com.br",
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=8),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=2),
+    "USER_ID_FIELD": "user_id",
+    "AUTH_ERROR_MESSAGES": {
+        'no_active_account': 'As credenciais fornecidas estão incorretas ou a conta está inativa.'
+    }
+}
 
 TEMPLATES = [
     {
@@ -97,3 +118,6 @@ AUTH_USER_MODEL = "APIUser.AbsUser"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = True
+USE_X_FORWARDED_HOST = True

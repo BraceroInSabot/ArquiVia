@@ -15,13 +15,13 @@ from .views import (
 
 urlpatterns = [
     # Authentication
-    path("entrar", LoginTokenObtainPairView.as_view(), name="entrar"),
-    path("atualizar-token", LoginTokenRefreshPairView.as_view(), name="atualizar-token"),
-    path("sair", LogoutTokenView.as_view(), name="sair"),
-    path("criar-conta", RegisterTokenView.as_view(), name="criar-conta"),
+    path("entrar/", LoginTokenObtainPairView.as_view(), name="entrar"),
+    path("atualizar-token/", LoginTokenRefreshPairView.as_view(), name="atualizar-token"),
+    path("sair/", LogoutTokenView.as_view(), name="sair"),
+    path("criar-conta/", RegisterTokenView.as_view(), name="criar-conta"),
 ] + [
     # User CRUD
-    path("consultar/<str:username>", RetrieveUserView.as_view(), name="consultar-usuario")    
+    path("consultar/<str:username>/", RetrieveUserView.as_view(), name="consultar-usuario")    
 ]+ [
     # Password Reset
     # path("esqueci-senha", RequisicaoRedefinicaoSenhaView.as_view()),

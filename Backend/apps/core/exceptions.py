@@ -29,14 +29,16 @@ def custom_exception_handler(exc: Exception, context: dict) -> Optional[Response
     """
     response = exception_handler(exc, context)
 
+    print(response)
+    
     if response is not None: 
         error: str = response.data['detail'] #type: ignore
-        print(error)
         response.data = default_response(success=False, message=error)
 
     elif response is None and isinstance(exc, Exception):
         response = Response(
             default_response(success=False, message="Houve um erro interno no servidor."),
+            status=500,
         )
         
     return response

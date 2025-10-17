@@ -28,8 +28,6 @@ def custom_exception_handler(exc: Exception, context: dict) -> Optional[Response
                             if the exception is handled by DRF, otherwise None.
     """
     response = exception_handler(exc, context)
-
-    print(response)
     
     if response is not None: 
         error: str = response.data['detail'] #type: ignore

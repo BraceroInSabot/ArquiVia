@@ -30,11 +30,16 @@ const EnterprisePage = () => {
     navigate('/painel');
   };
 
+  const goToCreateEnterprise = () => {
+    navigate('/criar-empresa');
+  };
+
   return (
     <div>
       <a onClick={goToPanel}><h1>Arquivia Logo</h1></a>
       <h2>Gestão de Empresas</h2>
-      {/* <CreateEnterpriseForm onEnterpriseCreated={handleEnterpriseCreated} /> */}
+
+      <button onClick={goToCreateEnterprise}>Criar Empresa</button>
       
       {isLoading && <p>Carregando empresas...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}

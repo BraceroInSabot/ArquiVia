@@ -6,6 +6,7 @@ import RegisterPage from './pages/Register';
 import PanelPage from './pages/PanelPage';
 import ProtectedRoute from './utils/protected_route';
 import EnterprisePage from './pages/EnterprisePage';
+import CreateEnterprisePage from './pages/CreateEnterprisePage';
 
 function ArquiVia() {
   return (
@@ -20,6 +21,7 @@ function ArquiVia() {
         <Route element={<ProtectedRoute />}>
           <Route path="/painel" element={<PanelPage />} />
           <Route path="/empresas" element={<EnterprisePage />} />
+          <Route path="/criar-empresa" element={<CreateEnterprisePage />} />
         </Route>
       </Routes>
     </div>

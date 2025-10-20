@@ -1,6 +1,8 @@
 # DRF
+from django.http import HttpResponse
 from rest_framework.views import exception_handler
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
 
 # NATIVE
 from typing import Dict, Optional
@@ -30,16 +32,22 @@ def custom_exception_handler(exc: Exception, context: dict) -> Optional[Response
     response = exception_handler(exc, context)
     
     if response is not None: 
-        try:
-            error: str = response.data['detail'] #type: ignore
-            response.data = default_response(success=False, message=error)
-        except:
-            print(response.data)
+
+        if isinstance(exc, ValidationError):
+            response.data = default_response(
+                success=False,
+                message=list(response.data.values())[0][0], #type: ignore
+            )
+        else:
+            error_detail = response.data.get('detail', str(response.data)) # type: ignore
+            response.data = default_response(success=False, message=error_detail)
+        
 
     elif response is None and isinstance(exc, Exception):
-        response = Response(
-            default_response(success=False, message="Houve um erro interno no servidor."),
-            status=500,
-        )
+        res: HttpResponse = Response()
+        res.status_code = 500
+        res.data = default_response(success=False, message="Houve um erro interno no servidor.")
+        
+        return res
         
     return response

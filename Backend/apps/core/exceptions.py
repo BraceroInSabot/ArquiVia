@@ -30,8 +30,11 @@ def custom_exception_handler(exc: Exception, context: dict) -> Optional[Response
     response = exception_handler(exc, context)
     
     if response is not None: 
-        error: str = response.data['detail'] #type: ignore
-        response.data = default_response(success=False, message=error)
+        try:
+            error: str = response.data['detail'] #type: ignore
+            response.data = default_response(success=False, message=error)
+        except:
+            print(response.data)
 
     elif response is None and isinstance(exc, Exception):
         response = Response(

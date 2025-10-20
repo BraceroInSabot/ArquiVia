@@ -71,12 +71,26 @@ const EnterprisePage = () => {
     // Futuramente: chamar a API para atualizar o status e depois atualizar o estado local
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: number) => {
+    // A confirmação do usuário é uma ótima prática de UX.
     if (window.confirm(`Tem certeza que deseja deletar a empresa com ID: ${id}?`)) {
-      alert(`Deletando empresa com ID: ${id}`);
-      // Futuramente: chamar enterpriseService.deleteEnterprise(id)
-      // e depois remover a empresa do estado 'enterprises'
-      // setEnterprises(current => current.filter(e => e.id !== id));
+      try {
+        // 1. Chama o método do serviço para deletar no backend.
+        await enterpriseService.deleteEnterprise(id);
+
+        // 2. Otimização: Atualiza o estado local para remover a empresa da UI.
+        // O método '.filter' cria um novo array contendo apenas os elementos
+        // que passam no teste (cujo id é diferente do que foi deletado).
+        setEnterprises(currentEnterprises =>
+          currentEnterprises.filter(enterprise => enterprise.enterprise_id !== id)
+        );
+
+        alert(`Empresa com ID: ${id} deletada com sucesso!`);
+
+      } catch (error) {
+        console.error(`Falha ao deletar empresa com ID ${id}:`, error);
+        alert('Não foi possível deletar a empresa. Verifique se ela não possui dados vinculados e tente novamente.');
+      }
     }
   };
 

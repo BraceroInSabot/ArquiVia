@@ -33,6 +33,14 @@ const enterpriseService = {
     updateEnterprise(id: number, data: UpdateEnterpriseData): Promise<{ data: Enterprise }> {
         return api.put(`/empresa/alterar/${id}/`, data);
     },
+
+    /**
+   * Deleta uma empresa existente.
+   * @param id - O ID da empresa a ser deletada.
+   */
+    deleteEnterprise(id: number): Promise<void> {
+        return api.delete(`/empresa/excluir/${id}/`);
+    },
 }
 
 export default enterpriseService;

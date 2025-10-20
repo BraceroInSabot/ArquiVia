@@ -13,16 +13,24 @@ ALLOWED_HOSTS += [
     "127.0.0.1",
 ]
 
+
 DATABASES = {
     'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'arquivia_db',
-            'USER': 'arquivia',
-            'PASSWORD': '123',
-            'HOST': '179.125.60.185', 
-            'PORT': '5432',
-        }
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
+
+# DATABASES = {
+#     'default': {
+#             'ENGINE': 'django.db.backends.postgresql',
+#             'NAME': 'arquivia_db',
+#             'USER': 'arquivia',
+#             'PASSWORD': '123',
+#             'HOST': '179.125.60.185', 
+#             'PORT': '5432',
+#         }
+# }
 
 CORS_ALLOWED_ORIGINS += [
     "http://localhost:3000",

@@ -6,7 +6,8 @@ from datetime import timedelta
 load_dotenv(".env")
 
 SECRET_KEY = os.getenv("S_KEY")
-DEBUG = os.getenv("DEBUG")
+
+DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1", 't')
 
 ALLOWED_HOSTS += [
     "localhost",

@@ -7,18 +7,41 @@ load_dotenv(".env")
 
 SECRET_KEY = os.getenv("S_KEY")
 
-DEBUG = os.getenv("DEBUG")
+DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1", 't')
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ["bracero.com.br", "www.bracero.com.br"]
 
-# docker run -p 5432:5432 -e POSTGRES_PASSWORD=1234 postgres
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "AnnotaPS-Desenvolvimento",
-        "USER": "postgres",
-        "PASSWORD": "1234",
-        "HOST": "localhost",
-        "PORT": "5432",
-    }
+    'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv("DB_NAME"),
+            'USER': os.getenv('DB_USER'),
+            'PASSWORD': os.getenv('DB_PASSWORD'),
+            'HOST': os.getenv('DB_HOST'), 
+            'PORT': os.getenv('DB_PORT'),
+        }
 }
+
+ALLOWED_HOSTS += [
+    "bracero.com.br",
+]
+
+CORS_ALLOWED_ORIGINS += [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://arquivia.pages.dev",
+    "https://arquivia.bracero.com.br",
+]
+
+CSRF_TRUSTED_ORIGINS += [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://arquivia.pages.dev",
+    "https://www.arquivia.bracero.com.br/"
+]
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = True
+
+SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'] = timedelta(days=1)
+SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'] = timedelta(days=3)

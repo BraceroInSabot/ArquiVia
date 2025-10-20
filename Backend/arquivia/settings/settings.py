@@ -46,17 +46,11 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = "arquivia.urls"
 
-ALLOWED_HOSTS = [
-    "bracero.com.br",
-]
+ALLOWED_HOSTS = []
 
-CORS_ALLOWED_ORIGINS = [
-    "https://bracero.com.br",
-]
+CORS_ALLOWED_ORIGINS = []
 
-CSRF_TRUSTED_ORIGINS = [
-    "https://bracero.com.br",
-]
+CSRF_TRUSTED_ORIGINS = []
 
 CORS_ALLOW_CREDENTIALS = True
 
@@ -117,6 +111,3 @@ STATIC_URL = "static/"
 AUTH_USER_MODEL = "APIUser.AbsUser"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SECURE_SSL_REDIRECT = True

@@ -21,6 +21,9 @@ class CreateSectorView(APIView):
     permission_classes = [IsAuthenticated, IsEnterpriseOwner]
     
     def post(self, request):
+        """
+        Create a new Sector. Set the logged user (onwer from enterprise_id) as manager.
+        """
         serializer = SectorCreateSerializer(data=request.data)
         
         serializer.is_valid(raise_exception=True)

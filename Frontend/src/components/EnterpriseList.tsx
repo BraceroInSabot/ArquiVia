@@ -16,8 +16,6 @@ const EnterpriseList = ({ enterprises, onView, onEdit, onToggleStatus, onDelete 
     return <p>Nenhuma empresa cadastrada.</p>;
   }
 
-  console.log(enterprises);
-
   return (
     <div>
       <h2>Lista de Empresas</h2>

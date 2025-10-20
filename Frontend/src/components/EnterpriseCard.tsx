@@ -10,12 +10,11 @@ interface EnterpriseCardProps {
 
 const EnterpriseCard = ({ enterprise, onView, onEdit, onToggleStatus, onDelete }: EnterpriseCardProps) => {
   const isActive = enterprise.is_active; 
-  console.log(enterprise);
   return (
     <div style={{ border: '1px solid black', margin: '10px', padding: '10px' }}>
       <h3>{enterprise.name}</h3>
       <p>ID: {enterprise.enterprise_id}</p>
-      
+
       <button onClick={() => onView(enterprise.enterprise_id)}>Consultar</button>
       <button onClick={() => onEdit(enterprise.enterprise_id)}>Alterar</button>
       <button onClick={() => onDelete(enterprise.enterprise_id)}>Deletar</button>

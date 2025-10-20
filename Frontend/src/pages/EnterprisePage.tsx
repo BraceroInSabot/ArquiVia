@@ -15,8 +15,6 @@ const EnterprisePage = () => {
       try {
         const response = await enterpriseService.getEnterprises();
 
-        console.log('Resposta completa da API:', response.data);
-
         const listaDeEmpresas = response.data.data; 
 
         if (Array.isArray(listaDeEmpresas)) {
@@ -24,13 +22,11 @@ const EnterprisePage = () => {
         } else if (response.data && Array.isArray(response.data)) {
           setEnterprises(response.data);
         } else {
-          console.error("A resposta da API não é um array nem contém uma chave 'results' com um array.", response.data);
           setError('Formato de dados inesperado recebido do servidor.');
         }
 
       } catch (err) {
         setError('Falha ao carregar as empresas.');
-        console.error(err);
       } finally {
         setIsLoading(false);
       }
@@ -57,7 +53,6 @@ const EnterprisePage = () => {
       alert(enterpriseData);
 
     } catch (error) {
-      console.error(`Falha ao consultar empresa com ID ${id}:`, error);
       alert('Não foi possível carregar os dados atualizados da empresa. Tente novamente.');
     }
   };
@@ -86,7 +81,6 @@ const EnterprisePage = () => {
         alert(`Empresa ${actionText}da com sucesso!`);
 
       } catch (error) {
-        console.error(`Falha ao ${actionText} empresa com ID ${id}:`, error);
         alert(`Não foi possível alterar o status da empresa. Tente novamente.`);
       }
     }
@@ -104,7 +98,6 @@ const EnterprisePage = () => {
         alert(`Empresa com ID: ${id} deletada com sucesso!`);
 
       } catch (error) {
-        console.error(`Falha ao deletar empresa com ID ${id}:`, error);
         alert('Não foi possível deletar a empresa. Verifique se ela não possui dados vinculados e tente novamente.');
       }
     }

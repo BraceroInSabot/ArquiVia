@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import enterpriseService from '../services/Enterprise/api';
 import Validate from '../utils/enterprise_validation';
 import { useNavigate } from 'react-router-dom';
 
@@ -19,17 +18,12 @@ const CreateEnterpriseForm = () => {
 
         try {
         
-            const enterpriseData = { name, image };
-
             const nameValidation = Validate.name(name);
             if (!nameValidation[0]) {
             setError(nameValidation[1] as string);
             return;
             }
             
-            const api_response = await enterpriseService.createEnterprise(enterpriseData);
-
-            console.log('Empresa criada com sucesso:', api_response.data);
             alert('Empresa criada com sucesso!');
             
             setName('');
@@ -40,7 +34,6 @@ const CreateEnterpriseForm = () => {
         } catch (err: any) {
             const errorMessage = err.response?.data?.detail || 'Falha ao criar a empresa.';
             setError(errorMessage);
-            console.error('Erro ao criar empresa:', err.response?.data);
         } finally {
             setLoading(false);
         }

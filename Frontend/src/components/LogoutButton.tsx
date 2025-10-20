@@ -9,9 +9,7 @@ const LogoutButton = () => {
   const handleLogout = async () => {
     try {
       await userService.logout(); 
-      console.log("Token invalidado no backend.");
     } catch (error) {
-      console.error("Falha ao fazer logout no backend:", error);
     } finally {
       logout();
       navigate('/entrar');

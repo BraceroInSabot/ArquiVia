@@ -6,7 +6,8 @@ from datetime import timedelta
 load_dotenv(".env")
 
 SECRET_KEY = os.getenv("S_KEY")
-DEBUG = os.getenv("DEBUG")
+
+DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1", 't')
 
 ALLOWED_HOSTS += [
     "localhost",
@@ -15,13 +16,9 @@ ALLOWED_HOSTS += [
 
 DATABASES = {
     'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'arquivia_db',
-            'USER': 'arquivia',
-            'PASSWORD': '123',
-            'HOST': '179.125.60.185', 
-            'PORT': '5432',
-        }
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
 
 CORS_ALLOWED_ORIGINS += [

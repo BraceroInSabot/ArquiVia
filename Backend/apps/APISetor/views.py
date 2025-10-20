@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework.views import APIView, Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import Sector, SectorUser, KeyCodeSector
+from .models import Sector, SectorUser
 from apps.APIEmpresa.models import Enterprise
 from django.contrib.auth import get_user_model
 from django.utils import timezone

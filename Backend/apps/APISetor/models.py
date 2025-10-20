@@ -38,14 +38,14 @@ class SectorUser(models.Model):
     def __str__(self):
         return f"{self.user} vinculado ao setor {self.sector}"
 
-class KeyCodeSector(models.Model):
-    key_code_id = models.AutoField(primary_key=True, db_column="ID_key_code")
-    key = models.CharField(max_length=256, db_column="key")
-    expiration = models.DateTimeField(default=lambda: timezone.now() + timedelta(hours=3), db_column="expiration_date")
-    sector = models.ForeignKey(Sector, on_delete=models.CASCADE, db_column="PK_sector")
+# class KeyCodeSector(models.Model):
+#     key_code_id = models.AutoField(primary_key=True, db_column="ID_key_code")
+#     key = models.CharField(max_length=256, db_column="key")
+#     expiration = models.DateTimeField(default=lambda: timezone.now() + timedelta(hours=3), db_column="expiration_date")
+#     sector = models.ForeignKey(Sector, on_delete=models.CASCADE, db_column="PK_sector")
     
-    class Meta:
-        db_table = "KeyCodeSector"
+#     class Meta:
+#         db_table = "KeyCodeSector"
         
-        verbose_name = "Codigo Chave"
-        verbose_name_plural = "Códigos Chave"
+#         verbose_name = "Codigo Chave"
+#         verbose_name_plural = "Códigos Chave"

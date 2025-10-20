@@ -10,8 +10,20 @@ class ApidocumentoConfig(AppConfig):
     def ready(self):
         """
         Este método é executado quando a aplicação está pronta.
+        
+        Querys:
+        
+        INSERT INTO public."Classification_Privacity" ("ID_class_priv", privacity, abreviation) VALUES
+            (1, 'Público', 'PB'),
+            (2, 'Privado', 'PV');
+            
+        INSERT INTO public."Classification_Status" ("ID_status", status) VALUES
+            (1, 'Concluído'),
+            (2, 'Em Andamento'),
+            (3, 'Revisão necessária'),
+            (4, 'Arquivado');
         """
-        from .models import models, Classification_Privacity, Classification_Status
+        from .models import Classification_Privacity, Classification_Status
 
         def insert_initial_data(insert_data: List[Dict[str, Any]], model_class: Type[Model]):
             """

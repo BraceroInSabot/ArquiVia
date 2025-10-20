@@ -56,7 +56,7 @@ class CreateSectorView(APIView):
                     "mensagem": "Setor criado."
             }}, status=200)
     
-class ShowSectorView(APIView):
+class RetrieveSectorView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
@@ -108,7 +108,7 @@ class ShowSectorView(APIView):
         res.data = data
         return res
     
-class ListSectorsView(APIView):
+class ListSectorView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
@@ -158,7 +158,7 @@ class ListSectorsView(APIView):
         res.data = data
         return res
 
-class ActivateDeactivateSectorView(APIView):
+class ActivateOrDeactivateSectorView(APIView):
     permission_classes = [IsAuthenticated]
     
     def put(self, request):
@@ -202,7 +202,7 @@ class ActivateDeactivateSectorView(APIView):
             }}
         return res
 
-class UpdateSectorView(APIView):
+class EditSectorView(APIView):
     permission_classes = [IsAuthenticated]
     
     def put(self, request):
@@ -248,7 +248,7 @@ class UpdateSectorView(APIView):
             }}
         return res
     
-class DeleteSectorView(APIView):
+class ExcludeSectorView(APIView):
     permission_classes = [IsAuthenticated]
     
     def delete(self, request):

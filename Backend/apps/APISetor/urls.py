@@ -2,22 +2,20 @@ from django.urls import path
 
 from .views import ( 
     CreateSectorView,
-    ShowSectorView,
-    ListSectorsView,
-    ActivateDeactivateSectorView,
-    ShowSectorView,
-    UpdateSectorView,
-    DeleteSectorView,
+    RetrieveSectorView,
+    ListSectorView,
+    ActivateOrDeactivateSectorView,
+    EditSectorView,
+    ExcludeSectorView,
     AddUserToSectorView
     )
 
 urlpatterns = [
-    path("criar", CreateSectorView.as_view(), name="criar-setor"),
-    path("consultar", ShowSectorView.as_view(), name="consultar-setor"),
-    path("listar", ListSectorsView.as_view(), name="listar-setores"),
-    path("ativar-desativar", ActivateDeactivateSectorView.as_view(), name="ativar-desativar-setor"),
-    path("visualizar", ShowSectorView.as_view(), name="visualizar-setor"),
-    path("atualizar", UpdateSectorView.as_view(), name="atualizar-setor"),
-    path("deletar", DeleteSectorView.as_view(), name="deletar-setor"),
-    path("adicionar-usuario", AddUserToSectorView.as_view(), name="adicionar-usuario-setor"),
+    path("criar/", CreateSectorView.as_view(), name="criar-setor"),
+    path("consultar/<int:pk>/", RetrieveSectorView.as_view(), name="consultar-setor"),
+    path("visualizar/", ListSectorView.as_view(), name="listar-setores"),
+    path("alterar/<int:pk>/", EditSectorView.as_view(), name="atualizar-setor"),
+    path("ativar-desativar/<int:pk>/", ActivateOrDeactivateSectorView.as_view(), name="ativar-desativar-setor"),
+    path("excluir/<int:pk>/", ExcludeSectorView.as_view(), name="deletar-setor"),
+    path("adicionar-usuario/", AddUserToSectorView.as_view(), name="adicionar-usuario-setor"),
 ]

@@ -11,3 +11,4 @@ __init__.py
 *.sh
 *.bat
 migrations
+*.sqlite3

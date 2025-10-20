@@ -13,7 +13,7 @@ from .views import (
 urlpatterns = [
     path("criar/", CreateSectorView.as_view(), name="criar-setor"),
     path("consultar/<int:pk>/", RetrieveSectorView.as_view(), name="consultar-setor"),
-    path("visualizar/", ListSectorView.as_view(), name="listar-setores"),
+    path("visualizar/<int:pk>/", ListSectorView.as_view(), name="listar-setores"),
     path("alterar/<int:pk>/", EditSectorView.as_view(), name="atualizar-setor"),
     path("ativar-desativar/<int:pk>/", ActivateOrDeactivateSectorView.as_view(), name="ativar-desativar-setor"),
     path("excluir/<int:pk>/", ExcludeSectorView.as_view(), name="deletar-setor"),

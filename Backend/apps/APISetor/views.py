@@ -1,3 +1,4 @@
+from django.http import HttpResponse
 from django.shortcuts import render
 from rest_framework.views import APIView, Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -5,6 +6,11 @@ from .models import Sector, SectorUser
 from apps.APIEmpresa.models import Enterprise
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from apps.core.utils import default_response
+from .serializers import SectorCreateSerializer
+from .permissions import IsEnterpriseOwner
+from rest_framework import status
+
 
 # Typing
 from apps.APIUser.models import AbsUser as UserModel
@@ -12,49 +18,19 @@ from apps.APIUser.models import AbsUser as UserModel
 USER = get_user_model()
 
 class CreateSectorView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsEnterpriseOwner]
     
     def post(self, request):
-        name = request.data.get("name")
-        image = request.data.get("image")
-        enterprise = request.data.get("enterprise_id")
+        serializer = SectorCreateSerializer(data=request.data)
         
-        try:
-            enterprise: Enterprise = Enterprise.objects.filter(enterprise_id=enterprise).first() # type: ignore    
-        except Enterprise.DoesNotExist:
-            res = Response()
-            res.status_code=400
-            res.data = {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": f"Erro ao vincular o setor a empresa. Tente novamente."
-                    }}
-            return res 
+        serializer.is_valid(raise_exception=True)
         
-        if Sector.objects.filter(enterprise=enterprise, name=name).exists():
-            res = Response()
-            res.status_code=400
-            res.data = {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": f"Setor com mesmo nome já existente para a empresa. Tente com outro nome."
-                    }}
-            return res 
-
-        sector = Sector(
-            name = name,
-            image = image,
-            manager = enterprise.owner,
-            enterprise = enterprise            
-        )
-        sector.save()
+        sector = serializer.save()
         
-        return Response(
-            {"Data": 
-                { 
-                    "sucesso": True,
-                    "mensagem": "Setor criado."
-            }}, status=200)
+        res: HttpResponse = Response()
+        res.status_code = 201
+        res.data = default_response(success=True, message="Setor criado com sucesso!", data=serializer.data)
+        return res
     
 class RetrieveSectorView(APIView):
     permission_classes = [IsAuthenticated]

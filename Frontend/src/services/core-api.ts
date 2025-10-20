@@ -43,6 +43,11 @@ export interface CreateEnterprise {
   image: string;
 }
 
+export interface UpdateEnterpriseData {
+  name: string;
+  image?: string;
+}
+
 const api = axios.create({
   baseURL: URL, // A URL base do seu backend Django
   withCredentials: true, // Essencial para enviar cookies de autenticação

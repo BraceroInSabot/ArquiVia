@@ -63,8 +63,7 @@ const EnterprisePage = () => {
   };
 
   const handleEdit = (id: number) => {
-    alert(`Editar empresa com ID: ${id}`);
-    // Futuramente: navigate(`/empresas/editar/${id}`);
+    navigate(`/empresas/editar/${id}`);
   };
 
   const handleToggleStatus = (id: number, currentStatus: boolean) => {

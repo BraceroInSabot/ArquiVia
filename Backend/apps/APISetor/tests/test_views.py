@@ -305,3 +305,166 @@ class TestRetrieveSectorAPI:
         assert response.status_code == 403
         assert response.data['sucesso'] is False  #type: ignore
         assert "Você não tem permissão para acessar este setor" in response.data['mensagem'] #type: ignore
+    
+@pytest.mark.django_db
+class TestListSectorsByEnterpriseAPI:
+    """
+    Test suite for the List Sectors by Enterprise endpoint.
+    """
+
+    @pytest.fixture
+    def api_client(self) -> APIClient:
+        """Returns an APIClient instance for use in tests."""
+        return APIClient()
+
+    @pytest.fixture
+    def scenario_data(self) -> Dict[str, str | object]:
+        """
+        Creates a comprehensive scenario for visibility tests:
+        - owner: Owns the enterprise.
+        - member: Belongs to one active and one inactive sector.
+        - outsider: An authenticated user with no links to the enterprise.
+        """
+        # 1. Criar os usuários necessários para o escopo do teste
+        owner = User.objects.create_user(username="list_owner", email="owner@gmail.com", name="Owner", password="pw")
+        member = User.objects.create_user(username="list_member", email="member@gmail.com", name="Member", password="pw")
+        outsider = User.objects.create_user(username="list_outsider", email="outsider@gmail.com", name="Outsider", password="pw")
+
+        # 2. Criar a empresa que o setor será vinculado
+        enterprise = Enterprise.objects.create(name="Corp de Listagem", owner=owner)
+        
+        # 3. Criação de dois setores distintos, onde um é ativo e outro é inativo
+        active_sector = Sector.objects.create(name="Setor Ativo", enterprise=enterprise, manager=owner, is_active=True)
+        inactive_sector = Sector.objects.create(name="Setor Inativo", enterprise=enterprise, manager=owner, is_active=False)
+        
+        # 4. Criação de um setor a parte para verificar a permissão de usuários comuns vinculados a outro setor
+        other_sector = Sector.objects.create(name="Outro Setor", enterprise=enterprise, manager=owner, is_active=True)
+
+        # 5. Vinculo de usuários com setor.
+        SectorUser.objects.create(user=member, sector=active_sector)
+        SectorUser.objects.create(user=member, sector=inactive_sector)
+
+        return {
+            "owner": owner,
+            "member": member,
+            "outsider": outsider,
+            "enterprise": enterprise,
+        }
+
+    # Sucess
+    
+    def test_list_by_owner_sees_all_sectors_success(self, api_client: APIClient, scenario_data: Dict) -> None:
+        """
+        Tests if the enterprise owner can see all sectors (active and inactive).
+        
+        Args:
+            self: The test instance.
+            api_cliente (APIClient) : api client for log in use
+            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
+            
+        Return:
+            None
+        """
+        owner = scenario_data["owner"]
+        enterprise = scenario_data["enterprise"]
+        api_client.force_authenticate(user=owner)
+        url = reverse("listar-setores", kwargs={'pk': enterprise.pk})
+
+        response: DRFResponse = api_client.get(url)  #type: ignore
+
+        assert response.status_code == 200
+        assert response.data['sucesso'] is True #type: ignore
+        assert len(response.data['data']) == 3 #type: ignore
+
+    def test_list_by_member_sees_only_linked_active_sectors_success(self, api_client: APIClient, scenario_data: Dict) -> None:
+        """
+        Tests if a sector member sees only the active sectors they belong to.
+        
+        Args:
+            self: The test instance.
+            api_cliente (APIClient) : api client for log in use
+            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
+            
+        Return:
+            None
+        """
+        member = scenario_data["member"]
+        enterprise = scenario_data["enterprise"]
+        api_client.force_authenticate(user=member)
+        url = reverse("listar-setores", kwargs={'pk': enterprise.pk})
+
+        response: DRFResponse = api_client.get(url)  #type: ignore
+
+        assert response.status_code == 200
+        assert response.data['sucesso'] is True #type: ignore
+        assert len(response.data['data']) == 1 #type: ignore
+        assert response.data['data'][0]['name'] == "Setor Ativo" #type: ignore
+
+    # Failures
+
+    def test_list_by_anonymous_fails(self, api_client: APIClient, scenario_data: Dict) -> None:
+        """
+        Tests if an unauthenticated user receives a 401 Unauthorized error.
+        
+        Args:
+            self: The test instance.
+            api_cliente (APIClient) : api client for log in use
+            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
+            
+        Return:
+            None
+        """
+        enterprise = scenario_data["enterprise"]
+        url = reverse("listar-setores", kwargs={'pk': enterprise.pk})
+
+        response: DRFResponse = api_client.get(url) #type: ignore
+
+        assert response.status_code == 401
+        assert response.data['sucesso'] is False #type: ignore
+
+    def test_list_by_outsider_fails(self, api_client: APIClient, scenario_data: Dict) -> None:
+        """
+        Tests if an authenticated but non-linked user receives a 403 Forbidden error.
+        
+        Args:
+            self: The test instance.
+            api_cliente (APIClient) : api client for log in use
+            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
+            
+        Return:
+            None
+        """
+        outsider = scenario_data["outsider"]
+        enterprise = scenario_data["enterprise"]
+        api_client.force_authenticate(user=outsider)
+        url = reverse("listar-setores", kwargs={'pk': enterprise.pk})
+
+        response: DRFResponse = api_client.get(url)  #type: ignore
+
+        assert response.status_code == 403
+        assert response.data['sucesso'] is False #type: ignore
+        assert "Você não tem permissão para acessar os recursos desta empresa" in response.data['mensagem']  #type: ignore
+
+    def test_list_for_non_existent_enterprise_fails(self, api_client: APIClient, scenario_data: Dict) -> None:
+        """
+        Tests if requesting sectors for a non-existent enterprise returns a 404 Not Found.
+        
+        Args:
+            self: The test instance.
+            api_cliente (APIClient) : api client for log in use
+            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
+            
+        Return:
+            None
+        """
+        owner = scenario_data["owner"]
+        api_client.force_authenticate(user=owner)
+        non_existent_pk = 999
+        url = reverse("listar-setores", kwargs={'pk': non_existent_pk})
+
+        response: DRFResponse = api_client.get(url)  #type: ignore
+                     
+        assert response.status_code == 404
+        assert response.data['sucesso'] is False #type: ignore
+        assert response.data['mensagem'] == "Empresa não encontrada." #type: ignore
+        

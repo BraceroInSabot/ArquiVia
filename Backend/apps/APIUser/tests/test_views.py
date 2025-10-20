@@ -113,9 +113,6 @@ class TestLoginAPI:
 
         response: DRFResponse = client.post(url, login_payload, format='json') # type: ignore
 
-        with open("log.txt", "w") as f:
-            f.write(str(response.data))
-
         assert response.status_code == 401 # type: ignore
         assert response.data['sucesso'] is False # type: ignore
         assert response.data['mensagem'] == "Usuário e/ou senha incorreto(s)" # type: ignore

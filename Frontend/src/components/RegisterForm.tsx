@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import userService from '../services/User/api';
-import type { RegisterCredentials } from '../services/core-api';
 import Validate from '../utils/credential_validation';
 
 const RegisterForm = () => {

@@ -6,7 +6,7 @@ from rest_framework.response import Response as DRFResponse
 from typing import Dict
 
 from apps.APIEmpresa.models import Enterprise
-from apps.APISetor.models import Sector
+from apps.APISetor.models import Sector, SectorUser
 
 User = get_user_model()
 
@@ -141,9 +141,167 @@ class TestCreateSectorAPI:
     
         response: DRFResponse = api_client.post(url, invalid_payload, format="json") #type: ignore
         
-        with open("log.txt", "w") as f:
-            f.write(str(response.data))
-
         assert response.status_code == 400
         assert response.data['sucesso'] is False #type: ignore
         assert "Um setor com este nome já existe nesta empresa" in str(response.data)
+
+
+User = get_user_model()
+
+
+@pytest.mark.django_db
+class TestRetrieveSectorAPI:
+    """
+    Test suite for the Retrieve Sector endpoint (/consultar/<int:pk>/).
+    """
+
+    @pytest.fixture
+    def api_client(self) -> APIClient:
+        """Returns an APIClient instance."""
+        return APIClient()
+
+    @pytest.fixture
+    def scenario_data(self) -> Dict[str, str | object]:
+        """
+        Creates a scenario with an owner, a sector member, and an outsider.
+        
+        Returns:
+            Dict[str, str]: A dictionary containing the scenario data.
+        """
+        # 1. Cria três possíveis usuários
+        owner = User.objects.create_user(username="sector_owner", password="pw", email="owner@gmail.com", name="Owner")
+        member = User.objects.create_user(username="sector_member", password="pw", email="member@gmail.com", name="Member")
+        outsider = User.objects.create_user(username="sector_outsider", password="pw", email="outsider@gmail.com", name="Outsider")
+
+        # 2. Cria a empresa que possui o setor
+        enterprise = Enterprise.objects.create(name="Test Corp for Sector", owner=owner)
+        
+        # 3. Cria o Setor alvo dos testes
+        sector = Sector.objects.create(name="Engineering", enterprise=enterprise, manager=owner)
+        
+        # 4. Vincula o 'member' ao setor
+        SectorUser.objects.create(user=member, sector=sector)
+
+        return {
+            "owner": owner,
+            "member": member,
+            "outsider": outsider,
+            "sector": sector,
+        }
+
+    # Success
+
+    def test_retrieve_sector_by_owner_success(self, api_client: APIClient, scenario_data: Dict) -> None:
+        """
+        Tests if the enterprise owner can successfully retrieve sector details.
+        
+        Args:
+            self: The test instance.
+            api_cliente (APIClient) : api client for log in use
+            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
+            
+        Return:
+            None
+        """
+        owner = scenario_data["owner"]
+        sector = scenario_data["sector"]
+        api_client.force_authenticate(user=owner)
+        url = reverse("consultar-setor", kwargs={'pk': sector.pk})
+
+        response: DRFResponse = api_client.get(url)  #type: ignore
+
+        assert response.status_code == 200
+        assert response.data['sucesso'] is True #type: ignore
+        assert response.data['data']['name'] == "Engineering" #type: ignore
+
+    def test_retrieve_sector_by_member_success(self, api_client: APIClient, scenario_data: Dict) -> None:
+        """
+        Tests if a member of the sector can successfully retrieve its details.
+        
+        Args:
+            self: The test instance.
+            api_cliente (APIClient) : api client for log in use
+            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
+            
+        Return:
+            None
+        """
+        member = scenario_data["member"]
+        sector = scenario_data["sector"]
+        api_client.force_authenticate(user=member)
+        url = reverse("consultar-setor", kwargs={'pk': sector.pk})
+
+        response: DRFResponse = api_client.get(url) #type: ignore
+
+        assert response.status_code == 200
+        assert response.data['sucesso'] is True #type: ignore
+        assert response.data['data']['sector_id'] == sector.pk #type: ignore
+
+    # Failures
+
+    def test_retrieve_non_existent_sector_fails(self, api_client: APIClient, scenario_data: Dict) -> None:
+        """
+        Tests if requesting a non-existent sector ID returns a 404 Not Found error.
+        
+        Args:
+            self: The test instance.
+            api_cliente (APIClient) : api client for log in use
+            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
+            
+        Return:
+            None
+        """
+        owner = scenario_data["owner"]
+        api_client.force_authenticate(user=owner)
+        non_existent_pk = 999
+        url = reverse("consultar-setor", kwargs={'pk': non_existent_pk})
+
+        response: DRFResponse = api_client.get(url)  #type: ignore
+
+        assert response.status_code == 404
+        assert response.data['sucesso'] is False  #type: ignore
+        assert response.data['mensagem'] == "Setor não encontrado."  #type: ignore
+
+    def test_retrieve_sector_by_anonymous_fails(self, api_client: APIClient, scenario_data: Dict) -> None:
+        """
+        Tests if an unauthenticated (anonymous) user receives a 401 Unauthorized error.
+        
+        Args:
+            self: The test instance.
+            api_cliente (APIClient) : api client for log in use
+            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
+            
+        Return:
+            None
+        """
+        sector = scenario_data["sector"]
+        url = reverse("consultar-setor", kwargs={'pk': sector.pk})
+
+        response: DRFResponse = api_client.get(url)  #type: ignore
+
+        assert response.status_code == 401
+        assert response.data['sucesso'] is False #type: ignore
+        assert "As credenciais de autenticação não foram fornecidas" in response.data['mensagem'] #type: ignore
+
+    def test_retrieve_sector_by_outsider_fails(self, api_client: APIClient, scenario_data: Dict) -> None:
+        """
+        Tests if an authenticated but non-member/non-owner user receives a 403 Forbidden error.
+        
+        Args:
+            self: The test instance.
+            api_cliente (APIClient) : api client for log in use
+            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
+            
+        Return:
+            None
+        """
+        outsider = scenario_data["outsider"]
+        sector = scenario_data["sector"]
+        api_client.force_authenticate(user=outsider) # Autenticado, mas sem permissão
+        url = reverse("consultar-setor", kwargs={'pk': sector.pk})
+
+        response: DRFResponse = api_client.get(url)  #type: ignore
+
+        assert response.status_code == 403
+        assert response.data['sucesso'] is False  #type: ignore
+        assert "Você não tem permissão para acessar este setor" in response.data['mensagem'] #type: ignore

@@ -2,6 +2,8 @@
 
 from rest_framework.permissions import BasePermission
 from apps.APIEmpresa.models import Enterprise
+from apps.APISetor.models import SectorUser, Sector
+
 
 class IsEnterpriseOwner(BasePermission):
     """
@@ -25,3 +27,17 @@ class IsEnterpriseOwner(BasePermission):
         except Enterprise.DoesNotExist:
             self.message = f"A empresa com o ID {enterprise_id} não foi encontrada."
             return False
+        
+class IsOwnerOrSectorMember(BasePermission):
+    """
+    Permissão customizada que concede acesso se o usuário for o dono da empresa
+    ou um membro do setor.
+    """
+    message = "Você não tem permissão para acessar este setor."
+
+    def has_object_permission(self, request, view, obj):        
+        is_owner = obj.enterprise.owner == request.user
+        is_manager = Sector.objects.filter(manager=request.user, sector_id=obj.sector_id).exists()
+        is_member = SectorUser.objects.filter(user=request.user, sector=obj).exists()
+        
+        return is_owner or is_member or is_manager

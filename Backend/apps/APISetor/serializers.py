@@ -71,3 +71,22 @@ class SectorDetailSerializer(serializers.ModelSerializer):
             'enterprise_name', 
             'is_active'
         ]
+        
+class SectorListSerializer(serializers.ModelSerializer):
+    """
+    Serializer for listing Sector details efficiently.
+    """
+    manager_name = serializers.CharField(source='manager.name', read_only=True)
+    
+    creation_date = serializers.DateTimeField(format="%H:%M:%S - %d-%m-%Y", read_only=True) #type: ignore
+
+    class Meta:
+        model = Sector
+        fields = [
+            'sector_id', 
+            'name', 
+            'manager_name', 
+            'image', 
+            'creation_date', 
+            'is_active'
+        ]

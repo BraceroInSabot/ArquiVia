@@ -41,3 +41,20 @@ class IsOwnerOrSectorMember(BasePermission):
         is_member = SectorUser.objects.filter(user=request.user, sector=obj).exists()
         
         return is_owner or is_member or is_manager
+    
+class IsEnterpriseOwnerOrMember(BasePermission):
+    """
+    Custom permission to only allow enterprise owners or members 
+    of any sector within that enterprise to access related resources.
+    """
+    message = "Você não tem permissão para acessar os recursos desta empresa."
+
+    def has_object_permission(self, request, view, obj):
+        is_owner = obj.owner == request.user
+        
+        is_member = SectorUser.objects.filter(
+            user=request.user, 
+            sector__enterprise=obj
+        ).exists()
+        
+        return is_owner or is_member

@@ -49,8 +49,8 @@ export interface UpdateEnterpriseData {
 }
 
 const api = axios.create({
-  baseURL: URL, // A URL base do seu backend Django
-  withCredentials: true, // Essencial para enviar cookies de autenticação
+  baseURL: URL,
+  withCredentials: true,
 });
 
 export default api;

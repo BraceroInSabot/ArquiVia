@@ -1,7 +1,5 @@
 import type { Enterprise } from '../services/core-api';
 import EnterpriseCard from './EnterpriseCard';
-
-// As props são a lista de empresas e as funções de ação
 interface EnterpriseListProps {
   enterprises: Enterprise[];
   onView: (id: number) => void;

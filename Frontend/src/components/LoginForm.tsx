@@ -32,7 +32,6 @@ const LoginForm = ({ login, navigate }: LoginFormProps) => {
         }
     };
 
-    // O JSX (return) continua o mesmo.
     return (
         <form onSubmit={handleLogin}>
             <div>

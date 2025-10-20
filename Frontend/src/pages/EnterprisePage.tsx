@@ -116,7 +116,6 @@ const EnterprisePage = () => {
       {error && <p style={{ color: 'red' }}>{error}</p>}
       
       {!isLoading && !error && (
-        // 3. Renderize o componente de lista, passando os dados e as funções de ação
         <EnterpriseList
           enterprises={enterprises}
           onView={handleView}

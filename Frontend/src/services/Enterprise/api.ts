@@ -10,6 +10,14 @@ const enterpriseService = {
     },
 
     /**
+     * Realiza a consulta da empresa pelo ID.
+     * @param id - ID da empresa. Comumente pego pela listagem de empresas ou vinculo de setor.
+    */
+    getEnterpriseById(id: number): Promise<{ data: Enterprise }> {
+        return api.get<Enterprise>(`/empresa/consultar/${id}/`);
+    },
+
+    /**
    * Cria uma nova empresa.
    * @param data - Objeto com nome e cnpj.
    */

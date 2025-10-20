@@ -23,7 +23,7 @@ const EnterpriseList = ({ enterprises, onView, onEdit, onToggleStatus, onDelete 
       <h2>Lista de Empresas</h2>
       {enterprises.map(enterprise => (
         <EnterpriseCard
-          key={enterprise.id}
+          key={enterprise.enterprise_id}
           enterprise={enterprise}
           onView={onView}
           onEdit={onEdit}

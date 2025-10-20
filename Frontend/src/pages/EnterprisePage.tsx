@@ -39,9 +39,27 @@ const EnterprisePage = () => {
     fetchEnterprises();
   }, []);
 
-  const handleView = (id: number) => {
-    alert(`Consultar empresa com ID: ${id}`);
-    // Futuramente: navigate(`/empresas/${id}`);
+  const handleView = async (id: number) => {
+    try {
+      const response = await enterpriseService.getEnterpriseById(id);
+      // @ts-ignore
+      const enterprise = response.data.data; 
+
+      const enterpriseData = `
+        Dados da Empresa (ID: ${enterprise.enterprise_id}):
+        --------------------------
+        Nome: ${enterprise.name}
+        Imagem: ${enterprise.image || 'Não informada'}
+        Ativo: ${enterprise.is_active ? 'Sim' : 'Não'}
+        Criado em: ${new Date(enterprise.created_at).toLocaleString()}
+      `;
+
+      alert(enterpriseData);
+
+    } catch (error) {
+      console.error(`Falha ao consultar empresa com ID ${id}:`, error);
+      alert('Não foi possível carregar os dados atualizados da empresa. Tente novamente.');
+    }
   };
 
   const handleEdit = (id: number) => {

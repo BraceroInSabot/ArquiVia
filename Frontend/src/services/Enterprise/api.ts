@@ -41,6 +41,15 @@ const enterpriseService = {
     deleteEnterprise(id: number): Promise<void> {
         return api.delete(`/empresa/excluir/${id}/`);
     },
+
+    /**
+   * Altera o status de ativação de uma empresa.
+   * @param id - O ID da empresa.
+   * @param newStatus - O novo status (true para ativo, false para inativo).
+   */
+    toggleEnterpriseStatus(id: number, newStatus: boolean): Promise<{ data: Enterprise }> {
+        return api.put(`/empresa/ativar-desativar/${id}/`, { is_active: newStatus });
+    },
 }
 
 export default enterpriseService;

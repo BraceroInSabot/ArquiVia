@@ -9,20 +9,17 @@ interface EnterpriseCardProps {
 }
 
 const EnterpriseCard = ({ enterprise, onView, onEdit, onToggleStatus, onDelete }: EnterpriseCardProps) => {
-  const isActive = true; // No futuro, isso viria de `enterprise.status` ou algo similar
+  const isActive = enterprise.is_active; 
   console.log(enterprise);
   return (
     <div style={{ border: '1px solid black', margin: '10px', padding: '10px' }}>
       <h3>{enterprise.name}</h3>
       <p>ID: {enterprise.enterprise_id}</p>
-
-      {/* Botões de Ação */}
-      {/* Cada botão chama a função recebida via prop, passando o ID da empresa */}
+      
       <button onClick={() => onView(enterprise.enterprise_id)}>Consultar</button>
       <button onClick={() => onEdit(enterprise.enterprise_id)}>Alterar</button>
       <button onClick={() => onDelete(enterprise.enterprise_id)}>Deletar</button>
 
-      {/* Switch para Ativar/Desativar */}
       <label>
         <input
           type="checkbox"

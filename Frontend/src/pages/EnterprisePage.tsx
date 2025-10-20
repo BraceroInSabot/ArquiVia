@@ -66,21 +66,37 @@ const EnterprisePage = () => {
     navigate(`/empresas/editar/${id}`);
   };
 
-  const handleToggleStatus = (id: number, currentStatus: boolean) => {
-    alert(`Mudar status da empresa ${id} de ${currentStatus} para ${!currentStatus}`);
-    // Futuramente: chamar a API para atualizar o status e depois atualizar o estado local
+  const handleToggleStatus = async (id: number, currentStatus: boolean) => {
+    const newStatus = !currentStatus;
+    const actionText = newStatus ? "ativar" : "desativar";
+
+    if (window.confirm(`Tem certeza que deseja ${actionText} a empresa com ID: ${id}?`)) {
+      try {
+        await enterpriseService.toggleEnterpriseStatus(id, newStatus);
+
+        setEnterprises(currentEnterprises =>
+          currentEnterprises.map(enterprise => {
+            if (enterprise.enterprise_id === id) {
+              return { ...enterprise, is_active: newStatus };
+            }
+            return enterprise;
+          })
+        );
+        
+        alert(`Empresa ${actionText}da com sucesso!`);
+
+      } catch (error) {
+        console.error(`Falha ao ${actionText} empresa com ID ${id}:`, error);
+        alert(`Não foi possível alterar o status da empresa. Tente novamente.`);
+      }
+    }
   };
 
   const handleDelete = async (id: number) => {
-    // A confirmação do usuário é uma ótima prática de UX.
     if (window.confirm(`Tem certeza que deseja deletar a empresa com ID: ${id}?`)) {
       try {
-        // 1. Chama o método do serviço para deletar no backend.
         await enterpriseService.deleteEnterprise(id);
 
-        // 2. Otimização: Atualiza o estado local para remover a empresa da UI.
-        // O método '.filter' cria um novo array contendo apenas os elementos
-        // que passam no teste (cujo id é diferente do que foi deletado).
         setEnterprises(currentEnterprises =>
           currentEnterprises.filter(enterprise => enterprise.enterprise_id !== id)
         );

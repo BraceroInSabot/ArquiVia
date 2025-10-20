@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import userService from '../services/User/api';
-import type { RegisterCredentials } from '../services/core-api';
 import Validate from '../utils/credential_validation';
 
 const RegisterForm = () => {
@@ -12,20 +10,16 @@ const RegisterForm = () => {
   const [password, setPassword] = useState('');
   const [cpassword, setCpassword] = useState('');
   
-  // 1. Estado para armazenar e exibir a mensagem de erro na tela
   const [error, setError] = useState<string | null>(null);
 
   const goToLoginPage = () => {
     navigate('/entrar');
   };
 
-  // 2. A lógica agora está no onSubmit do formulário
   const handleRegister = async (event: React.FormEvent<HTMLFormElement>) => {
-    // 3. Previne o recarregamento da página
     event.preventDefault();
-    setError(null); // Limpa erros anteriores
+    setError(null); 
 
-    // 4. Validação mais eficiente (chamando cada função apenas uma vez)
     const usernameValidation = Validate.username(username);
     if (!usernameValidation[0]) {
       setError(usernameValidation[1] as string);
@@ -47,16 +41,11 @@ const RegisterForm = () => {
       return;
     }
 
-    const userData: RegisterCredentials = { username, name, email, password, cpassword };
-
     try {
-      const api_response = await userService.register(userData);
-      console.log('Registro bem-sucedido:', api_response.data);
       alert('Registro realizado com sucesso!');
       navigate('/entrar');
     } catch (err: any) {
       const errorMessage = err.response?.data?.mensagem || 'Erro ao registrar usuário.';
-      // 5. Exibe o erro na tela em vez de usar alert()
       setError(errorMessage);
     }
   }

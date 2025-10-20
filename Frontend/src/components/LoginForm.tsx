@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { type NavigateFunction } from 'react-router-dom';
-import userService from '../services/User/api'; 
 
 interface LoginFormProps {
   login: (name: string) => void;
@@ -22,22 +21,17 @@ const LoginForm = ({ login, navigate }: LoginFormProps) => {
         setError(null);
 
         try {
-            const api_response = await userService.login({username, password})
-
-            console.log('Login bem-sucedido:', api_response.data);
             login(username);
-            navigate('/menu');
+            navigate('/painel');
 
         } catch (err: any) {
             const errorMessage = err.response?.data?.detail || 'Usuário ou senha inválidos.';
             setError(errorMessage);
-            console.error('Erro no login:', err.response?.data);
         } finally {
             setLoading(false);
         }
     };
 
-    // O JSX (return) continua o mesmo.
     return (
         <form onSubmit={handleLogin}>
             <div>

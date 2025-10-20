@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE: string = "http://179.125.60.185:8081/"
+const BASE: string = "https://bracero.com.br/"
 const VERSION: string = "api/v2/"
 const URL: string = BASE + VERSION
 
@@ -22,10 +22,35 @@ export interface RegisterCredentials {
   cpassword: string;
 }
 
+export interface Enterprise {
+  enterprise_id: number;
+  name: string;
+  image: string;
+  owner: number;
+  owner_name: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface ManyEnterprises {
+  sucesso: boolean;
+  mensagem: string;
+  data: Enterprise[];
+}
+
+export interface CreateEnterprise {
+  name: string;
+  image: string;
+}
+
+export interface UpdateEnterpriseData {
+  name: string;
+  image?: string;
+}
 
 const api = axios.create({
-  baseURL: URL, // A URL base do seu backend Django
-  withCredentials: true, // Essencial para enviar cookies de autenticação
+  baseURL: URL,
+  withCredentials: true,
 });
 
 export default api;

@@ -49,3 +49,25 @@ class SectorCreateSerializer(serializers.ModelSerializer):
             image=validated_data.get('image')
         )
         return sector
+    
+class SectorDetailSerializer(serializers.ModelSerializer):
+    """
+    Serializer para exibir os detalhes de um setor, incluindo nomes
+    de campos relacionados.
+    """
+    manager_name = serializers.CharField(source='manager.name', read_only=True)
+    enterprise_name = serializers.CharField(source='enterprise.name', read_only=True)
+    
+    creation_date = serializers.DateTimeField(format="%H:%M:%S - %d-%m-%Y", read_only=True)  #type: ignore
+
+    class Meta:
+        model = Sector
+        fields = [
+            'sector_id', 
+            'name', 
+            'manager_name', 
+            'image', 
+            'creation_date', 
+            'enterprise_name', 
+            'is_active'
+        ]

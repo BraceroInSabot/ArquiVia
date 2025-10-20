@@ -7,8 +7,8 @@ from apps.APIEmpresa.models import Enterprise
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from apps.core.utils import default_response
-from .serializers import SectorCreateSerializer
-from .permissions import IsEnterpriseOwner
+from .serializers import SectorCreateSerializer, SectorDetailSerializer
+from .permissions import IsEnterpriseOwner, IsOwnerOrSectorMember
 from rest_framework import status
 
 
@@ -23,6 +23,12 @@ class CreateSectorView(APIView):
     def post(self, request):
         """
         Create a new Sector. Set the logged user (onwer from enterprise_id) as manager.
+        
+        Args:
+            request (dict): user request
+
+        Returns:
+            Response: HttpResponse with status and message
         """
         serializer = SectorCreateSerializer(data=request.data)
         
@@ -34,57 +40,41 @@ class CreateSectorView(APIView):
         res.status_code = 201
         res.data = default_response(success=True, message="Setor criado com sucesso!", data=serializer.data)
         return res
-    
+        
 class RetrieveSectorView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsOwnerOrSectorMember]
     
-    def get(self, request):
-        sector_id = request.data.get("sector_id")
-        
-        try:
-            sector: Sector = Sector.objects.filter(sector_id=sector_id).first()          
-        except Enterprise.DoesNotExist:
-            res = Response()
-            res.status_code=400
-            res.data = {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": f"Setor não existente. Tente novamente."
-                    }}
-            return res 
+    def get(self, request, pk: int):
+        """
+        Retrieves the details of a single sector.
 
-        try:
-            if sector.enterprise.owner != request.user or SectorUser.objects.filter(user=request.user, sector=sector).exists():
-                res = Response()
-                res.status_code=403
-                res.data = {"Data": 
-                            { 
-                                "sucesso": False,
-                                "mensagem": f"Você não tem permissão para acessar este setor."
-                        }}
-                return res
-        except:
-            res = Response()
-            res.status_code=403
-            res.data = {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": "Houve um erro ao tentar acessar o setor. Tente novamente."
-                    }}
-            return res
-       
-        data = {
-            "name": sector.name,
-            "manager": sector.manager.name,
-            "image": sector.image,
-            "created_at": timezone.localtime(sector.creation_date).strftime("%H:%M:%S - %d-%m-%Y"),
-            "works_at": sector.enterprise.name,
-            "is_active": sector.is_active
-        }
+        The user must be authenticated and have permission to view the sector.
+        Permission is granted if the user is the owner of the company to which
+        the sector belongs, or if the user is a member of the sector.
         
-        res = Response()
-        res.status_code=200
-        res.data = data
+        Args:
+            request (Request): The user request object.
+            pk (int): The primary key of the sector to retrieve.
+
+        Returns:
+            Response: HttpResponse with status and message
+        """
+        
+        sector = Sector.objects.select_related('manager', 'enterprise').filter(pk=pk).first()
+
+        if sector is None:
+            res: HttpResponse = Response()
+            res.status_code = 404
+            res.data = default_response(success=False, message="Setor não encontrado.")
+            return res
+        
+        self.check_object_permissions(request, sector)
+
+        serializer = SectorDetailSerializer(sector)
+        
+        res: HttpResponse = Response()
+        res.status_code = 200
+        res.data = default_response(success=True, message="Setor recuperado com sucesso!", data=serializer.data)
         return res
     
 class ListSectorView(APIView):

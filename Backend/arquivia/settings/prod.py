@@ -35,7 +35,7 @@ CORS_ALLOWED_ORIGINS += [
 CSRF_TRUSTED_ORIGINS += [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "https://arquivia.bracero.com.br",
+    "https://www.arquivia.bracero.com.br/"
 ]
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

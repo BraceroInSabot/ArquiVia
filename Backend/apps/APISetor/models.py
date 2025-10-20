@@ -10,7 +10,7 @@ class Sector(models.Model):
     image = models.CharField(max_length=50, db_column="image_sector", null=True, blank=True)
     creation_date = models.DateTimeField(auto_now_add=True, db_column='date_created_at_sector')
     manager = models.ForeignKey(User, on_delete=models.CASCADE, db_column='FK_manager_sector', related_name="managers")
-    enterprise = models.ForeignKey(Enterprise, on_delete=models.CASCADE, db_column='FK_enterprise_sector', related_name="enterprises")
+    enterprise = models.ForeignKey(Enterprise, on_delete=models.CASCADE, db_column='FK_enterprise_sector', related_name="sectors")
     is_active = models.BooleanField(default=True, db_column="is_active_sector")
     
     class Meta:

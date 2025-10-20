@@ -12,4 +12,4 @@ COPY Backend/. /app/
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "export DJANGO_SETTINGS_MODULE=core.settings.prod && gunicorn --bind 0.0.0.0:8000 arquivia.wsgi:application"]
+CMD ["sh", "-c", "export DJANGO_SETTINGS_MODULE=arquivia.settings.prod && gunicorn --bind 0.0.0.0:8000 arquivia.wsgi:application"]

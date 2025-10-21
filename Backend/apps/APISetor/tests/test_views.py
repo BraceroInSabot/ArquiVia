@@ -605,4 +605,216 @@ class TestActivateDeactivateSectorAPI:
 
         assert response.status_code == 404 #type: ignore
         assert response.data['sucesso'] is False #type: ignore
+
+@pytest.mark.django_db
+class TestEditSectorAPI:
+    """
+    Test suite for the Edit Sector endpoint (PUT /alterar/<int:pk>/).
+    """
+
+    @pytest.fixture
+    def api_client(self) -> APIClient:
+        """Returns an APIClient instance."""
+        return APIClient()
+
+    @pytest.fixture
+    def scenario_data(self) -> Dict:
+        """
+        Creates a scenario with users, enterprise, and sector for edit tests.
+        Roles: owner, manager, admin_worker, worker, outsider.
+        """
+        owner = User.objects.create_user(username="edit_owner", password="pw", name="Owner", email="owner@gmail.com")
+        manager = User.objects.create_user(username="edit_manager", password="pw", name="Manager", email="manager@gmail.com")
+        admin_worker = User.objects.create_user(username="edit_admin", password="pw", name="Admin", email="adm@gmail.com")
+        worker = User.objects.create_user(username="edit_worker", password="pw", name="Worker", email="worker@gmail.com")
+        outsider = User.objects.create_user(username="edit_outsider", password="pw", name="Outsider", email="outsider@gmail.com")
+
+        enterprise = Enterprise.objects.create(name="Edit Corp", owner=owner)
+        sector_to_edit = Sector.objects.create(
+            name="Original Name", 
+            enterprise=enterprise, 
+            manager=manager, # Manager is assigned here
+            image="original.png"
+        )
+
+        SectorUser.objects.create(user=admin_worker, sector=sector_to_edit, is_adm=True)
+        SectorUser.objects.create(user=worker, sector=sector_to_edit, is_adm=False)
+
+        return {
+            "owner": owner,
+            "manager": manager,
+            "admin_worker": admin_worker,
+            "worker": worker,
+            "outsider": outsider,
+            "enterprise": enterprise,
+            "sector": sector_to_edit,
+        }
+
+    # Success
+
+    @pytest.mark.parametrize("role", ["owner", "manager", "admin_worker"])
+    def test_edit_sector_by_authorized_user_success(
+        self, api_client: APIClient, scenario_data: Dict, role: str
+    ) -> None:
+        """
+        Tests if authorized users (owner, manager, admin) can successfully edit the sector.
         
+        Args:
+            self: The test instance.
+            api_cliente (APIClient) : api client for log in use
+            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
+            roles: (str): Possible user roles
+            
+        Return:
+            None
+        """
+        user = scenario_data[role]
+        sector = scenario_data["sector"]
+        api_client.force_authenticate(user=user)
+        url = reverse("atualizar-setor", kwargs={'pk': sector.pk})
+        
+        payload = {
+            "name": f"Updated by {role}",
+            "image": "updated.png"
+        }
+        
+        response = api_client.put(url, payload, format="json")
+
+        assert response.status_code == 200 #type: ignore
+        assert response.data['sucesso'] is True #type: ignore
+        assert response.data['mensagem'] == "Setor Atualizado!" #type: ignore
+        assert response.data['data']['name'] == f"Updated by {role}" #type: ignore
+        
+        sector.refresh_from_db()
+        
+        assert sector.name == f"Updated by {role}"
+        assert sector.image == "updated.png"
+
+    def test_edit_sector_partial_update_success(self, api_client: APIClient, scenario_data: Dict) -> None:
+        """
+        Tests if an authorized user can partially update (only one field) the sector.
+        
+        Args:
+            self: The test instance.
+            api_cliente (APIClient) : api client for log in use
+            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
+            
+        Return:
+            None
+        """
+        owner = scenario_data["owner"]
+        sector = scenario_data["sector"]
+        api_client.force_authenticate(user=owner)
+        url = reverse("atualizar-setor", kwargs={'pk': sector.pk})
+        
+        payload = { "name": "Partially Updated Name" }
+        original_image = sector.image 
+
+        response = api_client.put(url, payload, format="json")
+
+        assert response.status_code == 200 #type: ignore
+        assert response.data['sucesso'] is True #type: ignore
+        assert response.data['data']['name'] == "Partially Updated Name" #type: ignore
+        
+        sector.refresh_from_db()
+        
+        assert sector.name == "Partially Updated Name"
+        assert sector.image == original_image
+
+
+    # Failures
+
+    def test_edit_non_existent_sector_fails(self, api_client: APIClient, scenario_data: Dict) -> None:
+        """
+        Tests if trying to edit a non-existent sector returns 404 Not Found.
+        
+        Args:
+            self: The test instance.
+            api_cliente (APIClient) : api client for log in use
+            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
+            
+        Return:
+            None
+        """
+        owner = scenario_data["owner"]
+        api_client.force_authenticate(user=owner)
+        non_existent_pk = 999
+        url = reverse("atualizar-setor", kwargs={'pk': non_existent_pk})
+        payload = {"name": "Wont Update"}
+
+        response = api_client.put(url, payload, format="json")
+
+        assert response.status_code == 404 #type: ignore
+        assert response.data['sucesso'] is False #type: ignore
+
+    def test_edit_sector_by_anonymous_fails(self, api_client: APIClient, scenario_data: Dict) -> None:
+        """
+        Tests if an unauthenticated user receives 401 Unauthorized.
+        
+        Args:
+            self: The test instance.
+            api_cliente (APIClient) : api client for log in use
+            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
+            
+        Return:
+            None
+        """
+        sector = scenario_data["sector"]
+        url = reverse("atualizar-setor", kwargs={'pk': sector.pk})
+        payload = {"name": "Wont Update"}
+
+        response = api_client.put(url, payload, format="json")
+
+        assert response.status_code == 401 #type: ignore
+        assert response.data['sucesso'] is False #type: ignore
+
+    @pytest.mark.parametrize("role", ["worker", "outsider"])
+    def test_edit_sector_by_unauthorized_user_fails(
+        self, api_client: APIClient, scenario_data: Dict, role: str
+    ) -> None:
+        """
+        Tests if unauthorized users (worker, outsider) receive 403 Forbidden.
+        
+        Args:
+            self: The test instance.
+            api_cliente (APIClient) : api client for log in use
+            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
+            role (str) : two types of unauthorized users
+            
+        Return:
+            None
+        """
+        user = scenario_data[role]
+        sector = scenario_data["sector"]
+        api_client.force_authenticate(user=user)
+        url = reverse("atualizar-setor", kwargs={'pk': sector.pk})
+        payload = {"name": f"Attempt by {role}"}
+
+        response = api_client.put(url, payload, format="json")
+
+        assert response.status_code == 403 #type: ignore
+        assert response.data['sucesso'] is False #type: ignore
+
+    def test_edit_sector_with_invalid_data_fails(self, api_client: APIClient, scenario_data: Dict) -> None:
+        """
+        Tests if sending invalid data (e.g., name too long) returns 400 Bad Request.
+        
+        Args:
+            self: The test instance.
+            api_cliente (APIClient) : api client for log in use
+            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
+            
+        Return:
+            None
+        """
+        owner = scenario_data["owner"] 
+        sector = scenario_data["sector"]
+        api_client.force_authenticate(user=owner)
+        url = reverse("atualizar-setor", kwargs={'pk': sector.pk})
+        
+        invalid_payload = { "name": "a" * 201 } 
+
+        response = api_client.put(url, invalid_payload, format="json")
+
+        assert response.status_code == 400 #type: ignore
+        assert response.data['sucesso'] is False #type: ignore

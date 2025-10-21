@@ -2,6 +2,7 @@ import pytest
 from rest_framework.test import APIClient
 from django.urls import reverse
 from django.contrib.auth import get_user_model
+from django.http import HttpResponse
 from rest_framework.response import Response as DRFResponse
 from typing import Dict
 
@@ -467,4 +468,141 @@ class TestListSectorsByEnterpriseAPI:
         assert response.status_code == 404
         assert response.data['sucesso'] is False #type: ignore
         assert response.data['mensagem'] == "Empresa não encontrada." #type: ignore
+
+@pytest.mark.django_db
+class TestActivateDeactivateSectorAPI:
+    """
+    Test suite for the Activate/Deactivate Sector endpoint.
+    """
+
+    @pytest.fixture
+    def api_client(self) -> APIClient:
+        """Returns an APIClient instance."""
+        return APIClient()
+
+    @pytest.fixture
+    def scenario_data(self) -> Dict:
+        """
+        Creates a scenario with an owner, an outsider, and a sector.
+        """
+        owner = User.objects.create_user(username="toggle_owner", password="pw", name="Owner", email="owner@gmail.com")
+        outsider = User.objects.create_user(username="toggle_outsider", password="pw", name="Outsider", email='outsider@gmail.com')
+        enterprise = Enterprise.objects.create(name="Toggle Corp", owner=owner)
+        # Start with an active sector
+        sector = Sector.objects.create(name="Active Sector", enterprise=enterprise, manager=owner, is_active=True)
+
+        return {
+            "owner": owner,
+            "outsider": outsider,
+            "enterprise": enterprise,
+            "sector": sector,
+        }
+
+    # Success
+
+    def test_toggle_sector_by_owner_success(self, api_client: APIClient, scenario_data: Dict) -> None:
+        """
+        Tests if the enterprise owner can successfully deactivate an active sector.
+        
+        Args:
+            self: The test instance.
+            api_cliente (APIClient) : api client for log in use
+            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
+            
+        Return:
+            None
+        """
+        owner = scenario_data["owner"]
+        sector = scenario_data["sector"]
+        
+        assert sector.is_active is True 
+        
+        api_client.force_authenticate(user=owner)
+        url = reverse("ativar-desativar-setor", kwargs={'pk': sector.pk})
+
+        response = api_client.put(url)
+
+        assert response.status_code == 200 #type: ignore
+        assert response.data['sucesso'] is True #type: ignore
+        assert response.data['data']['is_active'] is False #type: ignore
+        
+        sector.refresh_from_db()
+        assert sector.is_active is False
+
+        response_reactivate = api_client.put(url)
+
+        assert response_reactivate.status_code == 200 #type: ignore
+        assert response_reactivate.data['data']['is_active'] is True #type: ignore
+        
+        sector.refresh_from_db()
+        
+        assert sector.is_active is True
+
+
+    # Failures
+
+    def test_toggle_sector_by_anonymous_fails(self, api_client: APIClient, scenario_data: Dict) -> None:
+        """
+        Tests if an unauthenticated user receives a 401 Unauthorized error.
+        
+        Args:
+            self: The test instance.
+            api_cliente (APIClient) : api client for log in use
+            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
+            
+        Return:
+            None
+        """
+        sector = scenario_data["sector"]
+        url = reverse("ativar-desativar-setor", kwargs={'pk': sector.pk})
+
+        response = api_client.put(url)
+
+        assert response.status_code == 401 #type: ignore
+        assert response.data['sucesso'] is False #type: ignore
+
+    def test_toggle_sector_by_outsider_fails(self, api_client: APIClient, scenario_data: Dict) -> None:
+        """
+        Tests if an authenticated but non-owner user receives a 403 Forbidden error.
+        
+        Args:
+            self: The test instance.
+            api_cliente (APIClient) : api client for log in use
+            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
+            
+        Return:
+            None
+        """
+        outsider = scenario_data["outsider"]
+        sector = scenario_data["sector"]
+        api_client.force_authenticate(user=outsider)
+        url = reverse("ativar-desativar-setor", kwargs={'pk': sector.pk})
+
+        response = api_client.put(url)
+
+        assert response.status_code == 403 #type: ignore
+        assert response.data['sucesso'] is False #type: ignore
+        assert "Você não tem permissão para modificar este setor" in str(response.data) #type: ignore
+
+    def test_toggle_non_existent_sector_fails(self, api_client: APIClient, scenario_data: Dict) -> None:
+        """
+        Tests if trying to toggle a non-existent sector returns a 404 Not Found error.
+        
+        Args:
+            self: The test instance.
+            api_cliente (APIClient) : api client for log in use
+            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
+            
+        Return:
+            None
+        """
+        owner = scenario_data["owner"]
+        api_client.force_authenticate(user=owner)
+        non_existent_pk = 999
+        url = reverse("ativar-desativar-setor", kwargs={'pk': non_existent_pk})
+
+        response = api_client.put(url)
+
+        assert response.status_code == 404 #type: ignore
+        assert response.data['sucesso'] is False #type: ignore
         

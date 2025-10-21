@@ -14,7 +14,8 @@ from .permissions import (
     IsEnterpriseOwnerOrMember, 
     IsOwnerOrSectorMember, 
     IsSectorEnterpriseOwner, 
-    IsOwnerManagerOrSectorAdmin)
+    IsOwnerManagerOrSectorAdmin,
+    IsEnterpriseOwnerBySector)
 from rest_framework import status
 
 
@@ -178,106 +179,17 @@ class EditSectorView(APIView):
         return res
     
 class ExcludeSectorView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsEnterpriseOwnerBySector]
     
-    def delete(self, request):
-        sector_id = request.data.get("sector_id")
+    def delete(self, request, pk: int): 
+        sector = get_object_or_404(Sector.objects.select_related('enterprise__owner'), pk=pk)
         
-        try:
-            sector: Sector = Sector.objects.filter(sector_id=sector_id).first()          
-        except Enterprise.DoesNotExist:
-            res = Response()
-            res.status_code=400
-            res.data = {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": "Setor não encontrado. Tente novamente."
-                    }}
-            return res 
+        self.check_object_permissions(request, sector)
         
-        if sector.enterprise.owner != request.user or sector.manager != request.user or SectorUser.objects.filter(sector=sector, user=request.user, is_adm=True).exists():
-            res = Response()
-            res.status_code=403
-            res.data = {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": "Você não tem permissão para deletar este setor."
-                    }}
-            return res
-        
+        sector_name: str = sector.name
         sector.delete()
 
         res = Response()
         res.status_code = 200
-        res.data = {"Data": 
-                { 
-                    "sucesso": True,
-                    "mensagem": "Setor deletado com sucesso."
-            }}
-        return res
-    
-class AddUserToSectorView(APIView):
-    permission_classes = [IsAuthenticated]
-    
-    def post(self, request):
-        sector_id = request.data.get("sector_id")
-        user_email = request.data.get("user_email")
-        
-        try:
-            sector: Sector = Sector.objects.filter(sector_id=sector_id).first()          
-        except Enterprise.DoesNotExist:
-            res = Response()
-            res.status_code=400
-            res.data = {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": "Setor não encontrado. Tente novamente."
-                    }}
-            return res 
-
-        if sector.enterprise.owner != request.user and not SectorUser.objects.filter(sector=sector, user=request.user, is_adm=True).exists():
-            res = Response()
-            res.status_code=403
-            res.data = {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": "Você não tem permissão para adicionar usuários a este setor."
-                    }}
-            return res
-        
-        try:
-            user: UserModel = USER.objects.filter(email=user_email).first()
-        except USER.DoesNotExist:
-            res = Response()
-            res.status_code=400
-            res.data = {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": "Usuário não encontrado. Tente novamente."
-                    }}
-            return res 
-        
-        if SectorUser.objects.filter(sector=sector, user=user).exists():
-            res = Response()
-            res.status_code=400
-            res.data = {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": "Usuário já está vinculado a este setor."
-                    }}
-            return res 
-        
-        sector_user = SectorUser(
-            sector=sector,
-            user=user
-        )
-        sector_user.save()
-
-        res = Response()
-        res.status_code = 200
-        res.data = {"Data": 
-                { 
-                    "sucesso": True,
-                    "mensagem": "Usuário adicionado ao setor com sucesso."
-            }}
+        res.data = default_response(success=True, message=f"Setor {sector_name} deletado com sucesso.") 
         return res

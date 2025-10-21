@@ -6,7 +6,10 @@ from .views import (
     ListSectorView,
     ActivateOrDeactivateSectorView,
     EditSectorView,
-    ExcludeSectorView,
+    ExcludeSectorView
+    )
+
+from .sectorUserUtils.views import (
     AddUserToSectorView
     )
 
@@ -17,5 +20,7 @@ urlpatterns = [
     path("alterar/<int:pk>/", EditSectorView.as_view(), name="atualizar-setor"),
     path("ativar-desativar/<int:pk>/", ActivateOrDeactivateSectorView.as_view(), name="ativar-desativar-setor"),
     path("excluir/<int:pk>/", ExcludeSectorView.as_view(), name="deletar-setor"),
+] + [
     path("adicionar-usuario/", AddUserToSectorView.as_view(), name="adicionar-usuario-setor"),
+    
 ]

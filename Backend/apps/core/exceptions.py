@@ -1,8 +1,10 @@
 # DRF
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from rest_framework.views import exception_handler
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
+from rest_framework import status
 
 # NATIVE
 from typing import Dict, Optional
@@ -32,6 +34,10 @@ def custom_exception_handler(exc: Exception, context: dict) -> Optional[Response
     response = exception_handler(exc, context)
     
     if response is not None: 
+        if response.status_code == status.HTTP_404_NOT_FOUND:
+            # Se for, substituímos a mensagem padrão pela nossa traduzida
+            response.data = "Recurso não encontrado."
+            
         if isinstance(exc, ValidationError):
             response.data = default_response(
                 success=False,
@@ -39,11 +45,11 @@ def custom_exception_handler(exc: Exception, context: dict) -> Optional[Response
             )
         else:
             if isinstance(response.data, dict) and 'detail' in response.data:
-                msg = str(response.data['detail'])
+                msg = _(str(response.data['detail']))
             else:
-                msg = str(response.data)
+                msg = _(str(response.data))
                 
-            response.data = default_response(success=False, message=msg)
+            response.data = default_response(success=False, message=_(msg))
         
 
     elif response is None and isinstance(exc, Exception):

@@ -1,5 +1,6 @@
+from typing import Union
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from rest_framework.views import APIView, Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import Sector, SectorUser
@@ -8,7 +9,7 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from apps.core.utils import default_response
 from .serializers import SectorCreateSerializer, SectorDetailSerializer, SectorListSerializer
-from .permissions import IsEnterpriseOwner, IsEnterpriseOwnerOrMember, IsOwnerOrSectorMember
+from .permissions import IsEnterpriseOwner, IsEnterpriseOwnerOrMember, IsOwnerOrSectorMember, IsSectorEnterpriseOwner
 from rest_framework import status
 
 
@@ -125,47 +126,23 @@ class ListSectorView(APIView):
         return res
     
 class ActivateOrDeactivateSectorView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsSectorEnterpriseOwner]
     
-    def put(self, request):
-        sector_id = request.data.get("sector_id")
+    def put(self, request, pk: int):      
         
-        try:
-            sector: Sector = Sector.objects.filter(sector_id=sector_id).first()          
-        except Enterprise.DoesNotExist:
-            res = Response()
-            res.status_code=400
-            res.data = {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": "Setor não encontrado. Tente novamente."
-                    }}
-            return res 
+        sector = get_object_or_404(Sector.objects.select_related('enterprise__owner'), pk=pk)
         
-        if sector.enterprise.owner != request.user or sector.manager != request.user:
-            res = Response()
-            res.status_code=403
-            res.data = {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": "Você não tem permissão para ativar/desativar este setor."
-                    }}
-            return res
+        self.check_object_permissions(request, sector)
 
-        if sector.is_active:
-            sector.is_active = False
-        else:
-            sector.is_active = True
+        sector.is_active = not sector.is_active  #type: ignore
+        sector.save()  #type: ignore
 
-        sector.save()
-
-        res = Response()
+        res: HttpResponse = Response()
         res.status_code = 200
-        res.data = {"Data": 
-                { 
-                    "sucesso": True,
-                    "mensagem": f"Setor {'ativado' if sector.is_active else 'desativado'} com sucesso."
-            }}
+        res.data = default_response(
+            success=True, 
+            message=f"Setor {'ativado' if sector.is_active else 'desativado'} com sucesso.",  #type: ignore
+            data={"is_active": sector.is_active})  #type: ignore
         return res
 
 class EditSectorView(APIView):

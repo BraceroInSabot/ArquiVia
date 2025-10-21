@@ -58,3 +58,13 @@ class IsEnterpriseOwnerOrMember(BasePermission):
         ).exists()
         
         return is_owner or is_member
+
+class IsSectorEnterpriseOwner(BasePermission):
+    """
+    Custom permission to only allow the owner of the enterprise
+    to which the sector belongs to modify the sector.
+    """
+    message = "Você não tem permissão para modificar este setor."
+
+    def has_object_permission(self, request, view, obj):
+        return obj.enterprise.owner == request.user

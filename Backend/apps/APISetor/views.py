@@ -8,8 +8,13 @@ from apps.APIEmpresa.models import Enterprise
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from apps.core.utils import default_response
-from .serializers import SectorCreateSerializer, SectorDetailSerializer, SectorListSerializer
-from .permissions import IsEnterpriseOwner, IsEnterpriseOwnerOrMember, IsOwnerOrSectorMember, IsSectorEnterpriseOwner
+from .serializers import SectorCreateSerializer, SectorDetailSerializer, SectorListSerializer, SectorUpdateSerializer
+from .permissions import (
+    IsEnterpriseOwner, 
+    IsEnterpriseOwnerOrMember, 
+    IsOwnerOrSectorMember, 
+    IsSectorEnterpriseOwner, 
+    IsOwnerManagerOrSectorAdmin)
 from rest_framework import status
 
 
@@ -146,49 +151,30 @@ class ActivateOrDeactivateSectorView(APIView):
         return res
 
 class EditSectorView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsOwnerManagerOrSectorAdmin]
     
-    def put(self, request):
-        sector_id = request.data.get("sector_id")
+    def put(self, request, pk: int):
         name = request.data.get("name")
         image = request.data.get("image")
         
-        try:
-            sector: Sector = Sector.objects.filter(sector_id=sector_id).first()          
-        except Enterprise.DoesNotExist:
-            res = Response()
-            res.status_code=400
-            res.data = {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": f"Setor não encontrado. Tente novamente."
-                    }}
-            return res 
+        sector = get_object_or_404(Sector, pk=pk)
         
-        if sector.enterprise.owner != request.user or sector.manager != request.user or SectorUser.objects.filter(sector=sector, user=request.user, is_adm=True).exists():
-            res = Response()
-            res.status_code=403
-            res.data = {"Data": 
-                        { 
-                            "sucesso": False,
-                            "mensagem": f"Você não tem permissão para atualizar este setor."
-                    }}
-            return res
+        self.check_object_permissions(request, sector)
         
-        if name:
-            sector.name = name
-        if image:
-            sector.image = image
+        update_serializer = SectorUpdateSerializer(
+            instance=sector,
+            data=request.data,
+            partial=True
+        )        
+        update_serializer.is_valid(raise_exception=True)
+             
+        updated_sector = update_serializer.save()
         
-        sector.save()
-
-        res = Response()
+        response_serializer = SectorDetailSerializer(updated_sector)
+        
+        res: HttpResponse = Response()
         res.status_code = 200
-        res.data = {"Data": 
-                { 
-                    "sucesso": True,
-                    "mensagem": "Setor atualizado com sucesso."
-            }}
+        res.data = default_response(success=True, message="Setor Atualizado!", data=response_serializer.data)
         return res
     
 class ExcludeSectorView(APIView):

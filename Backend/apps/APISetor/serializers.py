@@ -1,31 +1,31 @@
-# Em APISetor/serializer.py
+
 
 from rest_framework import serializers
 from .models import Sector
 from apps.APIEmpresa.models import Enterprise
 
 class SectorCreateSerializer(serializers.ModelSerializer):
-    # --- A MÁGICA ACONTECE AQUI ---
-    # O campo no JSON será 'enterprise_id'
+
+
     enterprise_id = serializers.PrimaryKeyRelatedField(
         queryset=Enterprise.objects.all(),
-        # source='enterprise' diz ao DRF: "pegue o valor deste campo
-        # e use-o para preencher o campo 'enterprise' do modelo."
+    
+    
         source='enterprise',
         write_only=True
     )
 
     class Meta:
         model = Sector
-        # A lista de campos agora usa 'enterprise_id'
+    
         fields = ['name', 'image', 'enterprise_id']
 
     def validate(self, data):
         """
         Validação customizada para verificar se o nome do setor já existe na empresa.
         """
-        # IMPORTANTE: Graças ao 'source', o DRF já converteu o 'enterprise_id'
-        # em um objeto Enterprise completo e o colocou em 'data' com o nome 'enterprise'.
+    
+    
         enterprise = data.get('enterprise')
         name = data.get('name')
 
@@ -39,7 +39,7 @@ class SectorCreateSerializer(serializers.ModelSerializer):
         Sobrescreve o método create para definir o manager do setor
         como o dono da empresa.
         """
-        # O mesmo acontece aqui: 'validated_data' contém o objeto 'enterprise'.
+    
         enterprise = validated_data.get('enterprise')
         
         sector = Sector.objects.create(
@@ -89,4 +89,23 @@ class SectorListSerializer(serializers.ModelSerializer):
             'image', 
             'creation_date', 
             'is_active'
-        ]
+        ]    
+
+class SectorUpdateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for return Sector details efficiently when editted.
+    """
+    name = serializers.CharField(max_length=200, required=False)
+    image = serializers.CharField(max_length=50, required=False, allow_blank=True, allow_null=True)
+    class Meta:
+        model = Sector
+        fields = ['name', 'image']
+
+
+    def validate_name(self, value):
+    
+        if self.instance and Sector.objects.filter(
+            enterprise=self.instance.enterprise, name=value
+        ).exclude(pk=self.instance.pk).exists():
+            raise serializers.ValidationError("Um setor com este nome já existe nesta empresa.")
+        return value

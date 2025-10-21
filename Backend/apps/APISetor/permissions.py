@@ -1,4 +1,4 @@
-# Em APISetor/permissions.py
+
 
 from rest_framework.permissions import BasePermission
 from apps.APIEmpresa.models import Enterprise
@@ -13,8 +13,8 @@ class IsEnterpriseOwner(BasePermission):
     message = "Você não é o proprietário desta empresa e não pode criar setores nela."
 
     def has_permission(self, request, view):
-        # --- CORREÇÃO AQUI ---
-        # Procurar por 'enterprise', o mesmo nome do campo no serializer.
+    
+    
         enterprise_id = request.data.get('enterprise_id')
         
         if not enterprise_id or not isinstance(enterprise_id, int):
@@ -68,3 +68,26 @@ class IsSectorEnterpriseOwner(BasePermission):
 
     def has_object_permission(self, request, view, obj):
         return obj.enterprise.owner == request.user
+    
+class IsOwnerManagerOrSectorAdmin(BasePermission):
+    """
+    Custom permission to grant access if the user is the enterprise owner,
+    the direct manager of the sector, or an admin member of the sector.
+
+    Assumes the object being checked (`obj`) is an instance of the `Sector` model.
+    """
+    message = "Você não tem permissão para modificar este setor"
+    
+    def has_object_permission(self, request, view, obj):
+        if not isinstance(obj, Sector):
+             return False
+
+        is_owner = obj.enterprise.owner == request.user
+        is_manager = obj.manager == request.user    
+        is_adm = SectorUser.objects.filter(
+            is_adm=True, 
+            sector=obj,
+            user=request.user
+        ).exists()
+    
+        return is_owner or is_manager or is_adm

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Validate from '../utils/enterprise_validation';
 import { useNavigate } from 'react-router-dom';
+import enterpriseService from '../services/Enterprise/api';
 
 
 const CreateEnterpriseForm = () => {
@@ -24,6 +25,7 @@ const CreateEnterpriseForm = () => {
             return;
             }
             
+            const api_response = await enterpriseService.createEnterprise({ name, image });
             alert('Empresa criada com sucesso!');
             
             setName('');

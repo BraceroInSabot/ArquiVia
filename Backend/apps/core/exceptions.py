@@ -5,6 +5,8 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from rest_framework import status
+from django.conf import settings
+
 
 # NATIVE
 from typing import Dict, Optional
@@ -53,6 +55,11 @@ def custom_exception_handler(exc: Exception, context: dict) -> Optional[Response
         
 
     elif response is None and isinstance(exc, Exception):
+        
+        if settings.DEBUG:
+            return None
+        
+        print(111)
         res: HttpResponse = Response()
         res.status_code = 500
         res.data = default_response(success=False, message="Houve um erro interno no servidor.")

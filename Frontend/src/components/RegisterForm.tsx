@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Validate from '../utils/credential_validation';
+import register from '../services/User/api';
 
 const RegisterForm = () => {
   const navigate = useNavigate();
@@ -42,6 +43,8 @@ const RegisterForm = () => {
     }
 
     try {
+      const api_response = await register.register({ username, name, email, password, cpassword });
+      // Só avança se a requisição for bem-sucedida
       alert('Registro realizado com sucesso!');
       navigate('/entrar');
     } catch (err: any) {

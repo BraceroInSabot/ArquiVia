@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 
 const LoginPage = () => {
-  const { username } = useAuth();
+  const { username, login } = useAuth(); 
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -15,7 +15,7 @@ const LoginPage = () => {
 
   return (
     <>
-      <LoginForm login={useAuth().login} navigate={navigate} />
+      <LoginForm login={login} navigate={navigate} />
     </>
   );
 };

@@ -44,3 +44,40 @@ class AddUserToSectorView(APIView):
         res.status_code = 201
         res.data = default_response(success=True, message="Usuário adicionado ao setor com sucesso.")
         return res
+    
+class SetManagerForSectorView(APIView):
+    """
+    Sets a new manager for a specific sector.
+
+    The new manager must already be a member of the sector.
+    Requires authentication, and the requesting user must be the 
+    enterprise owner, current sector manager, or a sector admin.
+    """
+    permission_classes = [IsAuthenticated, IsOwnerManagerOrSectorAdmin]
+    
+    def patch(self, request, pk: int):
+        new_manager_email = request.data.get("new_manager_email")
+        
+        if not new_manager_email:
+            res: HttpResponse = Response()
+            res.status_code = 400
+            res.data = default_response(success=False, message="O campo 'email' é obrigatório.")
+            return res
+        
+        sector_query: Union[Sector, None] = get_object_or_404(Sector, pk=pk)
+        new_manager_query: Union[USER, None] = get_object_or_404(USER, email=new_manager_email) #type: ignore
+        self.check_object_permissions(request, sector_query)
+        
+        if SectorUser.objects.filter(sector=sector_query, user=new_manager_query).exists() is False:
+            res: HttpResponse = Response()
+            res.status_code=400
+            res.data = default_response(success=False, message="O novo gerente deve ser um membro do setor.") 
+            return res
+        
+        sector_query.manager = new_manager_query # type: ignore
+        sector_query.save()
+
+        res: HttpResponse = Response()
+        res.status_code = 200
+        res.data = default_response(success=True, message="Gerente do setor alterado com sucesso.")
+        return res

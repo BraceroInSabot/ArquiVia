@@ -45,6 +45,36 @@ class AddUserToSectorView(APIView):
         res.data = default_response(success=True, message="Usuário adicionado ao setor com sucesso.")
         return res
     
+class RemoveUserFromSectorView(APIView):
+    """
+    Removes a user's link (`SectorUser`) from a specific sector.
+
+    The link is identified by its primary key (`pk`) passed in the URL.
+    Requires authentication, and the requesting user must be the enterprise owner,
+    the sector manager, or a sector admin of the sector from which the user
+    is being removed.
+    """
+    permission_classes = [IsAuthenticated, IsOwnerManagerOrSectorAdmin]
+    
+    def delete(self, request, pk: int):
+        sector_user_link = get_object_or_404(
+            SectorUser.objects.select_related(
+                'sector__enterprise__owner',
+                'sector__manager'
+            ), 
+            pk=pk
+        )
+        sector_query: Sector = sector_user_link.sector
+        self.check_object_permissions(request, sector_query)
+        
+        user_name = sector_user_link.user.name # type: ignore
+        sector_user_link.delete()
+
+        res: HttpResponse = Response()
+        res.status_code = 200
+        res.data = default_response(success=True, message=f"Usuário {user_name} removido do setor com sucesso.")
+        return res
+    
 class SetManagerForSectorView(APIView):
     """
     Sets a new manager for a specific sector.

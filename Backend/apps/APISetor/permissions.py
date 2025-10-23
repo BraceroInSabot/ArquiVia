@@ -110,3 +110,23 @@ class IsEnterpriseOwnerBySector(BasePermission):
             
         if is_owner:
             return True
+        
+class IsEnterpriseOwnerOrSectorManager(BasePermission):
+    """
+    Permissão que verifica se o usuário da requisição é o dono da empresa
+    ou o gerente do setor especificado no payload.
+    """
+    message = "Você não é o proprietário desta empresa ou o gerente deste setor."
+
+    def has_object_permission(self, request, view, obj):        
+        if not isinstance(obj, Sector):
+             return False
+         
+        is_owner = obj.enterprise.owner == request.user
+        is_manager = obj.manager == request.user
+
+        if not (is_owner or is_manager):
+            self.message = "Apenas o proprietário da empresa ou o gerente do setor podem realizar esta ação."
+            
+        if is_owner or is_manager:
+            return True

@@ -22,7 +22,7 @@ const EnterprisePage = () => {
         } else if (response.data && Array.isArray(response.data)) {
           setEnterprises(response.data);
         } else {
-          setError('Formato de dados inesperado recebido do servidor.');
+          setError('Nenhuma empresa encontrada.');
         }
 
       } catch (err) {

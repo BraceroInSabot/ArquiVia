@@ -85,7 +85,7 @@ class TestAddUserToSectorAPI:
 
         response = api_client.post(url, payload, format="json")
 
-        assert response.status_code == 201 # type: ignore #type: ignore #type: ignore
+        assert response.status_code == 201 # type: ignore #type: ignore #type: ignore # type: ignore
         assert response.data['sucesso'] is True # type: ignore
         assert response.data['mensagem'] == "Usuário adicionado ao setor com sucesso." # type: ignore
         
@@ -112,7 +112,7 @@ class TestAddUserToSectorAPI:
 
         response = api_client.post(url, payload, format="json")
 
-        assert response.status_code == 404 # type: ignore #type: ignore #type: ignore
+        assert response.status_code == 404 # type: ignore #type: ignore #type: ignore # type: ignore
         assert response.data['sucesso'] is False # type: ignore
 
     def test_add_non_existent_user_fails(self, api_client: APIClient, scenario_data: Dict) -> None:
@@ -135,7 +135,7 @@ class TestAddUserToSectorAPI:
 
         response = api_client.post(url, payload, format="json")
 
-        assert response.status_code == 404 # type: ignore #type: ignore #type: ignore
+        assert response.status_code == 404 # type: ignore #type: ignore #type: ignore # type: ignore
         assert response.data['sucesso'] is False # type: ignore
 
     def test_add_user_by_anonymous_fails(self, api_client: APIClient, scenario_data: Dict) -> None:
@@ -156,7 +156,7 @@ class TestAddUserToSectorAPI:
 
         response = api_client.post(url, payload, format="json")
 
-        assert response.status_code == 401 # type: ignore #type: ignore #type: ignore
+        assert response.status_code == 401 # type: ignore #type: ignore #type: ignore # type: ignore
         assert response.data['sucesso'] is False # type: ignore
 
     @pytest.mark.parametrize("role", ["worker", "outsider"])
@@ -183,7 +183,7 @@ class TestAddUserToSectorAPI:
 
         response = api_client.post(url, payload, format="json")
 
-        assert response.status_code == 403 # type: ignore #type: ignore #type: ignore
+        assert response.status_code == 403 # type: ignore #type: ignore #type: ignore # type: ignore
         assert response.data['sucesso'] is False # type: ignore
 
     def test_add_already_linked_user_fails(self, api_client: APIClient, scenario_data: Dict) -> None:
@@ -206,7 +206,7 @@ class TestAddUserToSectorAPI:
 
         response = api_client.post(url, payload, format="json")
 
-        assert response.status_code == 400 # type: ignore #type: ignore #type: ignore
+        assert response.status_code == 400 # type: ignore #type: ignore #type: ignore # type: ignore
         assert response.data['sucesso'] is False # type: ignore
         assert response.data['mensagem'] == "Usuário já está vinculado a este setor." # type: ignore
         
@@ -230,7 +230,7 @@ class TestAddUserToSectorAPI:
 
         response = api_client.post(url, payload, format="json")
 
-        assert response.status_code == 400 # type: ignore #type: ignore #type: ignore
+        assert response.status_code == 400 # type: ignore #type: ignore #type: ignore # type: ignore
         assert response.data['sucesso'] is False # type: ignore
         
 @pytest.mark.django_db
@@ -310,7 +310,7 @@ class TestSetManagerForSectorAPI:
 
         response = api_client.patch(url, payload, format="json")
 
-        assert response.status_code == 200 #type: ignore #type: ignore
+        assert response.status_code == 200 #type: ignore #type: ignore # type: ignore
         assert response.data['sucesso'] is True # type: ignore
 
         sector.refresh_from_db()
@@ -338,7 +338,7 @@ class TestSetManagerForSectorAPI:
 
         response = api_client.patch(url, payload, format="json")
 
-        assert response.status_code == 400 #type: ignore #type: ignore
+        assert response.status_code == 400 #type: ignore #type: ignore # type: ignore
         assert response.data['sucesso'] is False # type: ignore
         assert response.data['mensagem'] == "O campo 'email' é obrigatório." # type: ignore
 
@@ -362,7 +362,7 @@ class TestSetManagerForSectorAPI:
 
         response = api_client.patch(url, payload, format="json")
 
-        assert response.status_code == 404 #type: ignore #type: ignore
+        assert response.status_code == 404 #type: ignore #type: ignore # type: ignore
         assert response.data['sucesso'] is False # type: ignore
 
     def test_set_manager_sector_not_found_fails(self, api_client: APIClient, scenario_data: Dict[str, Any]) -> None:
@@ -386,7 +386,7 @@ class TestSetManagerForSectorAPI:
 
         response = api_client.patch(url, payload, format="json")
 
-        assert response.status_code == 404 #type: ignore #type: ignore
+        assert response.status_code == 404 #type: ignore #type: ignore # type: ignore
         assert response.data['sucesso'] is False # type: ignore
 
     def test_set_manager_by_anonymous_fails(self, api_client: APIClient, scenario_data: Dict[str, Any]) -> None:
@@ -408,7 +408,7 @@ class TestSetManagerForSectorAPI:
 
         response = api_client.patch(url, payload, format="json")
 
-        assert response.status_code == 401 #type: ignore #type: ignore
+        assert response.status_code == 401 #type: ignore #type: ignore # type: ignore
         assert response.data['sucesso'] is False # type: ignore
 
     @pytest.mark.parametrize("role", ["worker", "outsider"])
@@ -436,7 +436,7 @@ class TestSetManagerForSectorAPI:
 
         response = api_client.patch(url, payload, format="json")
 
-        assert response.status_code == 403 #type: ignore #type: ignore
+        assert response.status_code == 403 #type: ignore #type: ignore # type: ignore
         assert response.data['sucesso'] is False # type: ignore
 
     def test_set_manager_who_is_not_member_fails(self, api_client: APIClient, scenario_data: Dict[str, Any]) -> None:
@@ -461,7 +461,7 @@ class TestSetManagerForSectorAPI:
 
         response = api_client.patch(url, payload, format="json")
 
-        assert response.status_code == 400 #type: ignore #type: ignore
+        assert response.status_code == 400 #type: ignore #type: ignore # type: ignore
         assert response.data['sucesso'] is False # type: ignore
 
         sector.refresh_from_db()
@@ -535,7 +535,7 @@ class TestSetUnsetUserAdministratorAPI:
 
         response = api_client.patch(url, payload, format="json")
 
-        assert response.status_code == 200 #type: ignore
+        assert response.status_code == 200 #type: ignore # type: ignore
         assert response.data['sucesso'] is True # type: ignore
         assert response.data['mensagem'] == "Privilégios de administrador concedido com sucesso." # type: ignore
 
@@ -570,7 +570,7 @@ class TestSetUnsetUserAdministratorAPI:
 
         response = api_client.patch(url, payload, format="json")
 
-        assert response.status_code == 200 #type: ignore
+        assert response.status_code == 200 #type: ignore # type: ignore
         assert response.data['sucesso'] is True # type: ignore
         assert response.data['mensagem'] == "Privilégios de administrador removido com sucesso." # type: ignore
 
@@ -599,7 +599,7 @@ class TestSetUnsetUserAdministratorAPI:
 
         response = api_client.patch(url, payload, format="json")
 
-        assert response.status_code == 400 #type: ignore
+        assert response.status_code == 400 #type: ignore # type: ignore
         assert response.data['sucesso'] is False # type: ignore
         assert response.data['mensagem'] == "Erro na validação do tipo de dado enviado." # type: ignore
 
@@ -623,7 +623,7 @@ class TestSetUnsetUserAdministratorAPI:
 
         response = api_client.patch(url, payload, format="json")
 
-        assert response.status_code == 400 #type: ignore
+        assert response.status_code == 400 #type: ignore # type: ignore
         assert response.data['sucesso'] is False # type: ignore
         assert response.data['mensagem'] == "Erro na validação do tipo de dado enviado." # type: ignore
 
@@ -647,7 +647,7 @@ class TestSetUnsetUserAdministratorAPI:
 
         response = api_client.patch(url, payload, format="json")
 
-        assert response.status_code == 404 #type: ignore
+        assert response.status_code == 404 #type: ignore # type: ignore
         assert response.data['sucesso'] is False # type: ignore
         assert "não encontrado" in response.data['mensagem'] # type: ignore
 
@@ -669,7 +669,7 @@ class TestSetUnsetUserAdministratorAPI:
 
         response = api_client.patch(url, payload, format="json")
 
-        assert response.status_code == 401 #type: ignore
+        assert response.status_code == 401 #type: ignore # type: ignore
         assert response.data['sucesso'] is False # type: ignore
 
     @pytest.mark.parametrize("role", ["worker_to_modify", "outsider"])
@@ -696,5 +696,155 @@ class TestSetUnsetUserAdministratorAPI:
 
         response = api_client.patch(url, payload, format="json")
 
-        assert response.status_code == 403 #type: ignore
+        assert response.status_code == 403 #type: ignore # type: ignore
+        assert response.data['sucesso'] is False # type: ignore
+        
+@pytest.mark.django_db
+class TestRemoveUserFromSectorAPI:
+    """
+    Test suite for the Remove User from Sector endpoint
+    (DELETE /remover-usuario/<int:pk>/). Assuming URL name 'remover-usuario-setor'.
+    """
+
+    @pytest.fixture
+    def api_client(self) -> APIClient:
+        """Returns an APIClient instance."""
+        return APIClient()
+
+    @pytest.fixture
+    def scenario_data(self) -> Dict[str, Any]:
+        """
+        Creates a scenario with users, enterprise, sector, and links.
+        Roles: owner, manager, admin_worker, worker_to_remove, outsider.
+        """
+        owner = User.objects.create_user(username="rm_owner", password="pw", email="rm_owner@e.com", name="Rm Owner")
+        manager = User.objects.create_user(username="rm_manager", password="pw", email="rm_manager@e.com", name="Rm Manager")
+        admin_worker = User.objects.create_user(username="rm_admin", password="pw", email="rm_admin@e.com", name="Rm Admin")
+        worker_to_remove = User.objects.create_user(username="rm_worker", password="pw", email="rm_worker@e.com", name="Rm Worker")
+        outsider = User.objects.create_user(username="rm_outsider", password="pw", email="rm_outsider@e.com", name="Rm Outsider")
+
+        enterprise = Enterprise.objects.create(name="Remove Corp", owner=owner)
+        sector = Sector.objects.create(
+            name="Remove Sector",
+            enterprise=enterprise,
+            manager=manager 
+        )
+
+        SectorUser.objects.create(user=admin_worker, sector=sector, is_adm=True)
+        link_to_delete = SectorUser.objects.create(user=worker_to_remove, sector=sector, is_adm=False)
+
+        return {
+            "owner": owner,
+            "manager": manager,
+            "admin_worker": admin_worker,
+            "worker_to_remove": worker_to_remove,
+            "link_to_delete": link_to_delete,
+            "outsider": outsider,
+            "enterprise": enterprise,
+            "sector": sector,
+        }
+
+    # Success
+
+    @pytest.mark.parametrize("role", ["owner", "manager", "admin_worker"])
+    def test_remove_user_by_authorized_user_success(
+        self, api_client: APIClient, scenario_data: Dict[str, Any], role: str
+    ) -> None:
+        """
+        Tests if authorized users (owner, manager, admin) can successfully remove a user link.
+
+        Args:
+            self: The test instance.
+            api_client (APIClient) : api client for log in use
+            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
+            role: (str): Possible user roles
+        
+        Return:
+            None
+        """
+        actor: User = scenario_data[role] # type: ignore
+        link_to_delete: SectorUser = scenario_data["link_to_delete"] # type: ignore
+        link_pk: int = link_to_delete.pk
+        user_name_removed: str = scenario_data["worker_to_remove"].name # type: ignore
+
+        api_client.force_authenticate(user=actor)
+        url: str = reverse("remover-usuario-setor", kwargs={'pk': link_pk}) 
+
+        response = api_client.delete(url)
+
+        assert response.status_code == 200 # type: ignore
+        assert response.data['sucesso'] is True # type: ignore
+        assert response.data['mensagem'] == f"Usuário {user_name_removed} removido do setor com sucesso." # type: ignore
+
+        assert not SectorUser.objects.filter(pk=link_pk).exists()
+
+    # Failures
+
+    def test_remove_non_existent_link_fails(self, api_client: APIClient, scenario_data: Dict[str, Any]) -> None:
+        """
+        Tests if trying to delete a non-existent SectorUser link returns 404.
+
+        Args:
+            self: The test instance.
+            api_client (APIClient) : api client for log in use
+            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
+        
+        Return:
+            None
+        """
+        owner: User = scenario_data["owner"] # type: ignore
+        api_client.force_authenticate(user=owner)
+        non_existent_pk: int = 999
+        url: str = reverse("remover-usuario-setor", kwargs={'pk': non_existent_pk})
+
+        response = api_client.delete(url)
+
+        assert response.status_code == 404 # type: ignore
+        assert response.data['sucesso'] is False # type: ignore
+        assert "não encontrado" in response.data['mensagem'] # type: ignore
+
+    def test_remove_user_by_anonymous_fails(self, api_client: APIClient, scenario_data: Dict[str, Any]) -> None:
+        """
+        Tests if an unauthenticated user receives 401.
+
+        Args:
+            self: The test instance.
+            api_client (APIClient) : api client for log in use
+            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
+        
+        Return:
+            None
+        """
+        link_to_delete: SectorUser = scenario_data["link_to_delete"] # type: ignore
+        url: str = reverse("remover-usuario-setor", kwargs={'pk': link_to_delete.pk})
+
+        response = api_client.delete(url)
+
+        assert response.status_code == 401 # type: ignore
+        assert response.data['sucesso'] is False # type: ignore
+
+    @pytest.mark.parametrize("role", ["worker_to_remove", "outsider"])
+    def test_remove_user_by_unauthorized_user_fails(
+        self, api_client: APIClient, scenario_data: Dict[str, Any], role: str
+    ) -> None:
+        """
+        Tests if unauthorized users (regular worker, outsider) receive 403.
+
+        Args:
+            self: The test instance.
+            api_client (APIClient) : api client for log in use
+            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
+            role: (str): Possible user roles
+        
+        Return:
+            None
+        """
+        actor: User = scenario_data[role] # type: ignore
+        link_to_delete: SectorUser = scenario_data["link_to_delete"] # type: ignore
+        api_client.force_authenticate(user=actor)
+        url: str = reverse("remover-usuario-setor", kwargs={'pk': link_to_delete.pk})
+
+        response = api_client.delete(url)
+
+        assert response.status_code == 403 # type: ignore
         assert response.data['sucesso'] is False # type: ignore

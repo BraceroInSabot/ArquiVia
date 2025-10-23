@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { type NavigateFunction } from 'react-router-dom';
+import userService from '../services/User/api';
 
 interface LoginFormProps {
   login: (name: string) => void;
@@ -21,9 +22,10 @@ const LoginForm = ({ login, navigate }: LoginFormProps) => {
         setError(null);
 
         try {
+            const api_response = await userService.login({ username, password });
+            // Só avança se a requisição for bem-sucedida
             login(username);
             navigate('/painel');
-
         } catch (err: any) {
             const errorMessage = err.response?.data?.detail || 'Usuário ou senha inválidos.';
             setError(errorMessage);

@@ -13,6 +13,7 @@ from .models import Enterprise
 from .serializers import EnterpriseSerializer, EnterpriseToggleActiveSerializer
 from apps.core.utils import default_response
 from apps.APISetor.models import Sector, SectorUser
+from apps.APIEmpresa.permissions import IsLinkedtoEnterprise
 
 # TYPING
 from django.contrib.auth import get_user_model
@@ -54,7 +55,7 @@ class CreateEnterpriseView(APIView):
 
 
 class RetrieveEnterpriseView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsLinkedtoEnterprise]
     
     def get(self, request, pk):
         """
@@ -69,29 +70,10 @@ class RetrieveEnterpriseView(APIView):
         """
         request_user: Type[User] = request.user # type: ignore
 
-        try:
-            ent = Enterprise.objects.get(enterprise_id=pk)
-        except Enterprise.DoesNotExist:
-            res: HttpResponse = Response()
-            res.status_code = 404
-            res.data = default_response(success=False, message="Empresa não encontrada.")
-            return res
-        except:
-            res: HttpResponse = Response()
-            res.status_code = 500
-            res.data = default_response(success=False, message="Houve um erro interno. Tente novamente.")
-            return res
+        enterprise_query = get_object_or_404(Enterprise, pk=pk) 
+        self.check_object_permissions(request, enterprise_query)
 
-        is_owner: bool = ent.owner == request_user
-        is_linked: bool = ent.enterprises.filter(sector_links__user=request_user).exists() # type: ignore
-
-        if not (is_owner or is_linked):
-            res = Response()
-            res.status_code = 403
-            res.data = default_response(success=False, message="Usuário sem permissão para completar a operação.") 
-            return res
-
-        serializer = EnterpriseSerializer(ent)
+        serializer = EnterpriseSerializer(enterprise_query)
 
         res = Response()
         res.status_code = 200

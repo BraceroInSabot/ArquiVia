@@ -26,22 +26,30 @@ ALLOWED_HOSTS += [
     "bracero.com.br",
 ]
 
-CORS_ALLOWED_ORIGINS += [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "https://arquivia.pages.dev",
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",         
+    "http://127.0.0.1:3000",        
+    "https://arquivia.pages.dev",      
     "https://arquivia.bracero.com.br",
+    "https://www.arquivia.bracero.com.br", 
 ]
 
-CSRF_TRUSTED_ORIGINS += [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "https://arquivia.pages.dev",
-    "https://www.arquivia.bracero.com.br/"
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",          
+    "http://127.0.0.1:3000",        
+    "https://arquivia.pages.dev",      
+    "https://arquivia.bracero.com.br", 
+    "https://www.arquivia.bracero.com.br",
 ]
+
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SAMESITE = 'None'
+CORS_ALLOW_CREDENTIALS = True
 
 SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'] = timedelta(days=1)
 SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'] = timedelta(days=3)

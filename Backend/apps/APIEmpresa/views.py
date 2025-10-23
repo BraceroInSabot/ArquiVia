@@ -99,34 +99,40 @@ class RetrieveEnterpriseView(APIView):
         return res
 
 class ListEnterpriseView(APIView):
+    """
+    Retrieves a list of enterprises linked to the requesting user.
+
+    An enterprise is considered linked if the user is:
+    1. The owner of the enterprise.
+    2. A manager of any sector within the enterprise.
+    3. A member (via SectorUser) of any sector within the enterprise.
+
+    Requires authentication.
+    """
     permission_classes = [IsAuthenticated]
-    
-    def get(self, request):
+
+    def get(self, request) -> HttpResponse:
         """
-        Retrieve many enterprises data wich are linked with the user.
+        Handles the GET request to list linked enterprises.
 
         Args:
-            request (dict): user request 
+            request (Request): The user request object.
 
         Returns:
-            Response: HttpResponse with status and message
+            HttpResponse: A response containing the list of linked enterprises or an empty list.
         """
         request_user = request.user
 
-        # Q -> Query
-        query: Q = (
-            # O usuário é dono da empresa?
-            Q(owner=request_user) | 
-            # O usuário é gerente de algum setor?
-            Q(enterprises__manager=request_user) |
-            # O usuário faz parte de algum setor relacionado à empresa?
-            Q(enterprises__sector_links__user=request_user)
+        query = (
+            Q(owner=request_user) |
+            Q(sectors__manager=request_user) |
+            Q(sectors__sector_links__user=request_user)
         )
 
-        enterprises = Enterprise.objects.filter(query).prefetch_related('owner').distinct()
+        enterprises = Enterprise.objects.filter(query).select_related('owner').distinct()
 
         serializer = EnterpriseSerializer(enterprises, many=True)
-            
+
         res: HttpResponse = Response()
         res.status_code = 200
         res.data = default_response(success=True, data=serializer.data)

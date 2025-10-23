@@ -26,12 +26,15 @@ const CreateEnterpriseForm = () => {
             }
             
             const api_response = await enterpriseService.createEnterprise({ name, image });
-            alert('Empresa criada com sucesso!');
-            
-            setName('');
-            setImage('');
 
-            navigate("/empresas");
+            if (api_response) {
+                alert('Empresa criada com sucesso!');
+                
+                setName('');
+                setImage('');
+
+                navigate("/empresas");
+            }
 
         } catch (err: any) {
             const errorMessage = err.response?.data?.detail || 'Falha ao criar a empresa.';

@@ -44,9 +44,12 @@ const RegisterForm = () => {
 
     try {
       const api_response = await register.register({ username, name, email, password, cpassword });
-      // Só avança se a requisição for bem-sucedida
-      alert('Registro realizado com sucesso!');
-      navigate('/entrar');
+      
+      if (api_response) {
+        // Só avança se a requisição for bem-sucedida
+        alert('Registro realizado com sucesso!');
+        navigate('/entrar');
+      }
     } catch (err: any) {
       const errorMessage = err.response?.data?.mensagem || 'Erro ao registrar usuário.';
       setError(errorMessage);

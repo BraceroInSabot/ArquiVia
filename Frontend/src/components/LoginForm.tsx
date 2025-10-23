@@ -24,8 +24,11 @@ const LoginForm = ({ login, navigate }: LoginFormProps) => {
         try {
             const api_response = await userService.login({ username, password });
             // Só avança se a requisição for bem-sucedida
-            login(username);
-            navigate('/painel');
+            if (api_response) {
+                alert('Login realizado com sucesso! Redirecionando...');
+                login(username);
+                navigate('/painel');
+            }
         } catch (err: any) {
             const errorMessage = err.response?.data?.detail || 'Usuário ou senha inválidos.';
             setError(errorMessage);

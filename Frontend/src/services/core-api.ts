@@ -48,6 +48,15 @@ export interface UpdateEnterpriseData {
   image?: string;
 }
 
+export interface Sector {
+  id: number;
+  name: string;
+  enterprise: {
+    id: number;
+    name: string;
+  };
+}
+
 const api = axios.create({
   baseURL: URL,
   withCredentials: true,

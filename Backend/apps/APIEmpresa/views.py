@@ -81,16 +81,6 @@ class RetrieveEnterpriseView(APIView):
         return res
 
 class ListEnterpriseView(APIView):
-    """
-    Retrieves a list of enterprises linked to the requesting user.
-
-    An enterprise is considered linked if the user is:
-    1. The owner of the enterprise.
-    2. A manager of any sector within the enterprise.
-    3. A member (via SectorUser) of any sector within the enterprise.
-
-    Requires authentication.
-    """
     permission_classes = [IsAuthenticated]
 
     def get(self, request) -> HttpResponse:
@@ -101,7 +91,8 @@ class ListEnterpriseView(APIView):
             request (Request): The user request object.
 
         Returns:
-            HttpResponse: A response containing the list of linked enterprises or an empty list.
+            HttpResponse: A response containing the list of linked enterprises or an empty list,
+                          formatted according to the default_response structure.
         """
         request_user = request.user
 
@@ -115,11 +106,15 @@ class ListEnterpriseView(APIView):
 
         serializer = EnterpriseSerializer(enterprises, many=True)
 
-        res: HttpResponse = Response()
-        res.status_code = 200
-        res.data = default_response(success=True, data=serializer.data)
-        return res
-    
+        ret: HttpResponse = Response()
+        ret.status_code = 200
+        ret.data = default_response(
+            success=True,
+            message="Lista de empresas recuperada com sucesso.",
+            data=serializer.data
+        )
+        return ret
+            
 class EditEnterpriseView(APIView):
     permission_classes = [IsAuthenticated]
 

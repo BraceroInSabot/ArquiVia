@@ -14,7 +14,7 @@ const SectorPage = () => {
     const fetchSectors = async () => {
       try {
         const response = await sectorService.getSectors();
-        setSectors(response.data.results || []);
+        setSectors(response.data.data || []);
       } catch (err) {
         setError('Nenhum setor encontrado.');
         console.error(err);
@@ -47,7 +47,8 @@ const SectorPage = () => {
   }, [sectors]);
 
   const goToCreateSector = () => {
-    alert('Navegar para a página de criação de setor');
+    navigate('/setor/criar');
+    // alert('Navegar para a página de criação de setor');
   };
 
   return (

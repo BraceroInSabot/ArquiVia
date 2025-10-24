@@ -1,4 +1,4 @@
-import type { LoginCredentials, RegisterCredentials } from '../core-api';
+import type { LoginCredentials, RegisterCredentials, UserDetails } from '../core-api';
 import api from '../core-api'
 
 const userService = {
@@ -22,6 +22,14 @@ const userService = {
    */
   logout() {
     return api.post('/usuario/sair/');
+  },
+
+  /**
+   * Busca os detalhes completos do usuário logado.
+   * A API identifica o usuário pelo cookie JWT.
+   */
+  getUserDetails(username: string): Promise<{ data: UserDetails }> {
+    return api.get(`/usuario/consultar/${username}/`);
   },
 };
 

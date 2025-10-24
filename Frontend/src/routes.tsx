@@ -8,6 +8,7 @@ import EnterprisePage from './pages/EnterprisePage';
 import CreateEnterprisePage from './pages/CreateEnterprisePage';
 import EditEnterprisePage from './pages/EditEnterprisePage';
 import SectorPage from './pages/SectorPage';
+import CreateSectorPage from './pages/CreateSectorPage';
 
 function ArquiVia() {
   return (
@@ -25,6 +26,7 @@ function ArquiVia() {
           <Route path="/criar-empresa" element={<CreateEnterprisePage />} />
           <Route path="/empresas/editar/:id" element={<EditEnterprisePage />} />
           <Route path="/setores" element={<SectorPage />} />
+          <Route path="/setor/criar" element={<CreateSectorPage />} />
         </Route>
       </Routes>
     </div>

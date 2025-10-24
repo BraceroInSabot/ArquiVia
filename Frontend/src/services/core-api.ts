@@ -57,6 +57,19 @@ export interface Sector {
   };
 }
 
+export interface CreateSectorData {
+  name: string;
+  image: string;
+  enterprise_id: number; 
+}
+
+export interface UserDetails {
+  id: number;
+  username: string;
+  name: string;
+  email: string;
+}
+
 const api = axios.create({
   baseURL: URL,
   withCredentials: true,

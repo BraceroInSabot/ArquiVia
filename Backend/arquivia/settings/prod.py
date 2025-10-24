@@ -17,7 +17,7 @@ DATABASES = {
         os.getenv('DB_URL', ''),
         conn_max_age=600, 
         conn_health_checks=True,
-        ssl_require=True 
+        ssl_require=os.getenv('DB_SSL_REQUIRE', 'False').lower() in ('true', '1', 't') 
     )
 }
 

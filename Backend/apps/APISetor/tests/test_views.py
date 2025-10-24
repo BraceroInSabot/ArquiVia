@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.http import HttpResponse
 from rest_framework.response import Response as DRFResponse
-from typing import Dict
+from typing import Dict, Any
 
 from apps.APIEmpresa.models import Enterprise
 from apps.APISetor.models import Sector, SectorUser
@@ -84,9 +84,9 @@ class TestCreateSectorAPI:
             "enterprise_id": enterprise.pk
         }
 
-        response: DRFResponse = api_client.post(url, valid_payload, format="json") #type: ignore
+        response = api_client.post(url, valid_payload, format="json") #type: ignore
 
-        assert response.status_code == 201
+        assert response.status_code == 201 # type: ignore
         assert response.data['sucesso'] is True #type: ignore
         
         new_sector = Sector.objects.get(name="Recursos Humanos", enterprise=enterprise)
@@ -118,9 +118,9 @@ class TestCreateSectorAPI:
             "enterprise_id": enterprise.pk
         }
 
-        response: DRFResponse = api_client.post(url, payload, format="json")  #type: ignore
+        response = api_client.post(url, payload, format="json")  #type: ignore
 
-        assert response.status_code == 403
+        assert response.status_code == 403 # type: ignore
         assert response.data['sucesso'] is False #type: ignore
 
     def test_create_sector_with_duplicate_name_fails(self, api_client: APIClient, scenario_data: Dict) -> None:
@@ -140,11 +140,11 @@ class TestCreateSectorAPI:
         }
 
     
-        response: DRFResponse = api_client.post(url, invalid_payload, format="json") #type: ignore
+        response = api_client.post(url, invalid_payload, format="json") #type: ignore
         
-        assert response.status_code == 400
+        assert response.status_code == 400 # type: ignore
         assert response.data['sucesso'] is False #type: ignore
-        assert "Um setor com este nome já existe nesta empresa" in str(response.data)
+        assert "Um setor com este nome já existe nesta empresa" in str(response.data) # type: ignore
 
 
 User = get_user_model()
@@ -209,9 +209,9 @@ class TestRetrieveSectorAPI:
         api_client.force_authenticate(user=owner)
         url = reverse("consultar-setor", kwargs={'pk': sector.pk})
 
-        response: DRFResponse = api_client.get(url)  #type: ignore
+        response = api_client.get(url)  #type: ignore
 
-        assert response.status_code == 200
+        assert response.status_code == 200 # type: ignore
         assert response.data['sucesso'] is True #type: ignore
         assert response.data['data']['name'] == "Engineering" #type: ignore
 
@@ -232,9 +232,9 @@ class TestRetrieveSectorAPI:
         api_client.force_authenticate(user=member)
         url = reverse("consultar-setor", kwargs={'pk': sector.pk})
 
-        response: DRFResponse = api_client.get(url) #type: ignore
+        response = api_client.get(url) #type: ignore
 
-        assert response.status_code == 200
+        assert response.status_code == 200 # type: ignore
         assert response.data['sucesso'] is True #type: ignore
         assert response.data['data']['sector_id'] == sector.pk #type: ignore
 
@@ -257,9 +257,9 @@ class TestRetrieveSectorAPI:
         non_existent_pk = 999
         url = reverse("consultar-setor", kwargs={'pk': non_existent_pk})
 
-        response: DRFResponse = api_client.get(url)  #type: ignore
+        response = api_client.get(url)  #type: ignore
 
-        assert response.status_code == 404
+        assert response.status_code == 404 # type: ignore
         assert response.data['sucesso'] is False  #type: ignore
         assert response.data['mensagem'] == "Setor não encontrado."  #type: ignore
 
@@ -278,9 +278,9 @@ class TestRetrieveSectorAPI:
         sector = scenario_data["sector"]
         url = reverse("consultar-setor", kwargs={'pk': sector.pk})
 
-        response: DRFResponse = api_client.get(url)  #type: ignore
+        response = api_client.get(url)  #type: ignore
 
-        assert response.status_code == 401
+        assert response.status_code == 401 # type: ignore
         assert response.data['sucesso'] is False #type: ignore
         assert "As credenciais de autenticação não foram fornecidas" in response.data['mensagem'] #type: ignore
 
@@ -301,173 +301,143 @@ class TestRetrieveSectorAPI:
         api_client.force_authenticate(user=outsider) # Autenticado, mas sem permissão
         url = reverse("consultar-setor", kwargs={'pk': sector.pk})
 
-        response: DRFResponse = api_client.get(url)  #type: ignore
+        response = api_client.get(url)  #type: ignore
 
-        assert response.status_code == 403
+        assert response.status_code == 403 # type: ignore
         assert response.data['sucesso'] is False  #type: ignore
         assert "Você não tem permissão para acessar este setor" in response.data['mensagem'] #type: ignore
     
 @pytest.mark.django_db
-class TestListSectorsByEnterpriseAPI:
+class TestListUserSectorsAPI:
     """
-    Test suite for the List Sectors by Enterprise endpoint.
+    Test suite for the ListUserSectorsView endpoint (/visualizar/).
     """
 
     @pytest.fixture
     def api_client(self) -> APIClient:
-        """Returns an APIClient instance for use in tests."""
+        """Returns an APIClient instance."""
         return APIClient()
 
     @pytest.fixture
-    def scenario_data(self) -> Dict[str, str | object]:
+    def scenario_data(self) -> Dict[str, Any]:
         """
-        Creates a comprehensive scenario for visibility tests:
-        - owner: Owns the enterprise.
-        - member: Belongs to one active and one inactive sector.
-        - outsider: An authenticated user with no links to the enterprise.
+        Creates a scenario where 'test_user' has various roles:
+        - Owns 'Owned Enterprise'.
+        - Manages 'Managed Sector' in another enterprise.
+        - Is Admin in 'Admin Sector'.
+        - Is Member in 'Member Sector Active' and 'Member Sector Inactive'.
+        - Has no link to 'Unrelated Sector'.
         """
-        # 1. Criar os usuários necessários para o escopo do teste
-        owner = User.objects.create_user(username="list_owner", email="owner@gmail.com", name="Owner", password="pw")
-        member = User.objects.create_user(username="list_member", email="member@gmail.com", name="Member", password="pw")
-        outsider = User.objects.create_user(username="list_outsider", email="outsider@gmail.com", name="Outsider", password="pw")
+        test_user = User.objects.create_user(username="multi_role_user", password="pw", email="multi@e.com", name="Multi Role")
+        other_owner = User.objects.create_user(username="other_owner", password="pw", email="other@e.com", name="Other Owner")
 
-        # 2. Criar a empresa que o setor será vinculado
-        enterprise = Enterprise.objects.create(name="Corp de Listagem", owner=owner)
-        
-        # 3. Criação de dois setores distintos, onde um é ativo e outro é inativo
-        active_sector = Sector.objects.create(name="Setor Ativo", enterprise=enterprise, manager=owner, is_active=True)
-        inactive_sector = Sector.objects.create(name="Setor Inativo", enterprise=enterprise, manager=owner, is_active=False)
-        
-        # 4. Criação de um setor a parte para verificar a permissão de usuários comuns vinculados a outro setor
-        other_sector = Sector.objects.create(name="Outro Setor", enterprise=enterprise, manager=owner, is_active=True)
+        owned_enterprise = Enterprise.objects.create(name="Owned Enterprise", owner=test_user)
+        owned_sector1 = Sector.objects.create(name="Owned Sector 1", enterprise=owned_enterprise, manager=test_user)
+        owned_sector2 = Sector.objects.create(name="Owned Sector 2", enterprise=owned_enterprise, manager=other_owner) # Managed by someone else
 
-        # 5. Vinculo de usuários com setor.
-        SectorUser.objects.create(user=member, sector=active_sector)
-        SectorUser.objects.create(user=member, sector=inactive_sector)
+        other_enterprise = Enterprise.objects.create(name="Other Enterprise", owner=other_owner)
+        
+        managed_sector = Sector.objects.create(name="Managed Sector", enterprise=other_enterprise, manager=test_user)
+
+        admin_sector = Sector.objects.create(name="Admin Sector", enterprise=other_enterprise, manager=other_owner)
+        SectorUser.objects.create(user=test_user, sector=admin_sector, is_adm=True)
+
+        member_sector_active = Sector.objects.create(name="Member Sector Active", enterprise=other_enterprise, manager=other_owner, is_active=True)
+        member_sector_inactive = Sector.objects.create(name="Member Sector Inactive", enterprise=other_enterprise, manager=other_owner, is_active=False)
+        SectorUser.objects.create(user=test_user, sector=member_sector_active, is_adm=False)
+        SectorUser.objects.create(user=test_user, sector=member_sector_inactive, is_adm=False)
+
+        unrelated_sector = Sector.objects.create(name="Unrelated Sector", enterprise=other_enterprise, manager=other_owner)
+
 
         return {
-            "owner": owner,
-            "member": member,
-            "outsider": outsider,
-            "enterprise": enterprise,
+            "test_user": test_user,
+            "owned_enterprise": owned_enterprise,
+            "owned_sector1": owned_sector1,
+            "owned_sector2": owned_sector2,
+            "managed_sector": managed_sector,
+            "admin_sector": admin_sector,
+            "member_sector_active": member_sector_active,
+            "member_sector_inactive": member_sector_inactive,
+            "unrelated_sector": unrelated_sector,
         }
 
     # Sucess
-    
-    def test_list_by_owner_sees_all_sectors_success(self, api_client: APIClient, scenario_data: Dict) -> None:
+
+    def test_list_user_sectors_success(self, api_client: APIClient, scenario_data: Dict[str, Any]) -> None:
         """
-        Tests if the enterprise owner can see all sectors (active and inactive).
-        
+        Tests if the view returns all linked sectors with correct hierarchy levels.
+
         Args:
             self: The test instance.
-            api_cliente (APIClient) : api client for log in use
+            api_client (APIClient) : api client for log in use
             scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
-            
+        
         Return:
             None
         """
-        owner = scenario_data["owner"]
-        enterprise = scenario_data["enterprise"]
-        api_client.force_authenticate(user=owner)
-        url = reverse("listar-setores", kwargs={'pk': enterprise.pk})
+        test_user: User = scenario_data["test_user"] # type: ignore
+        api_client.force_authenticate(user=test_user)
+        url: str = reverse("listar-setores") 
 
-        response: DRFResponse = api_client.get(url)  #type: ignore
+        response = api_client.get(url)
 
-        assert response.status_code == 200
-        assert response.data['sucesso'] is True #type: ignore
-        assert len(response.data['data']) == 3 #type: ignore
+        assert response.status_code == 200 # type: ignore
+        assert response.data['sucesso'] is True # type: ignore
+        
+        returned_data = response.data['data'] # type: ignore
+        
+        assert len(returned_data) == 6 
 
-    def test_list_by_member_sees_only_linked_active_sectors_success(self, api_client: APIClient, scenario_data: Dict) -> None:
+        results = {item['name']: item['hierarchy_level'] for item in returned_data}
+
+        assert results.get("Owned Sector 1") == "Proprietário"
+        assert results.get("Owned Sector 2") == "Proprietário"
+        assert results.get("Managed Sector") == "Gestor"
+        assert results.get("Admin Sector") == "Administrador"
+        assert results.get("Member Sector Active") == "Membro"
+        assert results.get("Member Sector Inactive") == "Membro"
+
+    def test_list_user_sectors_no_links_success(self, api_client: APIClient) -> None:
         """
-        Tests if a sector member sees only the active sectors they belong to.
+        Tests if a user with no links to any sectors gets an empty list.
         
         Args:
             self: The test instance.
-            api_cliente (APIClient) : api client for log in use
-            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
-            
+            api_client (APIClient) : api client for log in use
+        
         Return:
             None
         """
-        member = scenario_data["member"]
-        enterprise = scenario_data["enterprise"]
-        api_client.force_authenticate(user=member)
-        url = reverse("listar-setores", kwargs={'pk': enterprise.pk})
+        no_link_user = User.objects.create_user(username="no_link_user", password="pw", email="nolink@e.com", name="No Link")
+        api_client.force_authenticate(user=no_link_user)
+        url: str = reverse("listar-setores")
 
-        response: DRFResponse = api_client.get(url)  #type: ignore
+        response = api_client.get(url)
 
-        assert response.status_code == 200
-        assert response.data['sucesso'] is True #type: ignore
-        assert len(response.data['data']) == 1 #type: ignore
-        assert response.data['data'][0]['name'] == "Setor Ativo" #type: ignore
+        assert response.status_code == 200 # type: ignore
+        assert response.data['sucesso'] is True # type: ignore
+        assert "data" not in response.data # type: ignore
 
-    # Failures
+    # Fail
 
-    def test_list_by_anonymous_fails(self, api_client: APIClient, scenario_data: Dict) -> None:
+    def test_list_user_sectors_anonymous_fails(self, api_client: APIClient) -> None:
         """
-        Tests if an unauthenticated user receives a 401 Unauthorized error.
-        
+        Tests if an unauthenticated user receives 401 Unauthorized.
+
         Args:
             self: The test instance.
-            api_cliente (APIClient) : api client for log in use
-            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
-            
-        Return:
-            None
-        """
-        enterprise = scenario_data["enterprise"]
-        url = reverse("listar-setores", kwargs={'pk': enterprise.pk})
-
-        response: DRFResponse = api_client.get(url) #type: ignore
-
-        assert response.status_code == 401
-        assert response.data['sucesso'] is False #type: ignore
-
-    def test_list_by_outsider_fails(self, api_client: APIClient, scenario_data: Dict) -> None:
-        """
-        Tests if an authenticated but non-linked user receives a 403 Forbidden error.
+            api_client (APIClient) : api client for log in use
         
-        Args:
-            self: The test instance.
-            api_cliente (APIClient) : api client for log in use
-            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
-            
         Return:
             None
         """
-        outsider = scenario_data["outsider"]
-        enterprise = scenario_data["enterprise"]
-        api_client.force_authenticate(user=outsider)
-        url = reverse("listar-setores", kwargs={'pk': enterprise.pk})
+        url: str = reverse("listar-setores")
 
-        response: DRFResponse = api_client.get(url)  #type: ignore
+        response = api_client.get(url)
 
-        assert response.status_code == 403
-        assert response.data['sucesso'] is False #type: ignore
-        assert "Você não tem permissão para acessar os recursos desta empresa" in response.data['mensagem']  #type: ignore
-
-    def test_list_for_non_existent_enterprise_fails(self, api_client: APIClient, scenario_data: Dict) -> None:
-        """
-        Tests if requesting sectors for a non-existent enterprise returns a 404 Not Found.
-        
-        Args:
-            self: The test instance.
-            api_cliente (APIClient) : api client for log in use
-            scenario_data (Dict[str, object]) : scenario for simulate a determinated environment
-            
-        Return:
-            None
-        """
-        owner = scenario_data["owner"]
-        api_client.force_authenticate(user=owner)
-        non_existent_pk = 999
-        url = reverse("listar-setores", kwargs={'pk': non_existent_pk})
-
-        response: DRFResponse = api_client.get(url)  #type: ignore
-                     
-        assert response.status_code == 404
-        assert response.data['sucesso'] is False #type: ignore
-        assert response.data['mensagem'] == "Empresa não encontrada." #type: ignore
+        assert response.status_code == 401 # type: ignore
+        assert response.data['sucesso'] is False # type: ignore
 
 @pytest.mark.django_db
 class TestActivateDeactivateSectorAPI:
@@ -522,7 +492,7 @@ class TestActivateDeactivateSectorAPI:
 
         response = api_client.put(url)
 
-        assert response.status_code == 200 #type: ignore
+        assert response.status_code == 200 #type: ignore # type: ignore
         assert response.data['sucesso'] is True #type: ignore
         assert response.data['data']['is_active'] is False #type: ignore
         
@@ -558,7 +528,7 @@ class TestActivateDeactivateSectorAPI:
 
         response = api_client.put(url)
 
-        assert response.status_code == 401 #type: ignore
+        assert response.status_code == 401 #type: ignore # type: ignore
         assert response.data['sucesso'] is False #type: ignore
 
     def test_toggle_sector_by_outsider_fails(self, api_client: APIClient, scenario_data: Dict) -> None:
@@ -580,7 +550,7 @@ class TestActivateDeactivateSectorAPI:
 
         response = api_client.put(url)
 
-        assert response.status_code == 403 #type: ignore
+        assert response.status_code == 403 #type: ignore # type: ignore
         assert response.data['sucesso'] is False #type: ignore
         assert "Você não tem permissão para modificar este setor" in str(response.data) #type: ignore
 
@@ -603,7 +573,7 @@ class TestActivateDeactivateSectorAPI:
 
         response = api_client.put(url)
 
-        assert response.status_code == 404 #type: ignore
+        assert response.status_code == 404 #type: ignore # type: ignore
         assert response.data['sucesso'] is False #type: ignore
 
 @pytest.mark.django_db
@@ -680,7 +650,7 @@ class TestEditSectorAPI:
         
         response = api_client.put(url, payload, format="json")
 
-        assert response.status_code == 200 #type: ignore
+        assert response.status_code == 200 #type: ignore # type: ignore
         assert response.data['sucesso'] is True #type: ignore
         assert response.data['mensagem'] == "Setor Atualizado!" #type: ignore
         assert response.data['data']['name'] == f"Updated by {role}" #type: ignore
@@ -712,7 +682,7 @@ class TestEditSectorAPI:
 
         response = api_client.put(url, payload, format="json")
 
-        assert response.status_code == 200 #type: ignore
+        assert response.status_code == 200 #type: ignore # type: ignore
         assert response.data['sucesso'] is True #type: ignore
         assert response.data['data']['name'] == "Partially Updated Name" #type: ignore
         
@@ -744,7 +714,7 @@ class TestEditSectorAPI:
 
         response = api_client.put(url, payload, format="json")
 
-        assert response.status_code == 404 #type: ignore
+        assert response.status_code == 404 #type: ignore # type: ignore
         assert response.data['sucesso'] is False #type: ignore
 
     def test_edit_sector_by_anonymous_fails(self, api_client: APIClient, scenario_data: Dict) -> None:
@@ -765,7 +735,7 @@ class TestEditSectorAPI:
 
         response = api_client.put(url, payload, format="json")
 
-        assert response.status_code == 401 #type: ignore
+        assert response.status_code == 401 #type: ignore # type: ignore
         assert response.data['sucesso'] is False #type: ignore
 
     @pytest.mark.parametrize("role", ["worker", "outsider"])
@@ -792,7 +762,7 @@ class TestEditSectorAPI:
 
         response = api_client.put(url, payload, format="json")
 
-        assert response.status_code == 403 #type: ignore
+        assert response.status_code == 403 #type: ignore # type: ignore
         assert response.data['sucesso'] is False #type: ignore
 
     def test_edit_sector_with_invalid_data_fails(self, api_client: APIClient, scenario_data: Dict) -> None:
@@ -816,7 +786,7 @@ class TestEditSectorAPI:
 
         response = api_client.put(url, invalid_payload, format="json")
 
-        assert response.status_code == 400 #type: ignore
+        assert response.status_code == 400 #type: ignore # type: ignore
         assert response.data['sucesso'] is False #type: ignore
         
 @pytest.mark.django_db
@@ -874,7 +844,7 @@ class TestExcludeSectorAPI:
 
         response = api_client.delete(url)
 
-        assert response.status_code == 200 #type: ignore
+        assert response.status_code == 200 #type: ignore # type: ignore
         assert response.data['sucesso'] is True #type: ignore
         assert response.data['mensagem'] == f"Setor {sector_name} deletado com sucesso." #type: ignore
 
@@ -901,7 +871,7 @@ class TestExcludeSectorAPI:
 
         response = api_client.delete(url)
 
-        assert response.status_code == 404 #type: ignore
+        assert response.status_code == 404 #type: ignore # type: ignore
         assert response.data['sucesso'] is False #type: ignore
 
     def test_delete_sector_by_anonymous_fails(self, api_client: APIClient, scenario_data: Dict) -> None:
@@ -921,7 +891,7 @@ class TestExcludeSectorAPI:
         
         response = api_client.delete(url)
 
-        assert response.status_code == 401 #type: ignore
+        assert response.status_code == 401 #type: ignore # type: ignore
         assert response.data['sucesso'] is False #type: ignore
 
     def test_delete_sector_by_outsider_fails(self, api_client: APIClient, scenario_data: Dict) -> None:
@@ -943,5 +913,5 @@ class TestExcludeSectorAPI:
 
         response = api_client.delete(url)
 
-        assert response.status_code == 403 #type: ignore
+        assert response.status_code == 403 #type: ignore # type: ignore
         assert response.data['sucesso'] is False #type: ignore

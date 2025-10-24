@@ -51,10 +51,12 @@ export interface UpdateEnterpriseData {
 export interface Sector {
   id: number;
   name: string;
-  enterprise: {
-    id: number;
-    name: string;
-  };
+  image: string;
+  enterprise_name: string;
+  enterprise_id: number;
+  hierarchy_level: string;
+  is_active: boolean;
+  creation_date: string;
 }
 
 export interface CreateSectorData {
@@ -68,6 +70,12 @@ export interface UserDetails {
   username: string;
   name: string;
   email: string;
+}
+
+export interface ResponseStructure<T> {
+  sucesso: boolean;
+  mensagem: string;
+  data: T;
 }
 
 const api = axios.create({

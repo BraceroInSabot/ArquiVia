@@ -1,12 +1,12 @@
 import api from '../core-api';
-import type { Sector, CreateSectorData } from '../core-api';
+import type { Sector, CreateSectorData, ResponseStructure } from '../core-api';
 
 const sectorService = {
     /**
      * Busca a lista de todos os setores que o usuário possui vínculo.
      *  
      */
-  getSectors(): Promise<{ data: Sector[] }> {
+  getSectors(): Promise<{ data: ResponseStructure<Sector[]> }> {
     return api.get('/setor/visualizar/');
   },
 

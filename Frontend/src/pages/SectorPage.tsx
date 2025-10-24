@@ -29,7 +29,8 @@ const SectorPage = () => {
   const groupedAndSortedSectors = useMemo(() => {
     const groups: Record<string, Sector[]> = {};
     sectors.forEach(sector => {
-      const enterpriseName = sector.enterprise.name;
+        console.log(sector);
+      const enterpriseName = sector.enterprise_name;
       if (!groups[enterpriseName]) {
         groups[enterpriseName] = [];
       }

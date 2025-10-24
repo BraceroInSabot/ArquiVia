@@ -71,8 +71,6 @@ const CreateSectorPage = () => {
     setIsSubmitting(true);
     setError(null);
 
-    console.log("enterprise_id selecionado:", selectedEnterpriseId.enterprise_id);
-
     const data: CreateSectorData = {
       name,
       image,

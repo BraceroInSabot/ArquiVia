@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import sectorService from '../services/Sector/api';
 import type { Sector } from '../services/core-api';
 
+import SectorHeader from '../components/SectorHeader';
+import SectorList from '../components/SectorList';
+import type { SectorGroup } from '../components/SectorList.types'; 
+
 const SectorPage = () => {
   const navigate = useNavigate();
 
@@ -22,14 +26,12 @@ const SectorPage = () => {
         setIsLoading(false);
       }
     };
-
     fetchSectors();
   }, []); 
 
-  const groupedAndSortedSectors = useMemo(() => {
+  const groupedAndSortedSectors: SectorGroup[] = useMemo(() => {
     const groups: Record<string, Sector[]> = {};
     sectors.forEach(sector => {
-        console.log(sector);
       const enterpriseName = sector.enterprise_name;
       if (!groups[enterpriseName]) {
         groups[enterpriseName] = [];
@@ -49,42 +51,18 @@ const SectorPage = () => {
 
   const goToCreateSector = () => {
     navigate('/setor/criar');
-    // alert('Navegar para a página de criação de setor');
   };
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1 style={{ textAlign: 'left' }}>Listagem de Setores</h1>
-        <button onClick={goToCreateSector}>
-          Criar Novo Setor
-        </button>
-      </div>
-
+      <SectorHeader title="Listagem de Setores" onCreate={goToCreateSector} />
       <hr />
 
       {isLoading && <p>Carregando setores...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
       {!isLoading && !error && (
-        <div>
-          {groupedAndSortedSectors.length === 0 ? (
-            <p>Nenhum setor encontrado para as empresas que você pertence.</p>
-          ) : (
-            groupedAndSortedSectors.map(group => (
-              <div key={group.enterpriseName}>
-                <h2>{group.enterpriseName}</h2>
-                <ul>
-                  {group.sectors.map(sector => (
-                    <li key={sector.id}>
-                      {sector.name}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))
-          )}
-        </div>
+        <SectorList groups={groupedAndSortedSectors} />
       )}
     </div>
   );

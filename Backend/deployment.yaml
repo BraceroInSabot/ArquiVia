@@ -21,3 +21,8 @@ spec:
           envFrom:
             - secretRef:
                 name: django-env
+          env:
+            - name: DJANGO_SETTINGS_MODULE
+              value: "arquivia.settings.prod"
+          command:
+            ["gunicorn", "--bind", "0.0.0.0:8000", "arquivia.wsgi:application"]

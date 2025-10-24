@@ -8,7 +8,7 @@ from apps.APIEmpresa.models import Enterprise
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from apps.core.utils import default_response
-from .serializers import SectorCreateSerializer, SectorDetailSerializer, SectorListSerializer, SectorUpdateSerializer
+from .serializers import SectorCreateSerializer, SectorDetailSerializer, SectorHierarchyListSerializer, SectorUpdateSerializer
 from .permissions import (
     IsEnterpriseOwner, 
     IsEnterpriseOwnerOrMember, 
@@ -84,51 +84,70 @@ class RetrieveSectorView(APIView):
         res.data = default_response(success=True, message="Setor recuperado com sucesso!", data=serializer.data)
         return res
     
-class ListSectorView(APIView):
-    permission_classes = [IsAuthenticated, IsEnterpriseOwnerOrMember]
-    
-    def get(self, request, pk: int):
-        """
-        Retrieves a list of sectors belonging to a specific enterprise.
+class ListUserSectorsView(APIView): # Renamed for clarity
+    """
+    Retrieves a list of all sectors the requesting user is linked to,
+    including their hierarchy level within each sector.
 
-        The user must be authenticated and either the owner of the enterprise
-        or a member of a sector within that enterprise to view the list.
-        If the user is the owner, all sectors are returned.
-        If the user is a member, only the active sectors they belong to are returned.
+    Linkage includes being the enterprise owner, sector manager, or sector member.
+    Requires authentication.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request) -> HttpResponse:
+        request_user = request.user
+
+        user_sector_links = SectorUser.objects.filter(user=request_user).select_related(
+            'sector', 
+            'sector__manager', 
+            'sector__enterprise__owner'
+        )
         
-        Args:
-            request (Request): The user request object.
-            pk (int): The primary key of the sector to retrieve.
+        linked_sectors_data = {
+            link.sector: {'is_adm': link.is_adm} 
+            for link in user_sector_links
+        } # todos os vinculos onde o usuário é membro e /ou administrador do setor
+        linked_sector_ids = [sector.pk for sector in linked_sectors_data.keys()] 
 
-        Returns:
-            Response: HttpResponse with status and message
-        """
-        enterprise_check = Enterprise.objects.filter(pk=pk).first()
+        managed_sectors = Sector.objects.filter(manager=request_user).select_related(
+            'enterprise__owner'
+        ).exclude(pk__in=linked_sector_ids)  # não retorna os setores onde o usuário é adm
+        managed_sector_ids = [sector.pk for sector in managed_sectors]
+
+        owned_enterprise_ids = Enterprise.objects.filter(owner=request_user).values_list('pk', flat=True) # todos os ids de empresas que o usuário é dono
         
-        if enterprise_check is None:
-            res: HttpResponse = Response()
-            res.status_code = 404
-            res.data = default_response(success=False, message="Empresa não encontrada.")
-            return res
+        owner_sectors = Sector.objects.filter(
+            enterprise__pk__in=owned_enterprise_ids
+        ).select_related('manager', 'enterprise__owner').exclude(
+            pk__in=linked_sector_ids + managed_sector_ids
+        ) # todos os setores onde o usuário é dono da empresa, mas não é gestor nem membro
 
-        self.check_object_permissions(request, enterprise_check)
-
-        if enterprise_check.owner == request.user:
-            sectors_queryset = enterprise_check.sectors.all()  #type: ignore
-        else:
-            sectors_queryset = Sector.objects.filter(
-                enterprise=enterprise_check, 
-                sector_links__user=request.user,
-                is_active=True
-            )
+        all_relevant_sectors = list(linked_sectors_data.keys()) + list(managed_sectors) + list(owner_sectors)
         
-        optimized_queryset = sectors_queryset.select_related('manager').distinct()
+        unique_sectors = {sector.pk: sector for sector in all_relevant_sectors}.values()
 
-        serializer = SectorListSerializer(optimized_queryset, many=True)
-        
+        serializer_data = []
+        for sector in unique_sectors:
+            hierarchy = "Membro" 
+            
+            if sector.enterprise.owner == request_user:
+                hierarchy = "Proprietário"
+            elif sector.manager == request_user:
+                hierarchy = "Gestor"
+            elif sector in linked_sectors_data and linked_sectors_data[sector]['is_adm']:
+                 hierarchy = "Administrador"
+            
+            sector_data = SectorHierarchyListSerializer(sector).data
+            sector_data['hierarchy_level'] = hierarchy # type: ignore
+            serializer_data.append(sector_data)
+            
         res: HttpResponse = Response()
         res.status_code = 200
-        res.data = default_response(success=True, message="Lista de setores recuperada com sucesso!", data=serializer.data)
+        res.data = default_response(
+            success=True, 
+            message="Lista de setores recuperada com sucesso!", 
+            data=serializer_data
+        )
         return res
     
 class ActivateOrDeactivateSectorView(APIView):

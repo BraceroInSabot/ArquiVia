@@ -72,13 +72,17 @@ class SectorDetailSerializer(serializers.ModelSerializer):
             'is_active'
         ]
         
-class SectorListSerializer(serializers.ModelSerializer):
+class SectorHierarchyListSerializer(serializers.ModelSerializer):
     """
-    Serializer for listing Sector details efficiently.
+    Serializer for listing Sector details along with the user's hierarchy level.
     """
     manager_name = serializers.CharField(source='manager.name', read_only=True)
+    enterprise_name = serializers.CharField(source='enterprise.name', read_only=True)
+    enterprise_id = serializers.IntegerField(source='enterprise.pk', read_only=True) # Add enterprise ID
+    creation_date = serializers.DateTimeField(format="%H:%M:%S - %d-%m-%Y", read_only=True) # type: ignore
     
-    creation_date = serializers.DateTimeField(format="%H:%M:%S - %d-%m-%Y", read_only=True) #type: ignore
+    # Add a field to accept the hierarchy level from the view context
+    hierarchy_level = serializers.CharField(read_only=True) 
 
     class Meta:
         model = Sector
@@ -88,9 +92,12 @@ class SectorListSerializer(serializers.ModelSerializer):
             'manager_name', 
             'image', 
             'creation_date', 
-            'is_active'
-        ]    
-
+            'enterprise_id', # Added ID
+            'enterprise_name', 
+            'is_active',
+            'hierarchy_level' # Added hierarchy
+        ]
+        
 class SectorUpdateSerializer(serializers.ModelSerializer):
     """
     Serializer for return Sector details efficiently when editted.

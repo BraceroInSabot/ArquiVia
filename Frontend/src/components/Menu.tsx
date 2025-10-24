@@ -6,10 +6,15 @@ const Menu = () => {
     const goToEnterprises = () => {
         navigate('/empresas');
     }
+
+    const goToSectors = () => {
+        navigate('/setores');
+    }
     
     return (
         <ul>
             <li><a onClick={goToEnterprises}>Empresas</a></li>
+            <li><a onClick={goToSectors}>Setores</a></li>
         </ul>
     )
 }

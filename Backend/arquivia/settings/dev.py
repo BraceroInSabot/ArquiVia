@@ -22,16 +22,6 @@ DATABASES = {
     }
 }
 
-# DATABASES = {
-#     'default': {
-#             'ENGINE': 'django.db.backends.postgresql',
-#             'NAME': 'arquivia_db',
-#             'USER': 'arquivia',
-#             'PASSWORD': '123',
-#             'HOST': '179.125.60.185', 
-#             'PORT': '5432',
-#         }
-# }
 
 CORS_ALLOWED_ORIGINS += [
     "http://localhost:3000",

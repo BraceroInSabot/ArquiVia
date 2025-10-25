@@ -130,3 +130,28 @@ class IsEnterpriseOwnerOrSectorManager(BasePermission):
             
         if is_owner or is_manager:
             return True
+        
+class IsLinkedToSector(BasePermission):
+    """
+    Permissão que verifica se o usuário da requisição está vinculado
+    ao setor especificado no payload.
+    """
+    message = "Você não está vinculado a este setor."
+
+    def has_object_permission(self, request, view, obj):        
+        if not isinstance(obj, Sector):
+             return False
+         
+        is_linked = SectorUser.objects.filter(
+            user=request.user,
+            sector=obj
+        ).exists()
+
+        is_manager = obj.manager == request.user
+        is_owner = obj.enterprise.owner == request.user
+        
+        if not is_linked:
+            self.message = "Apenas usuários vinculados ao setor podem realizar esta ação."
+            
+        if is_linked or is_manager or is_owner:
+            return True

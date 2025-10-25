@@ -2,16 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import sectorService from '../services/Sector/api';
 import type { Sector } from '../services/core-api';
-
-
-const SectorUsers = ({ sectorId }: { sectorId: number }) => {
-  return (
-    <div>
-      <h3>Componente de Usuários</h3>
-      <p>Aqui será exibida a lista de usuários do setor {sectorId}.</p>
-    </div>
-  );
-};
+import SectorUsers from '../components/SectorUsers';  
 
 const SectorMetrics = ({ sectorId }: { sectorId: number }) => {
   return (
@@ -128,7 +119,7 @@ const ViewSectorPage = () => {
       </nav>
 
       <div style={{ padding: '20px 0' }}>
-        {activeTab === 'users' && <SectorUsers sectorId={sector.sector_id} />}
+        {activeTab === 'users' && sector.sector_id && <SectorUsers sectorId={sector.sector_id} />}
         {activeTab === 'metrics' && <SectorMetrics sectorId={sector.sector_id} />}
         {activeTab === 'logs' && <SectorLogs sectorId={sector.sector_id} />}
       </div>

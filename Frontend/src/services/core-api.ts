@@ -82,6 +82,13 @@ export interface ResponseStructure<T> {
   data: T;
 }
 
+export interface SectorUser {
+  user_id: number;
+  user_name: string;
+  user_email: string;
+  role: string;
+}
+
 const api = axios.create({
   baseURL: URL,
   withCredentials: true,

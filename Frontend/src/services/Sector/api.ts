@@ -1,5 +1,5 @@
 import api from '../core-api';
-import type { Sector, CreateSectorData, ResponseStructure } from '../core-api';
+import type { Sector, CreateSectorData, ResponseStructure, SectorUser } from '../core-api';
 
 const sectorService = {
     /**
@@ -24,6 +24,14 @@ const sectorService = {
    */
   getSectorById(id: number): Promise<{ data: ResponseStructure<Sector> }> {
     return api.get(`/setor/consultar/${id}/`);
+  },
+
+  /**
+   * Busca a lista de usuários e suas funções em um setor específico.
+   * @param sectorId - O ID do setor.
+   */
+  getSectorUsers(sectorId: number): Promise<{ data: ResponseStructure<SectorUser[]> }> {
+    return api.get(`/setor/listar-usuarios-setor/${sectorId}/`);
   },
 };
 

@@ -8,7 +8,7 @@ from apps.APIEmpresa.models import Enterprise
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from apps.core.utils import default_response
-from .serializers import SectorCreateSerializer, SectorDetailSerializer, SectorHierarchyListSerializer, SectorUpdateSerializer
+from .serializers import SectorCreateSerializer, SectorDetailSerializer, SectorUpdateSerializer
 from .permissions import (
     IsEnterpriseOwner, 
     IsEnterpriseOwnerOrMember, 
@@ -137,7 +137,7 @@ class ListUserSectorsView(APIView): # Renamed for clarity
             elif sector in linked_sectors_data and linked_sectors_data[sector]['is_adm']:
                  hierarchy = "Administrador"
             
-            sector_data = SectorHierarchyListSerializer(sector).data
+            sector_data = SectorDetailSerializer(sector).data
             sector_data['hierarchy_level'] = hierarchy # type: ignore
             serializer_data.append(sector_data)
             

@@ -49,36 +49,17 @@ class SectorCreateSerializer(serializers.ModelSerializer):
             image=validated_data.get('image')
         )
         return sector
-    
-class SectorDetailSerializer(serializers.ModelSerializer):
-    """
-    Serializer para exibir os detalhes de um setor, incluindo nomes
-    de campos relacionados.
-    """
-    manager_name = serializers.CharField(source='manager.name', read_only=True)
-    enterprise_name = serializers.CharField(source='enterprise.name', read_only=True)
-    
-    creation_date = serializers.DateTimeField(format="%H:%M:%S - %d-%m-%Y", read_only=True)  #type: ignore
-
-    class Meta:
-        model = Sector
-        fields = [
-            'sector_id', 
-            'name', 
-            'manager_name', 
-            'image', 
-            'creation_date', 
-            'enterprise_name', 
-            'is_active'
-        ]
         
-class SectorHierarchyListSerializer(serializers.ModelSerializer):
+class SectorDetailSerializer(serializers.ModelSerializer):
     """
     Serializer for listing Sector details along with the user's hierarchy level.
     """
+    manager_id = serializers.IntegerField(source='manager.pk', read_only=True)
     manager_name = serializers.CharField(source='manager.name', read_only=True)
     enterprise_name = serializers.CharField(source='enterprise.name', read_only=True)
     enterprise_id = serializers.IntegerField(source='enterprise.pk', read_only=True) # Add enterprise ID
+    owner_id = serializers.IntegerField(source='enterprise.owner.pk', read_only=True)
+    owner_name = serializers.CharField(source='enterprise.owner.name', read_only=True)
     creation_date = serializers.DateTimeField(format="%H:%M:%S - %d-%m-%Y", read_only=True) # type: ignore
     
     # Add a field to accept the hierarchy level from the view context
@@ -89,11 +70,14 @@ class SectorHierarchyListSerializer(serializers.ModelSerializer):
         fields = [
             'sector_id', 
             'name', 
+            'manager_id', 
             'manager_name', 
             'image', 
             'creation_date', 
             'enterprise_id', # Added ID
-            'enterprise_name', 
+            'enterprise_name',
+            'owner_id',
+            'owner_name', 
             'is_active',
             'hierarchy_level' # Added hierarchy
         ]

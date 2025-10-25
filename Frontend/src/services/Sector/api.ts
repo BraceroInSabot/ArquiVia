@@ -1,5 +1,5 @@
 import api from '../core-api';
-import type { Sector, CreateSectorData, ResponseStructure, SectorUser } from '../core-api';
+import type { Sector, CreateSectorData, ResponseStructure, SectorUser, AddSectorUserPayload } from '../core-api';
 
 const sectorService = {
     /**
@@ -32,6 +32,15 @@ const sectorService = {
    */
   getSectorUsers(sectorId: number): Promise<{ data: ResponseStructure<SectorUser[]> }> {
     return api.get(`/setor/listar-usuarios-setor/${sectorId}/`);
+  },
+
+  /**
+   * Adiciona um usuário a um setor.
+   * @param sectorId O ID do setor.
+   * @param data O payload com email e função do usuário.
+   */
+  addUserToSector(sectorId: number, data: AddSectorUserPayload): Promise<{ data: SectorUser }> {
+    return api.post(`/setor/adicionar-usuario/${sectorId}/`, data);
   },
 };
 

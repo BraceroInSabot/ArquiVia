@@ -70,10 +70,11 @@ export interface CreateSectorData {
 }
 
 export interface UserDetails {
-  id: number;
+  user_id: number;
   username: string;
   name: string;
   email: string;
+  image: string;
 }
 
 export interface ResponseStructure<T> {
@@ -87,6 +88,10 @@ export interface SectorUser {
   user_name: string;
   user_email: string;
   role: string;
+}
+
+export interface AddSectorUserPayload {
+  email: string;
 }
 
 const api = axios.create({

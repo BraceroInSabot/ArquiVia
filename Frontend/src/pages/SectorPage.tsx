@@ -52,8 +52,7 @@ const SectorPage = () => {
   };
 
   const handleViewSector = (id: number) => {
-    alert(`Consultar setor ID: ${id}`);
-    // Futuramente: navigate(`/setor/${id}`);
+    navigate(`/setor/${id}`);
   };
 
   const handleEditSector = (id: number) => {

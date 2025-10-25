@@ -3,10 +3,11 @@ from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404
 from rest_framework.views import APIView, Response
 from rest_framework.permissions import IsAuthenticated
+from apps.APISetor.sectorUserUtils.serializers import SectorUserRoleSerializer
 from apps.APISetor.models import Sector, SectorUser
 from apps.APIEmpresa.models import Enterprise
 from django.contrib.auth import get_user_model
-from apps.APISetor.permissions import IsEnterpriseOwnerOrSectorManager, IsOwnerManagerOrSectorAdmin
+from apps.APISetor.permissions import IsEnterpriseOwnerOrSectorManager, IsOwnerManagerOrSectorAdmin, IsLinkedToSector
 from apps.core.utils import default_response
 
 
@@ -144,4 +145,59 @@ class SetUnsetUserAdministrator(APIView):
         res: HttpResponse = Response()
         res.status_code = 200
         res.data = default_response(success=True, message=f"Privilégios de administrador {"concedido" if make_admin else "removido"} com sucesso.")
+        return res
+    
+class ListSectorUsersView(APIView):
+    permission_classes = [IsAuthenticated, IsLinkedToSector] 
+    
+    def get(self, request, pk: int) -> HttpResponse:
+        """
+        Handles the GET request to list users for a specific sector.
+
+        Args:
+            request (Request): The user request object.
+            pk (int): The primary key of the Sector to retrieve users from.
+
+        Returns:
+            HttpResponse: A response containing the list of users and their roles.
+        """
+        sector = get_object_or_404(
+            Sector.objects.select_related('manager', 'enterprise__owner'), 
+            pk=pk
+        )
+
+        self.check_object_permissions(request, sector)
+
+        owner = sector.enterprise.owner
+        manager = sector.manager
+
+        sector_links = SectorUser.objects.filter(sector=sector).select_related('user')
+
+        user_roles_map = {}
+
+        user_roles_map[owner.pk] = {"user": owner, "role": "Proprietário"}
+        
+        if manager.pk not in user_roles_map:
+            user_roles_map[manager.pk] = {"user": manager, "role": "Gestor"}
+        
+        for link in sector_links:
+            if link.user.pk not in user_roles_map:
+                role = "Administrador" if link.is_adm else "Membro"
+                user_roles_map[link.user.pk] = {"user": link.user, "role": role}
+
+        final_user_list = []
+        for data in user_roles_map.values():
+            user_obj = data["user"]
+            setattr(user_obj, 'role', data["role"]) 
+            final_user_list.append(user_obj)
+            
+        serializer = SectorUserRoleSerializer(final_user_list, many=True)
+        
+        res: HttpResponse = Response()
+        res.status_code = 200
+        res.data = default_response(
+            success=True, 
+            message="Lista de usuários do setor recuperada com sucesso!", 
+            data=serializer.data
+        )
         return res

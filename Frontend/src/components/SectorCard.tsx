@@ -32,6 +32,8 @@ const SectorCard = ({ sector, onView, onEdit, onDelete, onDeactivateOrActivate }
     objectFit: 'cover',
   };
 
+  console.log("Setor:", sector);
+
   return (
     <div style={cardStyle}>
       <div style={infoStyle}>
@@ -49,23 +51,23 @@ const SectorCard = ({ sector, onView, onEdit, onDelete, onDeactivateOrActivate }
       </div>
 
       <div>
-        <button onClick={() => onView(sector.id)} style={{ marginRight: '5px' }}>
+        <button onClick={() => onView(sector.sector_id)} style={{ marginRight: '5px' }}>
           Consultar
         </button>
         <button style={{ marginRight: '5px' }}>
           Documentos
         </button>
         {sector.hierarchy_level === 'Proprietário' || sector.hierarchy_level === 'Gestor' || sector.hierarchy_level === 'Administrador' ? (
-        <button onClick={() => onEdit(sector.id)} style={{ marginRight: '5px' }}> 
+        <button onClick={() => onEdit(sector.sector_id)} style={{ marginRight: '5px' }}> 
           Editar 
         </button>
         ) : null}
         {sector.hierarchy_level === 'Proprietário' ? (
             <div>
-                <button onClick={() => onDelete(sector.id)}>
+                <button onClick={() => onDelete(sector.sector_id)}>
                     Remover 
                 </button>
-                <button onClick={() => onDeactivateOrActivate(sector.id)}>
+                <button onClick={() => onDeactivateOrActivate(sector.sector_id)}>
                     Desativar / Ativar
                 </button>
             </div>

@@ -49,11 +49,15 @@ export interface UpdateEnterpriseData {
 }
 
 export interface Sector {
-  id: number;
+  sector_id: number;
   name: string;
   image: string;
+  manager_id: number;
+  manager_name: string;
   enterprise_name: string;
   enterprise_id: number;
+  owner_id: number;
+  owner_name: string;
   hierarchy_level: string;
   is_active: boolean;
   creation_date: string;

@@ -17,6 +17,14 @@ const sectorService = {
   createSector(data: CreateSectorData): Promise<{ data: Sector }> {
     return api.post('/setor/criar/', data);
   },
+
+  /**
+   * Realiza a consulta do setor pelo ID.
+   * @param id - ID do setor. Comumente pego pela listagem de setores.
+   */
+  getSectorById(id: number): Promise<{ data: ResponseStructure<Sector> }> {
+    return api.get(`/setor/consultar/${id}/`);
+  },
 };
 
 export default sectorService;

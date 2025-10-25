@@ -32,6 +32,8 @@ const SectorCard = ({ sector, onView, onEdit, onDelete, onDeactivateOrActivate }
     objectFit: 'cover',
   };
 
+  console.log("Setor:", sector);
+
   return (
     <div style={cardStyle}>
       <div style={infoStyle}>
@@ -49,7 +51,7 @@ const SectorCard = ({ sector, onView, onEdit, onDelete, onDeactivateOrActivate }
       </div>
 
       <div>
-        <button onClick={() => onView(sector.id)} style={{ marginRight: '5px' }}>
+        <button onClick={() => onView(sector.sector_id)} style={{ marginRight: '5px' }}>
           Consultar
         </button>
         <button style={{ marginRight: '5px' }}>

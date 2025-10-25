@@ -3,8 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import sectorService from '../services/Sector/api';
 import type { Sector } from '../services/core-api';
 
-// --- 1. Definição dos Componentes das Abas (Placeholders) ---
-// Em um projeto real, estes seriam arquivos separados.
 
 const SectorUsers = ({ sectorId }: { sectorId: number }) => {
   return (
@@ -32,9 +30,7 @@ const SectorLogs = ({ sectorId }: { sectorId: number }) => {
     </div>
   );
 };
-// --- Fim dos Componentes das Abas ---
 
-// Definição do tipo para o nome das abas
 type TabName = 'users' | 'metrics' | 'logs';
 
 const ViewSectorPage = () => {
@@ -45,10 +41,8 @@ const ViewSectorPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // --- 2. Estado para controlar a aba ativa ---
   const [activeTab, setActiveTab] = useState<TabName>('users');
 
-  // O seu useEffect para buscar dados permanece o mesmo
   useEffect(() => {
     if (!id) {
       setError('ID do setor não fornecido.');
@@ -58,7 +52,7 @@ const ViewSectorPage = () => {
     const fetchSectorData = async () => {
       try {
         const response = await sectorService.getSectorById(Number(id));
-        setSector(response.data.data); // Você usou response.data.data, mantive assim
+        setSector(response.data.data); 
       } catch (err) {
         console.error("Falha ao buscar dados do setor:", err);
         setError("Não foi possível carregar os dados do setor.");
@@ -69,7 +63,6 @@ const ViewSectorPage = () => {
     fetchSectorData();
   }, [id]);
 
-  // --- 3. Estilos simples para a navegação das abas ---
   const tabStyle: React.CSSProperties = {
     padding: '10px 15px',
     border: 'none',
@@ -84,7 +77,7 @@ const ViewSectorPage = () => {
       return {
         ...tabStyle,
         fontWeight: 'bold',
-        borderBottom: '3px solid blue', // Simples indicador de "ativo"
+        borderBottom: '3px solid blue', 
       };
     }
     return tabStyle;
@@ -99,13 +92,9 @@ const ViewSectorPage = () => {
     return <p style={{ color: 'red' }}>{error}</p>;
   }
 
-  // O seu 'if (!sector)' não funciona como esperado pois você inicializou
-  // com '{} as Sector'. Se 'sector.name' estiver undefined, o card
-  // apenas renderizará em branco. Isso é ok por enquanto.
 
   return (
     <div style={{ padding: '20px' }}>
-      {/* Card no Topo (Seu código original) */}
       <div style={{ border: '1px solid #ccc', padding: '16px', borderRadius: '8px', marginBottom: '40px' }}>
         <h2 style={{ marginTop: 0 }}>{sector.name}</h2>
         
@@ -115,11 +104,9 @@ const ViewSectorPage = () => {
           style={{ width: '100px', height: '100px', objectFit: 'cover', float: 'right' }} 
         />
         
-        {/* Corrigi para usar 'sector.id' como na interface */}
         <p><strong>ID do Setor:</strong> {sector.sector_id}</p> 
         <p><strong>Empresa:</strong> {sector.enterprise_name}</p>
         <p><strong>Gerente:</strong> {sector.manager_name}</p>
-        {/* Corrigi para formatar a data */}
         <p><strong>Data de Criação:</strong> {sector.creation_date ? new Date(sector.creation_date).toLocaleDateString() : 'N/A'}</p>
         <p><strong>Status:</strong> {sector.is_active ? 'Ativo' : 'Inativo'}</p>
         
@@ -128,7 +115,6 @@ const ViewSectorPage = () => {
         </button>
       </div>
 
-      {/* --- 4. Navegação por Abas --- */}
       <nav style={{ borderBottom: '1px solid #ccc' }}>
         <button style={getActiveTabStyle('users')} onClick={() => setActiveTab('users')}>
           Usuários
@@ -141,15 +127,11 @@ const ViewSectorPage = () => {
         </button>
       </nav>
 
-      {/* --- 5. Conteúdo da Aba Ativa --- */}
       <div style={{ padding: '20px 0' }}>
         {activeTab === 'users' && <SectorUsers sectorId={sector.sector_id} />}
         {activeTab === 'metrics' && <SectorMetrics sectorId={sector.sector_id} />}
         {activeTab === 'logs' && <SectorLogs sectorId={sector.sector_id} />}
       </div>
-
-      {/* Placeholder do Dashboard no Fundo */}
-      <h1>DASHBOARD</h1>
     </div>
   );
 };

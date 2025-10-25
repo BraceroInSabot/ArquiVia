@@ -23,7 +23,7 @@ const SectorList = ({ groups, onViewSector, onEditSector, onDeleteSector, onDeac
           <div>
             {group.sectors.map(sector => (
               <SectorCard
-                key={sector.id}
+                key={sector.sector_id}
                 sector={sector}
                 onView={onViewSector}
                 onEdit={onEditSector}

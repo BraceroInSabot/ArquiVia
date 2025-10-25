@@ -58,16 +58,16 @@ const SectorCard = ({ sector, onView, onEdit, onDelete, onDeactivateOrActivate }
           Documentos
         </button>
         {sector.hierarchy_level === 'Proprietário' || sector.hierarchy_level === 'Gestor' || sector.hierarchy_level === 'Administrador' ? (
-        <button onClick={() => onEdit(sector.id)} style={{ marginRight: '5px' }}> 
+        <button onClick={() => onEdit(sector.sector_id)} style={{ marginRight: '5px' }}> 
           Editar 
         </button>
         ) : null}
         {sector.hierarchy_level === 'Proprietário' ? (
             <div>
-                <button onClick={() => onDelete(sector.id)}>
+                <button onClick={() => onDelete(sector.sector_id)}>
                     Remover 
                 </button>
-                <button onClick={() => onDeactivateOrActivate(sector.id)}>
+                <button onClick={() => onDeactivateOrActivate(sector.sector_id)}>
                     Desativar / Ativar
                 </button>
             </div>

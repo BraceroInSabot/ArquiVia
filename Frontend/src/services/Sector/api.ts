@@ -48,6 +48,7 @@ const sectorService = {
    * @param sectorId O ID do setor.
    * @param userId O ID do usuário a ser removido.
    */
+
   removeUserFromSector(sectorUserLinkId: number): Promise<void> {
     return api.delete(`/setor/remover-usuario/${sectorUserLinkId}/`);
   },

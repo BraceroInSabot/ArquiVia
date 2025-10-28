@@ -36,7 +36,7 @@ const MODAL_STYLE: React.CSSProperties = {
 // --- O Componente ---
 
 const AddSectorUserModal = ({ isOpen, onClose, sectorId, onUserAdded }: ModalProps) => {
-  const [email, setEmail] = useState<string>('');
+  const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

@@ -40,7 +40,7 @@ const sectorService = {
    * @param data O payload com email e função do usuário.
    */
   addUserToSector(sectorId: number, data: AddSectorUserPayload): Promise<{ data: SectorUser }> {
-    return api.post(`/setor/adicionar-usuario/${sectorId}/`, {"user_email": data});
+    return api.post(`/setor/adicionar-usuario/${sectorId}/`, data);
   },
 
   /**
@@ -48,8 +48,8 @@ const sectorService = {
    * @param sectorId O ID do setor.
    * @param userId O ID do usuário a ser removido.
    */
-  removeUserFromSector(sectorId: number, userId: number): Promise<void> {
-    return api.delete(`/setor/remover-usuario/${sectorId}/${userId}/`);
+  removeUserFromSector(sectorUserLinkId: number): Promise<void> {
+    return api.delete(`/setor/remover-usuario/${sectorUserLinkId}/`);
   },
 };
 

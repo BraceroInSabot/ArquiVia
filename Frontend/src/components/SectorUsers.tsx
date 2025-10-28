@@ -82,6 +82,16 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
     return <p style={{ color: 'red' }}>{error}</p>;
   }
 
+  const handleUserRemove = async (sectorUserLinkId: number) => {
+    console.log("Removendo usuário com link ID:", users);
+    try {
+      await sectorService.removeUserFromSector(sectorUserLinkId);
+    } catch (err) {
+      console.error("Falha ao remover usuário do setor:", err);
+      alert("Não foi possível remover o usuário do setor.");
+    }
+  };
+
   return (
     <div>
       {canManage && (
@@ -118,7 +128,7 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
                   <td style={{ padding: '8px' }}>{user.role}</td>
                   <td style={{ padding: '8px' }}>
                     {canManage && user.user_id !== loggedInUser?.data.user_id ? (
-                      <button onClick={() => alert(`Removendo usuário ID: ${user.user_id} do setor.`)}>Remover</button>
+                      <button onClick={() => handleUserRemove(user.sector_user_id)}>Remover</button>
                     ) : null}
                   </td>
                 </tr>

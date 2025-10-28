@@ -70,11 +70,15 @@ export interface CreateSectorData {
 }
 
 export interface UserDetails {
-  user_id: number;
-  username: string;
-  name: string;
-  email: string;
-  image: string;
+  data : {
+    user_id: number;
+    username: string;
+    name: string;
+    email: string;
+    image: string;
+  };
+  sucesso: boolean;
+  mensagem: string;
 }
 
 export interface ResponseStructure<T> {
@@ -88,6 +92,7 @@ export interface SectorUser {
   user_name: string;
   user_email: string;
   role: string;
+  sector_user_id: number;
 }
 
 export interface AddSectorUserPayload {

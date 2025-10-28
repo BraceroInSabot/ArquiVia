@@ -91,7 +91,7 @@ export interface SectorUser {
 }
 
 export interface AddSectorUserPayload {
-  email: string;
+  user_email: string;
 }
 
 const api = axios.create({

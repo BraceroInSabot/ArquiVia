@@ -54,6 +54,7 @@ const ViewSectorPage = () => {
     fetchSectorData();
   }, [id]);
 
+
   const tabStyle: React.CSSProperties = {
     padding: '10px 15px',
     border: 'none',
@@ -98,12 +99,17 @@ const ViewSectorPage = () => {
         <p><strong>ID do Setor:</strong> {sector.sector_id}</p> 
         <p><strong>Empresa:</strong> {sector.enterprise_name}</p>
         <p><strong>Gerente:</strong> {sector.manager_name}</p>
-        <p><strong>Data de Criação:</strong> {sector.creation_date ? new Date(sector.creation_date).toLocaleDateString() : 'N/A'}</p>
+        <p><strong>Data de Criação:</strong> {sector.creation_date}</p>
         <p><strong>Status:</strong> {sector.is_active ? 'Ativo' : 'Inativo'}</p>
         
-        <button onClick={() => navigate(-1)} style={{ marginTop: '10px' }}>
-          Voltar
-        </button>
+        <div>
+          <button onClick={() => {navigate(-1)}}>
+            Voltar
+          </button>
+          <button>
+            Editar Setor
+          </button>
+        </div>
       </div>
 
       <nav style={{ borderBottom: '1px solid #ccc' }}>

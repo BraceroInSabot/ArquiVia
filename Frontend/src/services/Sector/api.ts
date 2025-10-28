@@ -40,7 +40,7 @@ const sectorService = {
    * @param data O payload com email e função do usuário.
    */
   addUserToSector(sectorId: number, data: AddSectorUserPayload): Promise<{ data: SectorUser }> {
-    return api.post(`/setor/adicionar-usuario/${sectorId}/`, data);
+    return api.post(`/setor/adicionar-usuario/${sectorId}/`, {"user_email": data});
   },
 };
 

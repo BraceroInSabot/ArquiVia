@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import sectorService from '../services/Sector/api';
-import userService from '../services/User/api';
 import { useAuth } from '../contexts/AuthContext';
-import type { SectorUser, UserDetails } from '../services/core-api';
-import AddSectorUserForm from './AddUserToSectorForm';
+import type { SectorUser } from '../services/core-api';
+
+import AddSectorUserModal from './AddSectorUserModal';
 
 interface SectorUsersProps {
   sectorId: number;
@@ -14,17 +14,21 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [canManage, setCanManage] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
-  const { user: loggedInUser } = useAuth(); 
+  // CORREÇÃO 1: Pegue 'isLoading' (renomeado para 'isAuthLoading') aqui no topo
+  const { user: loggedInUser, isLoading: isAuthLoading } = useAuth(); 
 
   useEffect(() => {
+    // CORREÇÃO 1 (uso): Use 'isAuthLoading'
+    if (!loggedInUser && !isAuthLoading) {
+      setError("Não foi possível identificar o usuário logado.");
+      setIsLoading(false); // Pare o loading se não pudermos fazer nada
+      return;
+    }
+    
+    // Se o sectorId ou o usuário ainda não estiverem prontos, espere.
     if (!sectorId || !loggedInUser) {
-      // Se não tivermos um ID do setor ou do usuário logado, não fazemos nada.
-      // O 'isLoading' de AuthContext deve lidar com a espera do loggedInUser.
-      if (!loggedInUser && !useAuth().isLoading) {
-        setError("Não foi possível identificar o usuário logado.");
-      }
-      setIsLoading(false);
       return;
     }
 
@@ -34,17 +38,9 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
       setCanManage(false); 
 
       try {
-        const usersPromise = sectorService.getSectorUsers(sectorId);
-        // O getUserDetails agora vem do AuthContext, não precisamos chamar de novo.
-        // Vamos usar o 'loggedInUser' que já pegamos do 'useAuth()'.
+        const usersResponse = await sectorService.getSectorUsers(sectorId);
+        const sectorUsers = usersResponse.data.data;
         
-        // Precisamos apenas da lista de usuários do setor
-        const usersResponse = await usersPromise;
-
-        // Corrigido: Acesse a chave 'data' dentro da resposta da API
-        const sectorUsers = usersResponse.data.data; 
-        
-        // Verifique se 'sectorUsers' é realmente um array
         if (!Array.isArray(sectorUsers)) {
           console.error("A resposta da API de usuários não era um array:", usersResponse.data);
           throw new Error("A resposta da API de usuários não continha um array.");
@@ -52,17 +48,18 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
         
         setUsers(sectorUsers);
 
+        // CORREÇÃO 2: Acesse 'loggedInUser.user_id' diretamente
+        console.log("Usuário logado ID:", loggedInUser.data);
         const userRoleInThisSector = sectorUsers.find(
-          (user) => user.user_id === loggedInUser.user_id
+          (user) => user.user_id === loggedInUser.data.user_id
         )?.role;
 
         if (userRoleInThisSector) {
           const role = userRoleInThisSector.toLowerCase();
-          if (role === 'proprietario' || role === 'gerente' || role === 'administrador') {
+          if (role === 'proprietário' || role === 'gerente' || role === 'administrador') {
             setCanManage(true);
           }
         }
-
       } catch (err) {
         console.error("Falha ao buscar dados dos usuários:", err);
         setError("Não foi possível carregar os dados dos usuários.");
@@ -72,13 +69,14 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
     };
     
     fetchAllData();
-  }, [sectorId, loggedInUser]); 
+  }, [sectorId, loggedInUser, isAuthLoading]); // Adicione 'isAuthLoading' às dependências
 
   const handleUserAdded = (newUser: SectorUser) => {
     setUsers(currentUsers => [...currentUsers, newUser]);
   };
 
-  if (isLoading) {
+  // Mostra o loading principal se o AuthContext ou os dados do setor estiverem carregando
+  if (isLoading || isAuthLoading) {
     return <p>Carregando usuários...</p>;
   }
 
@@ -89,33 +87,41 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
   return (
     <div>
       {canManage && (
-        <AddSectorUserForm 
-          sectorId={sectorId} 
-          onUserAdded={handleUserAdded} 
-        />
+        <button onClick={() => setIsModalOpen(true)} style={{ marginBottom: '15px' }}>
+          Adicionar Usuário ao Setor
+        </button>
       )}
+
+      <AddSectorUserModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        sectorId={sectorId}
+        onUserAdded={handleUserAdded}
+      />
 
       {users.length === 0 && !canManage ? (
         <p>Nenhum usuário encontrado neste setor.</p>
       ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid black', textAlign: 'left' }}>
-              <th style={{ padding: '8px' }}>Usuário</th>
-              <th style={{ padding: '8px' }}>Email</th>
-              <th style={{ padding: '8px' }}>Função</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user) => (
-              <tr key={user.user_id} style={{ borderBottom: '1px solid #ccc' }}>
-                <td style={{ padding: '8px' }}>{user.user_name}</td>
-                <td style={{ padding: '8px' }}>{user.user_email}</td>
-                <td style={{ padding: '8px' }}>{user.role}</td>
+        <div>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ borderBottom: '2px solid black', textAlign: 'left' }}>
+                <th style={{ padding: '8px' }}>Usuário</th>
+                <th style={{ padding: '8px', minWidth: '200px' }}>Email</th>
+                <th style={{ padding: '8px' }}>Função</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {users.map((user) => (
+                <tr key={user.user_id} style={{ borderBottom: '1px solid #ccc' }}>
+                  <td style={{ padding: '8px' }}>{user.user_name}</td>
+                  <td style={{ padding: '8px' }}>{user.user_email}</td>
+                  <td style={{ padding: '8px' }}>{user.role}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

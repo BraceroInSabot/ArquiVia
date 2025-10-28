@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import sectorService from '../services/Sector/api';
-import type { SectorUser } from '../services/core-api';
+import type { SectorUser, AddSectorUserPayload } from '../services/core-api';
 
 // --- Interfaces e Estilos ---
 
@@ -36,7 +36,7 @@ const MODAL_STYLE: React.CSSProperties = {
 // --- O Componente ---
 
 const AddSectorUserModal = ({ isOpen, onClose, sectorId, onUserAdded }: ModalProps) => {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,7 +51,7 @@ const AddSectorUserModal = ({ isOpen, onClose, sectorId, onUserAdded }: ModalPro
 
     try {
       // 1. Chama o serviço atualizado, passando o email
-      const response = await sectorService.addUserToSector(sectorId, email);
+      const response = await sectorService.addUserToSector(sectorId, { user_email: email } as AddSectorUserPayload);
 
       // 2. Avisa o componente pai (SectorUsers) que um novo usuário foi adicionado
       onUserAdded(response.data);

@@ -3,12 +3,13 @@ import LogoutButton from "../components/LogoutButton";
 import { useAuth } from "../contexts/AuthContext";
 
 const PanelPage = () => {
-  const { username } = useAuth();
+  const { user } = useAuth();
 
   return (
     <div>
-      {username ? (
-        <p>Olá, {username}!</p>
+      {user ? (
+        //@ts-ignore
+        <p>Olá, {user.data.name}!</p>
       ) : (
         <p>Por favor, faça o login.</p>
       )}

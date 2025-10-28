@@ -147,7 +147,15 @@ class SetUnsetUserAdministrator(APIView):
         res.data = default_response(success=True, message=f"Privilégios de administrador {"concedido" if make_admin else "removido"} com sucesso.")
         return res
     
-class ListSectorUsersView(APIView):
+class ListSectorUsersView(APIView): 
+    """
+    Retrieves a list of all users linked to a specific sector,
+    along with their highest role (Owner, Manager, Admin, Member)
+    and their specific link ID (sector_user_id) if applicable.
+
+    Requires authentication, and the requesting user must be the 
+    enterprise owner, sector manager, or a sector admin of the sector.
+    """
     permission_classes = [IsAuthenticated, IsLinkedToSector] 
     
     def get(self, request, pk: int) -> HttpResponse:
@@ -159,7 +167,7 @@ class ListSectorUsersView(APIView):
             pk (int): The primary key of the Sector to retrieve users from.
 
         Returns:
-            HttpResponse: A response containing the list of users and their roles.
+            HttpResponse: A response containing the list of users, roles, and link IDs.
         """
         sector = get_object_or_404(
             Sector.objects.select_related('manager', 'enterprise__owner'), 
@@ -175,29 +183,28 @@ class ListSectorUsersView(APIView):
 
         user_roles_map = {}
 
-        user_roles_map[owner.pk] = {"user": owner, "role": "Proprietário"}
+        user_roles_map[owner.pk] = {"user": owner, "role": "Proprietário", "link_id": None} 
         
         if manager.pk not in user_roles_map:
-            user_roles_map[manager.pk] = {"user": manager, "role": "Gestor"}
+            user_roles_map[manager.pk] = {"user": manager, "role": "Gestor", "link_id": None}
         
         for link in sector_links:
-            if link.user.pk not in user_roles_map:
+            if link.user.pk in user_roles_map:
+                 user_roles_map[link.user.pk]["link_id"] = link.pk 
+            else:
                 role = "Administrador" if link.is_adm else "Membro"
-                user_roles_map[link.user.pk] = {"user": link.user, "role": role}
+                user_roles_map[link.user.pk] = {"user": link.user, "role": role, "link_id": link.pk}
 
-        final_user_list = []
+        final_user_list_for_serializer = []
         for data in user_roles_map.values():
             user_obj = data["user"]
             setattr(user_obj, 'role', data["role"]) 
-            final_user_list.append(user_obj)
+            setattr(user_obj, 'sector_user_id', data["link_id"])
+            final_user_list_for_serializer.append(user_obj)
             
-        serializer = SectorUserRoleSerializer(final_user_list, many=True)
+        serializer = SectorUserRoleSerializer(final_user_list_for_serializer, many=True)
         
         res: HttpResponse = Response()
         res.status_code = 200
-        res.data = default_response(
-            success=True, 
-            message="Lista de usuários do setor recuperada com sucesso!", 
-            data=serializer.data
-        )
+        res.data = default_response(success=True, message="Lista de usuários recuperada com sucesso!", data=serializer.data)
         return res

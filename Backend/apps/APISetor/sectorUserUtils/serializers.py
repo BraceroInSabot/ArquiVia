@@ -11,10 +11,10 @@ class SectorUserRoleSerializer(serializers.ModelSerializer):
     user_id = serializers.IntegerField(source='pk', read_only=True)
     user_name = serializers.CharField(source='name', read_only=True)
     user_email = serializers.EmailField(source='email', read_only=True)
-    
+    sector_user_id = serializers.IntegerField(read_only=True, allow_null=True)
     role = serializers.CharField(read_only=True) 
 
     class Meta:
         model = User
-        fields = ['user_id', 'user_name', 'user_email', 'role']
+        fields = ['user_id', 'user_name', 'user_email', 'role', 'sector_user_id']
         

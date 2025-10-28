@@ -16,18 +16,15 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
   const [canManage, setCanManage] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
-  // CORREÇÃO 1: Pegue 'isLoading' (renomeado para 'isAuthLoading') aqui no topo
   const { user: loggedInUser, isLoading: isAuthLoading } = useAuth(); 
 
   useEffect(() => {
-    // CORREÇÃO 1 (uso): Use 'isAuthLoading'
     if (!loggedInUser && !isAuthLoading) {
       setError("Não foi possível identificar o usuário logado.");
-      setIsLoading(false); // Pare o loading se não pudermos fazer nada
+      setIsLoading(false); 
       return;
     }
     
-    // Se o sectorId ou o usuário ainda não estiverem prontos, espere.
     if (!sectorId || !loggedInUser) {
       return;
     }
@@ -47,10 +44,11 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
         }
         
         setUsers(sectorUsers);
-
-        // CORREÇÃO 2: Acesse 'loggedInUser.user_id' diretamente
+        
+        //@ts-ignore
         console.log("Usuário logado ID:", loggedInUser.data);
         const userRoleInThisSector = sectorUsers.find(
+          //@ts-ignore
           (user) => user.user_id === loggedInUser.data.user_id
         )?.role;
 
@@ -109,6 +107,7 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
                 <th style={{ padding: '8px' }}>Usuário</th>
                 <th style={{ padding: '8px', minWidth: '200px' }}>Email</th>
                 <th style={{ padding: '8px' }}>Função</th>
+                {canManage && <th style={{ padding: '8px' }}>Ações</th>}
               </tr>
             </thead>
             <tbody>
@@ -117,6 +116,11 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
                   <td style={{ padding: '8px' }}>{user.user_name}</td>
                   <td style={{ padding: '8px' }}>{user.user_email}</td>
                   <td style={{ padding: '8px' }}>{user.role}</td>
+                  <td style={{ padding: '8px' }}>
+                    {canManage && user.user_id !== loggedInUser?.data.user_id ? (
+                      <button onClick={() => alert(`Removendo usuário ID: ${user.user_id} do setor.`)}>Remover</button>
+                    ) : null}
+                  </td>
                 </tr>
               ))}
             </tbody>

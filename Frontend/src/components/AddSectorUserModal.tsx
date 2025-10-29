@@ -60,6 +60,8 @@ const AddSectorUserModal = ({ isOpen, onClose, sectorId, onUserAdded }: ModalPro
       setEmail('');
       onClose();
 
+      window.location.reload();
+
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Falha ao adicionar usuário.');
       console.error(err);

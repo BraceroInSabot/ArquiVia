@@ -94,6 +94,8 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
       console.error("Falha ao remover usuário do setor:", err);
       alert("Não foi possível remover o usuário do setor.");
     }
+
+    window.location.reload();
   };
 
   const handlePromoteUserToManager = async (userEmail: string) => {
@@ -145,7 +147,7 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
                     {(isOwner || isManager || isAdmin) && user.user_id === loggedInUser?.data.user_id ? (
                       <em>(Você)</em>
                     ) : null}
-                    {(isOwner || isManager || isAdmin) && user.user_id !== loggedInUser?.data.user_id ? (
+                    {(isOwner || isManager || isAdmin) && user.user_id !== loggedInUser?.data.user_id && user.role !== "Proprietário" ? (
                       <button onClick={() => handleUserRemove(user.sector_user_id)}>Remover</button>
                     ) : null}
                     {(isOwner) && (user.role === 'Membro' || user.role === 'Administrador') ? (

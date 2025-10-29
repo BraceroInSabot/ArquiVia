@@ -1,5 +1,5 @@
 import api from '../core-api';
-import type { Sector, CreateSectorData, ResponseStructure, SectorUser, AddSectorUserPayload, promoteUserToManagerPayload, promoteUserToAdministratorPayload } from '../core-api';
+import type { Sector, CreateSectorData, ResponseStructure, SectorUser, AddSectorUserPayload, promoteUserToManagerPayload, promoteUserToAdministratorPayload, ToggleSectorStatusPayload } from '../core-api';
 
 const sectorService = {
     /**
@@ -68,7 +68,15 @@ const sectorService = {
    */
   promoteUserToAdministrator(data: promoteUserToAdministratorPayload) : Promise<{ data: ResponseStructure<[]> }> {
     return api.patch(`/setor/definir-administrador/${data.sectorUserLinkId}/`, {make_admin: data.makeAdmin});
-  }
+  },
+
+  /**
+   * Altera o status de ativação de um setor (PATCH).
+   * @param id O ID do setor a ser atualizado.
+   */
+  toggleSectorStatus(sectorId: ToggleSectorStatusPayload): Promise<{ data: Sector }> {
+    return api.put(`/setor/ativar-desativar/${sectorId}/`);
+  },
 };
 
 export default sectorService;

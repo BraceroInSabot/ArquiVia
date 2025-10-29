@@ -1,12 +1,13 @@
 import type { SectorGroup } from './SectorList.types';
 import SectorCard from './SectorCard'; 
+import type { ToggleSectorStatusPayload } from '../services/core-api';
 
 interface SectorListProps {
   groups: SectorGroup[];
   onViewSector: (id: number) => void;
   onEditSector: (id: number) => void;
   onDeleteSector: (id: number) => void;
-  onDeactivateOrActivate: (id: number) => void;
+  onDeactivateOrActivate: (id: ToggleSectorStatusPayload) => void;
 }
 
 const SectorList = ({ groups, onViewSector, onEditSector, onDeleteSector, onDeactivateOrActivate }: SectorListProps) => {

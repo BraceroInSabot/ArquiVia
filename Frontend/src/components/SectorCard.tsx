@@ -1,11 +1,11 @@
-import type { Sector } from '../services/core-api';
+import type { Sector, ToggleSectorStatusPayload } from '../services/core-api';
 
 interface SectorCardProps {
   sector: Sector;
   onView: (id: number) => void;
   onEdit: (id: number) => void;
   onDelete: (id: number) => void;
-  onDeactivateOrActivate: (id: number) => void;
+  onDeactivateOrActivate: (id: ToggleSectorStatusPayload) => void;
 }
 
 const SectorCard = ({ sector, onView, onEdit, onDelete, onDeactivateOrActivate }: SectorCardProps) => {
@@ -32,47 +32,60 @@ const SectorCard = ({ sector, onView, onEdit, onDelete, onDeactivateOrActivate }
     objectFit: 'cover',
   };
 
-  console.log("Setor:", sector);
+  const isSectorActive = sector.is_active;
+  const isOwner = sector.hierarchy_level === 'Proprietário';
+  const isManager = sector.hierarchy_level === 'Gestor';
+
+  const canView = isSectorActive || isOwner || isManager;
 
   return (
-    <div style={cardStyle}>
-      <div style={infoStyle}>
-        <img 
-          src='https://picsum.photos/200/300' 
-          // TODO: Ajustar imagem do setor ao configurar recebimento de imagem da API
-          // tecnicamente seria: sector.image || 'https://www.svgrepo.com/show/59087/group.svg'
-          alt={sector.name} 
-          style={imageStyle} 
-        />
+    <div>
+      {canView ? (
+      <div style={cardStyle}>
+        <div style={infoStyle}>
+          <img 
+            src='https://picsum.photos/200/300' 
+            alt={sector.name} 
+            style={imageStyle} 
+          />
+          <div>
+            <strong style={{ display: 'block' }}>{sector.name}</strong>
+            <small>{sector.hierarchy_level}</small>
+          </div>
+        </div>
+
         <div>
-          <strong style={{ display: 'block' }}>{sector.name}</strong>
-          <small>{sector.hierarchy_level}</small>
+          {canView && (
+            <button onClick={() => onView(sector.sector_id)} style={{ marginRight: '5px' }}>
+              Consultar
+            </button>
+          )}
+          
+          <button style={{ marginRight: '5px' }}>
+            Documentos
+          </button>
+
+          {sector.hierarchy_level === 'Proprietário' || sector.hierarchy_level === 'Gestor' || sector.hierarchy_level === 'Administrador' ? (
+          <button onClick={() => onEdit(sector.sector_id)} style={{ marginRight: '5px' }}> 
+            Editar 
+          </button>
+          ) : null}
+          {sector.hierarchy_level === 'Proprietário' ? (
+              <div>
+                  <button onClick={() => onDelete(sector.sector_id)}>
+                      Remover 
+                  </button>
+                  <button onClick={() => 
+                    //@ts-ignore
+                    onDeactivateOrActivate(sector.sector_id as ToggleSectorStatusPayload)
+                    }>
+                    {sector.is_active ? 'Desativar' : 'Ativar'}
+                  </button>
+              </div>
+          ) : null}
         </div>
       </div>
-
-      <div>
-        <button onClick={() => onView(sector.sector_id)} style={{ marginRight: '5px' }}>
-          Consultar
-        </button>
-        <button style={{ marginRight: '5px' }}>
-          Documentos
-        </button>
-        {sector.hierarchy_level === 'Proprietário' || sector.hierarchy_level === 'Gestor' || sector.hierarchy_level === 'Administrador' ? (
-        <button onClick={() => onEdit(sector.sector_id)} style={{ marginRight: '5px' }}> 
-          Editar 
-        </button>
-        ) : null}
-        {sector.hierarchy_level === 'Proprietário' ? (
-            <div>
-                <button onClick={() => onDelete(sector.sector_id)}>
-                    Remover 
-                </button>
-                <button onClick={() => onDeactivateOrActivate(sector.sector_id)}>
-                    Desativar / Ativar
-                </button>
-            </div>
-        ) : null}
-      </div>
+      ) : null}
     </div>
   );
 };

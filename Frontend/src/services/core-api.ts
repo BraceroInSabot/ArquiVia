@@ -108,6 +108,10 @@ export interface promoteUserToAdministratorPayload {
   makeAdmin: boolean;
 }
 
+export interface ToggleSectorStatusPayload {
+  sector_id: number;
+}
+
 const api = axios.create({
   baseURL: URL,
   withCredentials: true,

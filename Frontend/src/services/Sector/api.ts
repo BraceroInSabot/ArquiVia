@@ -1,5 +1,5 @@
 import api from '../core-api';
-import type { Sector, CreateSectorData, ResponseStructure, SectorUser, AddSectorUserPayload } from '../core-api';
+import type { Sector, CreateSectorData, ResponseStructure, SectorUser, AddSectorUserPayload, promoteUserToManagerPayload } from '../core-api';
 
 const sectorService = {
     /**
@@ -52,6 +52,15 @@ const sectorService = {
   removeUserFromSector(sectorUserLinkId: number): Promise<void> {
     return api.delete(`/setor/remover-usuario/${sectorUserLinkId}/`);
   },
+
+  /**
+   * Promove o usuário para gerente no setor.
+   * @param sectorId O ID do setor.
+   * @param userId O ID do usuário a ser promovido.
+   */
+  promoteUserToManager(sectorId: number, userEmail: promoteUserToManagerPayload): Promise<{ data: ResponseStructure<[]> }> {
+    return api.patch(`/setor/definir-gerente/${sectorId}/`, userEmail);
+  }
 };
 
 export default sectorService;

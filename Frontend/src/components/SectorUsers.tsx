@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import sectorService from '../services/Sector/api';
 import { useAuth } from '../contexts/AuthContext';
 import type { SectorUser } from '../services/core-api';
@@ -57,7 +57,7 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
           const role = userRoleInThisSector.toLowerCase();
           if (role === 'proprietário') {
             setIsOwner(true);
-          } else if (role === 'gerente') {
+          } else if (role === 'gestor') {
             setIsManager(true);
           } else if (role === 'administrador') {
             setIsAdmin(true);
@@ -93,6 +93,17 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
     } catch (err) {
       console.error("Falha ao remover usuário do setor:", err);
       alert("Não foi possível remover o usuário do setor.");
+    }
+  };
+
+  const handlePromoteUserToManager = async (userEmail: string) => {
+    try {
+      const response = await sectorService.promoteUserToManager(sectorId, { new_manager_email: userEmail });
+      alert("Usuário promovido a gerente com sucesso.");
+      window.location.reload();
+    } catch (err) {
+      console.error("Falha ao promover usuário para gerente:", err);
+      alert("Não foi possível promover o usuário para gerente.");
     }
   };
 
@@ -137,7 +148,9 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
                     {(isOwner || isManager || isAdmin) && user.user_id !== loggedInUser?.data.user_id ? (
                       <button onClick={() => handleUserRemove(user.sector_user_id)}>Remover</button>
                     ) : null}
-                    {}
+                    {(isOwner) && (user.role === 'Membro' || user.role === 'Administrador') ? (
+                      <button onClick={() => handlePromoteUserToManager(user.user_email)}>Promover para Gerente</button>
+                    ): null}
                   </td>
                 </tr>
               ))}

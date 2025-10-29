@@ -99,6 +99,10 @@ export interface AddSectorUserPayload {
   user_email: string;
 }
 
+export interface promoteUserToManagerPayload {
+  new_manager_email: string;
+}
+
 const api = axios.create({
   baseURL: URL,
   withCredentials: true,

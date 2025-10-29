@@ -1,5 +1,5 @@
 import api from '../core-api';
-import type { Sector, CreateSectorData, ResponseStructure, SectorUser, AddSectorUserPayload, promoteUserToManagerPayload } from '../core-api';
+import type { Sector, CreateSectorData, ResponseStructure, SectorUser, AddSectorUserPayload, promoteUserToManagerPayload, promoteUserToAdministratorPayload } from '../core-api';
 
 const sectorService = {
     /**
@@ -60,6 +60,14 @@ const sectorService = {
    */
   promoteUserToManager(sectorId: number, userEmail: promoteUserToManagerPayload): Promise<{ data: ResponseStructure<[]> }> {
     return api.patch(`/setor/definir-gerente/${sectorId}/`, userEmail);
+  },
+
+  /**
+   * Promove (ou rebaixa) o usuário para administrador no setor.
+   * @param sectorUserLinkId O ID do vínculo do usuário no setor.
+   */
+  promoteUserToAdministrator(data: promoteUserToAdministratorPayload) : Promise<{ data: ResponseStructure<[]> }> {
+    return api.patch(`/setor/definir-administrador/${data.sectorUserLinkId}/`, {make_admin: data.makeAdmin});
   }
 };
 

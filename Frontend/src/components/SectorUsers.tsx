@@ -1,7 +1,7 @@
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect } from 'react';
 import sectorService from '../services/Sector/api';
 import { useAuth } from '../contexts/AuthContext';
-import type { SectorUser } from '../services/core-api';
+import type { promoteUserToAdministratorPayload, SectorUser } from '../services/core-api';
 
 import AddSectorUserModal from './AddSectorUserModal';
 
@@ -17,6 +17,7 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
   const [isManager, setIsManager] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
   
   const { user: loggedInUser, isLoading: isAuthLoading } = useAuth(); 
 
@@ -34,6 +35,9 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
     const fetchAllData = async () => {
       setIsLoading(true);
       setError(null);
+      setIsOwner(false);
+      setIsManager(false);
+      setIsAdmin(false);
 
       try {
         const usersResponse = await sectorService.getSectorUsers(sectorId);
@@ -71,13 +75,12 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
       }
     };
     fetchAllData();
-  }, [sectorId, loggedInUser, isAuthLoading]); // Adicione 'isAuthLoading' às dependências
+  }, [sectorId, loggedInUser, isAuthLoading]);
 
   const handleUserAdded = (newUser: SectorUser) => {
     setUsers(currentUsers => [...currentUsers, newUser]);
   };
 
-  // Mostra o loading principal se o AuthContext ou os dados do setor estiverem carregando
   if (isLoading || isAuthLoading) {
     return <p>Carregando usuários...</p>;
   }
@@ -88,14 +91,16 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
 
   const handleUserRemove = async (sectorUserLinkId: number) => {
     console.log("Removendo usuário com link ID:", users);
-    try {
-      await sectorService.removeUserFromSector(sectorUserLinkId);
-    } catch (err) {
-      console.error("Falha ao remover usuário do setor:", err);
-      alert("Não foi possível remover o usuário do setor.");
+    if (window.confirm("Tem certeza que deseja remover este usuário?")) {
+      try {
+        await sectorService.removeUserFromSector(sectorUserLinkId);
+        alert("Usuário removido com sucesso.");
+      } catch (err) {
+        console.error("Falha ao remover usuário do setor:", err);
+        alert("Não foi possível remover o usuário do setor.");
+      }
+      window.location.reload();
     }
-
-    window.location.reload();
   };
 
   const handlePromoteUserToManager = async (userEmail: string) => {
@@ -109,13 +114,24 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
     }
   };
 
+  const handlePromoteUserToAdministrator = async ({ sectorUserLinkId, makeAdmin }: promoteUserToAdministratorPayload) => {
+    try {
+      const response = await sectorService.promoteUserToAdministrator({sectorUserLinkId, makeAdmin});
+      alert(`Usuário ${makeAdmin ? 'promovido' : 'rebaixado'} com sucesso.`);
+    } catch (err) {
+      console.error("Falha ao alterar cargo de administrador:", err);
+      alert("Não foi possível alterar o cargo do usuário.");
+    }
+    window.location.reload();
+  };
+
   return (
     <div>
-      {isOwner || isManager || isAdmin ? (
+      {(isOwner || isManager || isAdmin) ? (
         <button onClick={() => setIsModalOpen(true)} style={{ marginBottom: '15px' }}>
           Adicionar Usuário ao Setor
         </button>
-      ): null}
+      ) : null}
 
       <AddSectorUserModal
         isOpen={isModalOpen}
@@ -134,28 +150,58 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
                 <th style={{ padding: '8px' }}>Usuário</th>
                 <th style={{ padding: '8px', minWidth: '200px' }}>Email</th>
                 <th style={{ padding: '8px' }}>Função</th>
-                {isOwner || isManager || isAdmin ? (<th style={{ padding: '8px' }}>Ações</th>) : null}
+                {(isOwner || isManager || isAdmin) ? (<th style={{ padding: '8px' }}>Ações</th>) : null}
               </tr>
             </thead>
             <tbody>
-              {users.map((user) => (
-                <tr key={user.user_id} style={{ borderBottom: '1px solid #ccc' }}>
-                  <td style={{ padding: '8px' }}>{user.user_name}</td>
-                  <td style={{ padding: '8px' }}>{user.user_email}</td>
-                  <td style={{ padding: '8px' }}>{user.role}</td>
-                  <td style={{ padding: '8px' }}>
-                    {(isOwner || isManager || isAdmin) && user.user_id === loggedInUser?.data.user_id ? (
-                      <em>(Você)</em>
-                    ) : null}
-                    {(isOwner || isManager || isAdmin) && user.user_id !== loggedInUser?.data.user_id && user.role !== "Proprietário" ? (
-                      <button onClick={() => handleUserRemove(user.sector_user_id)}>Remover</button>
-                    ) : null}
-                    {(isOwner) && (user.role === 'Membro' || user.role === 'Administrador') ? (
-                      <button onClick={() => handlePromoteUserToManager(user.user_email)}>Promover para Gerente</button>
-                    ): null}
-                  </td>
-                </tr>
-              ))}
+              {users.map((user) => {
+                const targetRole = user.role.toLowerCase();
+                //@ts-ignore
+                const canNotRemoveSelf = user.user_id === loggedInUser.data.user_id;
+                const isTargetOwner = targetRole === 'proprietário';
+                const canOwnerRemove = isOwner; 
+                const canManagerRemove = isManager && (targetRole === 'administrador' || targetRole === 'membro');
+                const canAdminRemove = isAdmin && (targetRole === 'membro');
+                const showRemoveButton = 
+                  !canNotRemoveSelf && 
+                  !isTargetOwner && 
+                  (canOwnerRemove || canManagerRemove || canAdminRemove);
+
+                return (
+                  <tr key={user.user_id} style={{ borderBottom: '1px solid #ccc' }}>
+                    <td style={{ padding: '8px' }}>{user.user_name}</td>
+                    <td style={{ padding: '8px' }}>{user.user_email}</td>
+                    <td style={{ padding: '8px' }}>{user.role}</td>
+                    
+                    {(isOwner || isManager || isAdmin) && (
+                      <td style={{ padding: '8px' }}>
+                        {/* @ts-ignore */}
+                        {user.user_id === loggedInUser.data.user_id ? (
+                          <em>(Você)</em>
+                        ) : null}
+                        
+                        {showRemoveButton && (
+                          <button onClick={() => handleUserRemove(user.sector_user_id)}>Remover</button>
+                        )}
+                        
+                        {isOwner && (targetRole === 'membro' || targetRole === 'administrador') ? (
+                          <button onClick={() => handlePromoteUserToManager(user.user_email)}>Promover para Gerente</button>
+                        ): null}
+                        
+                        {(isOwner || isManager) && targetRole === 'membro' ? (
+                          <button onClick={() => handlePromoteUserToAdministrator({sectorUserLinkId: user.sector_user_id, makeAdmin: true})}>
+                            Promover para Administrador
+                          </button>
+                        ) : (isOwner || isManager) && targetRole === 'administrador' ? (
+                          <button onClick={() => handlePromoteUserToAdministrator({sectorUserLinkId: user.sector_user_id, makeAdmin: false})}>
+                            Rebaixar de Administrador
+                          </button>
+                        ): null}
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

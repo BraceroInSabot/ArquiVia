@@ -103,6 +103,11 @@ export interface promoteUserToManagerPayload {
   new_manager_email: string;
 }
 
+export interface promoteUserToAdministratorPayload {
+  sectorUserLinkId: number;
+  makeAdmin: boolean;
+}
+
 const api = axios.create({
   baseURL: URL,
   withCredentials: true,

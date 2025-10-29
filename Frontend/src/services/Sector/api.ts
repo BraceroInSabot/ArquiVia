@@ -85,6 +85,15 @@ const sectorService = {
   deleteSector(sectorId: RemoveSectorPayload): Promise<void> {
     return api.delete(`/setor/excluir/${sectorId}/`);
   },
+
+  /**
+   * Atualiza os dados de um setor.
+   * @param id O ID do setor a ser atualizado.
+   * @param data Os novos dados do setor.
+   */
+  updateSector(id: number, data: Partial<Sector>): Promise<{ data: Sector }> {
+    return api.put(`/setor/alterar/${id}/`, data);
+  }
 };
 
 export default sectorService;

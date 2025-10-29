@@ -116,6 +116,11 @@ export interface RemoveSectorPayload {
   sector_id: number;
 }
 
+export interface UpdateSectorData {
+  name: string;
+  image: string;
+}
+
 const api = axios.create({
   baseURL: URL,
   withCredentials: true,

@@ -13,7 +13,9 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
   const [users, setUsers] = useState<SectorUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [canManage, setCanManage] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
+  const [isManager, setIsManager] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   const { user: loggedInUser, isLoading: isAuthLoading } = useAuth(); 
@@ -32,7 +34,6 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
     const fetchAllData = async () => {
       setIsLoading(true);
       setError(null);
-      setCanManage(false); 
 
       try {
         const usersResponse = await sectorService.getSectorUsers(sectorId);
@@ -54,8 +55,12 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
 
         if (userRoleInThisSector) {
           const role = userRoleInThisSector.toLowerCase();
-          if (role === 'proprietário' || role === 'gerente' || role === 'administrador') {
-            setCanManage(true);
+          if (role === 'proprietário') {
+            setIsOwner(true);
+          } else if (role === 'gerente') {
+            setIsManager(true);
+          } else if (role === 'administrador') {
+            setIsAdmin(true);
           }
         }
       } catch (err) {
@@ -65,7 +70,6 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
         setIsLoading(false);
       }
     };
-    
     fetchAllData();
   }, [sectorId, loggedInUser, isAuthLoading]); // Adicione 'isAuthLoading' às dependências
 
@@ -94,11 +98,11 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
 
   return (
     <div>
-      {canManage && (
+      {isOwner || isManager || isAdmin ? (
         <button onClick={() => setIsModalOpen(true)} style={{ marginBottom: '15px' }}>
           Adicionar Usuário ao Setor
         </button>
-      )}
+      ): null}
 
       <AddSectorUserModal
         isOpen={isModalOpen}
@@ -107,7 +111,7 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
         onUserAdded={handleUserAdded}
       />
 
-      {users.length === 0 && !canManage ? (
+      {users.length === 0 && !(isOwner || isManager || isAdmin) ? (
         <p>Nenhum usuário encontrado neste setor.</p>
       ) : (
         <div>
@@ -117,7 +121,7 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
                 <th style={{ padding: '8px' }}>Usuário</th>
                 <th style={{ padding: '8px', minWidth: '200px' }}>Email</th>
                 <th style={{ padding: '8px' }}>Função</th>
-                {canManage && <th style={{ padding: '8px' }}>Ações</th>}
+                {isOwner || isManager || isAdmin ? (<th style={{ padding: '8px' }}>Ações</th>) : null}
               </tr>
             </thead>
             <tbody>
@@ -127,9 +131,13 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
                   <td style={{ padding: '8px' }}>{user.user_email}</td>
                   <td style={{ padding: '8px' }}>{user.role}</td>
                   <td style={{ padding: '8px' }}>
-                    {canManage && user.user_id !== loggedInUser?.data.user_id ? (
+                    {(isOwner || isManager || isAdmin) && user.user_id === loggedInUser?.data.user_id ? (
+                      <em>(Você)</em>
+                    ) : null}
+                    {(isOwner || isManager || isAdmin) && user.user_id !== loggedInUser?.data.user_id ? (
                       <button onClick={() => handleUserRemove(user.sector_user_id)}>Remover</button>
                     ) : null}
+                    {}
                   </td>
                 </tr>
               ))}

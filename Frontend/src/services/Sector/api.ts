@@ -1,5 +1,5 @@
 import api from '../core-api';
-import type { Sector, CreateSectorData, ResponseStructure, SectorUser, AddSectorUserPayload, promoteUserToManagerPayload, promoteUserToAdministratorPayload, ToggleSectorStatusPayload } from '../core-api';
+import type { Sector, CreateSectorData, ResponseStructure, SectorUser, AddSectorUserPayload, promoteUserToManagerPayload, promoteUserToAdministratorPayload, ToggleSectorStatusPayload, RemoveSectorPayload } from '../core-api';
 
 const sectorService = {
     /**
@@ -76,6 +76,14 @@ const sectorService = {
    */
   toggleSectorStatus(sectorId: ToggleSectorStatusPayload): Promise<{ data: Sector }> {
     return api.put(`/setor/ativar-desativar/${sectorId}/`);
+  },
+
+  /**
+   * Remove um setor pelo ID.
+   * @param id O ID do setor a ser removido.
+   */
+  deleteSector(sectorId: RemoveSectorPayload): Promise<void> {
+    return api.delete(`/setor/excluir/${sectorId}/`);
   },
 };
 

@@ -112,6 +112,10 @@ export interface ToggleSectorStatusPayload {
   sector_id: number;
 }
 
+export interface RemoveSectorPayload {
+  sector_id: number;
+}
+
 const api = axios.create({
   baseURL: URL,
   withCredentials: true,

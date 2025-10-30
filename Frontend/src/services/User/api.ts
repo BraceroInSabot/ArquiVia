@@ -14,7 +14,7 @@ const userService = {
    * Realiza a criação de conta do usuário.
    * @param register_credentials - um objeto contendo os dados do usuário a serem validados
    */
-  register(register_credentials: RegisterCredentials) {
+  register(register_credentials: FormData) {
     return api.post('/usuario/criar-conta/', register_credentials);
   },
   /**

@@ -21,10 +21,14 @@ class RegistroUsuarioSerializer(serializers.ModelSerializer):
     username = serializers.CharField(write_only=True, required=True)
     name = serializers.CharField(write_only=True, required=True) 
     email = serializers.CharField(write_only=True, required=True) 
+    image = serializers.ImageField(
+        required=False, 
+        allow_null=True 
+    )
 
     class Meta:
         model = User
-        fields = ['username', 'name', 'email', 'password', 'cpassword']
+        fields = ['username', 'name', 'email', 'password', 'cpassword', 'image']
 
     def validate(self, attrs: dict) -> dict | serializers.ValidationError:
         """

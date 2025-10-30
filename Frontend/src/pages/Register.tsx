@@ -4,14 +4,14 @@ import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 
 const RegisterPage = () => {
-  const { username } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   
   useEffect(() => {
-    if (username) {
+    if (user) {
       navigate("/painel");
     }
-  }, [username, navigate]);
+  }, [user, navigate]);
 
   return (
     <div>

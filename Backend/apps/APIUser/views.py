@@ -6,7 +6,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework.views import Response, APIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
-
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from apps.APIEmpresa.models import Enterprise
 from .serializer import RegistroUsuarioSerializer, UserDetailSerializer
 from django.shortcuts import render
@@ -111,6 +111,7 @@ class LoginTokenRefreshPairView(TokenRefreshView):
 
 class RegisterTokenView(APIView):
     permission_classes: AllowAny = [AllowAny] #type: ignore
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def post(self, request: dict) -> HttpResponse:
         """

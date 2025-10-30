@@ -62,7 +62,7 @@ class AbsUser(AbstractUser, PermissionsMixin):
     username = models.CharField(max_length=50, unique=True, db_column='username_user')
     email = models.EmailField(unique=True, blank=False, null=False, db_column='email_user')
     password = models.CharField(max_length=256, db_column='password_user')
-    image = models.CharField(max_length=255, default='', db_column="image_user")
+    image = models.ImageField(upload_to='user_images/', default='templates/user_image_default.png', null=True, blank=True, db_column='image_user')
     date_joined = models.DateTimeField(auto_now=True, db_column='date_created_at_user')
     last_login = models.DateTimeField(null=True, db_column='date_last_login_user')
     is_active = models.BooleanField(default=True, db_column='is_active_user')

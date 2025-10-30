@@ -89,7 +89,7 @@ class SectorUpdateSerializer(serializers.ModelSerializer):
     Serializer for return Sector details efficiently when editted.
     """
     name = serializers.CharField(max_length=200, required=False)
-    image = serializers.CharField(max_length=50, required=False, allow_blank=True, allow_null=True)
+    image = serializers.ImageField(required=False)
     class Meta:
         model = Sector
         fields = ['name', 'image']

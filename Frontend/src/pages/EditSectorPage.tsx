@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import sectorService from '../services/Sector/api';
-import type { UpdateSectorData } from '../services/core-api';
 
 const EditSectorPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-
+  
+  const [currentImageUrl, setCurrentImageUrl] = useState<string>('');
   const [name, setName] = useState('');
-  const [image, setImage] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null); // Changed to File | null
   
   const [staticData, setStaticData] = useState<{ enterprise: string; created: string; status: boolean } | null>(null);
 
@@ -29,7 +29,8 @@ const EditSectorPage = () => {
         const sector = response.data.data; 
 
         setName(sector.name);
-        setImage(sector.image || '');
+        setCurrentImageUrl(sector.image);
+ setImageFile(null); // Clear image file on load, user will re-upload if needed
     
         setStaticData({
           enterprise: sector.enterprise_name,
@@ -52,6 +53,15 @@ const EditSectorPage = () => {
     navigate(-1); 
   };
 
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      setImageFile(event.target.files[0]);
+      setCurrentImageUrl(URL.createObjectURL(event.target.files[0]));
+    } else {
+      setImageFile(null);
+    }
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!id) return;
@@ -59,13 +69,14 @@ const EditSectorPage = () => {
     setIsSubmitting(true);
     setError(null);
 
-    const payload: UpdateSectorData = {
-      name: name,
-      image: image,
-    };
+    const formData = new FormData();
+    formData.append('name', name);
+    if (imageFile) {
+      formData.append('image', imageFile);
+    }
 
     try {
-      await sectorService.updateSector(Number(id), payload);
+      await sectorService.updateSector(Number(id), formData);
       alert('Setor atualizado com sucesso!');
       navigate(`/setor/${id}`); 
 
@@ -85,6 +96,7 @@ const EditSectorPage = () => {
     return <p style={{ color: 'red' }}>{error}</p>;
   }
 
+  console.log("Current Image File:", imageFile);
   return (
     <div style={{ padding: '20px' }}>
       <form onSubmit={handleSubmit}>
@@ -108,13 +120,15 @@ const EditSectorPage = () => {
           </div>
 
           <div style={{ margin: '15px 0' }}>
-            <label htmlFor="image" style={{ display: 'block', fontWeight: 'bold' }}>URL da Imagem:</label>
+            <label htmlFor="image" style={{ display: 'block', fontWeight: 'bold' }}>Imagem do Setor (JPG, PNG, SVG):</label>
+            <img src={currentImageUrl} alt="" />
             <input
-              type="text"
+              type="file"
               id="image"
-              value={image}
-              onChange={(e) => setImage(e.target.value)}
+ accept="image/jpeg, image/png, image/svg+xml"
+              onChange={handleImageChange}
               style={{ width: '100%', padding: '8px' }}
+ // value={imageFile ? imageFile.name : ''} // Display selected file name
             />
           </div>
         </div>

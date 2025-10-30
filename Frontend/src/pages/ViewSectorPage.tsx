@@ -84,6 +84,11 @@ const ViewSectorPage = () => {
     return <p style={{ color: 'red' }}>{error}</p>;
   }
 
+  const goToEditSectorPage = () => {
+    navigate(`/setor/editar/${sector.sector_id}`);
+  };
+
+
 
   return (
     <div style={{ padding: '20px' }}>
@@ -106,7 +111,7 @@ const ViewSectorPage = () => {
           <button onClick={() => {navigate(-1)}}>
             Voltar
           </button>
-          <button>
+          <button onClick={goToEditSectorPage}>
             Editar Setor
           </button>
         </div>

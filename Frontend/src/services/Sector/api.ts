@@ -91,7 +91,7 @@ const sectorService = {
    * @param id O ID do setor a ser atualizado.
    * @param data Os novos dados do setor.
    */
-  updateSector(id: number, data: Partial<Sector>): Promise<{ data: Sector }> {
+  updateSector(id: number, data: FormData): Promise<{ data: Sector }> {
     return api.put(`/setor/alterar/${id}/`, data);
   }
 };

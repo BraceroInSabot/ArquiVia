@@ -20,9 +20,9 @@ const enterpriseService = {
 
     /**
    * Cria uma nova empresa.
-   * @param data - Objeto com nome e cnpj.
+   * @param data - Objeto com nome e imagem.
    */
-    createEnterprise(data: CreateEnterprise): Promise<{ data: Enterprise }> {
+    createEnterprise(data: FormData): Promise<{ data: Enterprise }> {
         return api.post('/empresa/criar/', data);
     },
 

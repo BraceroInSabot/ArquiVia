@@ -3,14 +3,22 @@ import Validate from '../utils/enterprise_validation';
 import { useNavigate } from 'react-router-dom';
 import enterpriseService from '../services/Enterprise/api';
 
-
 const CreateEnterpriseForm = () => {
     const [name, setName] = useState('');
-    const [image, setImage] = useState('');
+    // 1. Mude o estado para 'File | null'
+    const [imageFile, setImageFile] = useState<File | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
 
+    // 2. Adicione um handler para o input de arquivo
+    const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+      if (event.target.files && event.target.files.length > 0) {
+        setImageFile(event.target.files[0]);
+      } else {
+        setImageFile(null);
+      }
+    };
 
     const handleCreateEnterprise = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -18,21 +26,32 @@ const CreateEnterpriseForm = () => {
         setError(null);
 
         try {
-        
             const nameValidation = Validate.name(name);
             if (!nameValidation[0]) {
-            setError(nameValidation[1] as string);
-            return;
+              setError(nameValidation[1] as string);
+              setLoading(false); // Pare o loading se a validação falhar
+              return;
+            }
+
+            // 3. Verifique se um arquivo foi selecionado
+            if (!imageFile) {
+              setError("Por favor, selecione uma imagem.");
+              setLoading(false);
+              return;
             }
             
-            const api_response = await enterpriseService.createEnterprise({ name, image });
+            // 4. Crie o FormData
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('image', imageFile);
+
+            // 5. Envie o formData para o serviço
+            const api_response = await enterpriseService.createEnterprise(formData);
 
             if (api_response) {
                 alert('Empresa criada com sucesso!');
-                
                 setName('');
-                setImage('');
-
+                setImageFile(null); // Limpe o estado do arquivo
                 navigate("/empresas");
             }
 
@@ -57,12 +76,13 @@ const CreateEnterpriseForm = () => {
                     required
                 />
                 <br />
-                <label htmlFor="image">Caminho da Imagem</label>
+                {/* 6. Mude o input para 'file' e adicione 'accept' */}
+                <label htmlFor="image">Imagem da Empresa (JPG, PNG, SVG)</label>
                 <input
-                    type="text"
+                    type="file"
                     id="image"
-                    value={image}
-                    onChange={(e) => setImage(e.target.value)}
+                      accept="image/jpeg, image/png, image/svg+xml"
+                      onChange={handleImageChange}
                     required
                 />
                 <br />

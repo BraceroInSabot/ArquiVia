@@ -9,8 +9,6 @@ class SectorCreateSerializer(serializers.ModelSerializer):
 
     enterprise_id = serializers.PrimaryKeyRelatedField(
         queryset=Enterprise.objects.all(),
-    
-    
         source='enterprise',
         write_only=True
     )
@@ -25,9 +23,13 @@ class SectorCreateSerializer(serializers.ModelSerializer):
         Validação customizada para verificar se o nome do setor já existe na empresa.
         """
     
-    
+        request_user = self.context['request'].user
         enterprise = data.get('enterprise')
         name = data.get('name')
+        
+        if enterprise.owner != request_user:
+            raise serializers.ValidationError("Você não é o proprietário desta empresa e não pode criar setores nela.")
+        
 
         if Sector.objects.filter(enterprise=enterprise, name=name).exists():
             raise serializers.ValidationError("Um setor com este nome já existe nesta empresa.")

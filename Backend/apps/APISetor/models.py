@@ -7,7 +7,7 @@ User = get_user_model()
 class Sector(models.Model):
     sector_id = models.AutoField(primary_key=True, db_column="PK_sector")
     name = models.CharField(null=False, max_length=200, db_column="name_sector")
-    image = models.CharField(max_length=50, db_column="image_sector", null=True, blank=True)
+    image = models.ImageField(upload_to='sector_images/', default='templates/sector_image_default.png',db_column="image_sector", null=True, blank=True)
     creation_date = models.DateTimeField(auto_now_add=True, db_column='date_created_at_sector')
     manager = models.ForeignKey(User, on_delete=models.CASCADE, db_column='FK_manager_sector', related_name="managers")
     enterprise = models.ForeignKey(Enterprise, on_delete=models.CASCADE, db_column='FK_enterprise_sector', related_name="sectors")

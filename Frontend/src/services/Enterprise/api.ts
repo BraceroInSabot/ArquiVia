@@ -31,7 +31,7 @@ const enterpriseService = {
    * @param id - O ID da empresa a ser atualizada.
    * @param data - Os novos dados da empresa.
    */
-    updateEnterprise(id: number, data: UpdateEnterpriseData): Promise<{ data: Enterprise }> {
+    updateEnterprise(id: number, data: FormData): Promise<{ data: Enterprise }> {
         return api.put(`/empresa/alterar/${id}/`, data);
     },
 

@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import enterpriseService from '../services/Enterprise/api';
-import type { UpdateEnterpriseData } from '../services/core-api';
 
 const EditEnterprisePage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
   const [name, setName] = useState('');
-  const [image, setImage] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null); // Changed from 'image' to 'imageFile'
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,7 +24,8 @@ const EditEnterprisePage = () => {
         const enterprise = response.data;
         
         setName(enterprise.name);
-        setImage(enterprise.image || '');
+
+        setImageFile(null); 
         
       } catch (err) {
         setError('Falha ao carregar os dados da empresa.');
@@ -38,6 +38,14 @@ const EditEnterprisePage = () => {
     fetchEnterpriseData();
   }, [id]); 
 
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      setImageFile(event.target.files[0]);
+    } else {
+      setImageFile(null);
+    }
+  };
+
   const handleUpdate = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!id) return; 
@@ -46,9 +54,13 @@ const EditEnterprisePage = () => {
     setError(null);
 
     try {
-      const updatedData: UpdateEnterpriseData = { name, image };
+      const formData = new FormData();
+      formData.append('name', name);
+      if (imageFile) { 
+        formData.append('image', imageFile);
+      }
       
-      await enterpriseService.updateEnterprise(Number(id), updatedData);
+      await enterpriseService.updateEnterprise(Number(id), formData);
 
       alert('Empresa atualizada com sucesso!');
       
@@ -84,12 +96,12 @@ const EditEnterprisePage = () => {
           required
         />
         <br />
-        <label htmlFor="image">Caminho da Imagem</label>
+        <label htmlFor="image">Imagem da Empresa (JPG, PNG, SVG)</label>
         <input
-          type="text"
+          type="file"
+          accept="image/jpeg, image/png, image/svg+xml"
           id="image"
-          value={image}
-          onChange={(e) => setImage(e.target.value)}
+          onChange={handleImageChange}
         />
         <br />
         

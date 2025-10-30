@@ -1,4 +1,4 @@
-import type { LoginCredentials, RegisterCredentials, UserDetails } from '../core-api';
+import type { LoginCredentials, UserDetails } from '../core-api';
 import api from '../core-api'
 
 const userService = {

@@ -3,7 +3,7 @@ import { useAuth } from "../contexts/AuthContext";
 import LogoutButton from "../components/LogoutButton";
 
 const IndexPage = () => {
-  const { username } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate(); 
 
   const goToLoginPage = () => {
@@ -16,13 +16,12 @@ const IndexPage = () => {
     navigate('/painel')
   };
 
-
   return (
     <div>
       <h2>Página Inicial</h2>
-      {username ? (
+      {user ? (
         <div>
-          <p>Bem-vindo de volta, {username}!</p>
+          <p>Bem-vindo de volta, {user.data.name}!</p>
           <button onClick={goToIndexPage}>Acessar Painel</button>
           <LogoutButton />
         </div>

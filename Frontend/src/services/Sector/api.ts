@@ -14,7 +14,7 @@ const sectorService = {
    * Cria um novo setor.
    * @param data - Objeto com nome, imagem e ID da empresa.
    */
-  createSector(data: CreateSectorData): Promise<{ data: Sector }> {
+  createSector(data: FormData): Promise<{ data: Sector }> {
     return api.post('/setor/criar/', data);
   },
 

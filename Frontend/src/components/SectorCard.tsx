@@ -44,7 +44,7 @@ const SectorCard = ({ sector, onView, onEdit, onDelete, onDeactivateOrActivate }
       <div style={cardStyle}>
         <div style={infoStyle}>
           <img 
-            src='https://picsum.photos/200/300' 
+            src={sector.image} 
             alt={sector.name} 
             style={imageStyle} 
           />

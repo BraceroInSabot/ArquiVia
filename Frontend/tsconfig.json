@@ -3,5 +3,10 @@
   "references": [
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" }
-  ]
+  ],
+  "include": [
+    "src/assets/icons",
+    "src/custom.d.ts"
+  ],
+  "types": ["node"]  
 }

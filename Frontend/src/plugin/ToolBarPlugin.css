@@ -1,0 +1,64 @@
+/* Adicione este CSS ao seu arquivo de estilos */
+
+.toolbar {
+  display: flex;
+  margin-bottom: 1px;
+  background: #fff;
+  padding: 4px;
+  border-bottom: 1px solid #ccc;
+}
+
+.toolbar-item {
+  border: 0;
+  background: none;
+  border-radius: 10px;
+  padding: 8px;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.toolbar-item:hover {
+  background-color: #eee;
+}
+
+.toolbar-item.active {
+  background-color: #ddd;
+}
+
+.toolbar-item i {
+  display: block;
+  width: 18px;
+  height: 18px;
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+/* Adicione este CSS ao seu arquivo App.css */
+
+.divider {
+  width: 1px;
+  background-color: #eee;
+  margin: 0 4px;
+}
+
+/* Ícones de Alinhamento */
+.toolbar-item i.left-align {
+  background-image: url('https://lexical.dev/images/icons/left-align.svg');
+}
+.toolbar-item i.center-align {
+  background-image: url('https://lexical.dev/images/icons/center-align.svg');
+}
+.toolbar-item i.right-align {
+  background-image: url('https://lexical.dev/images/icons/right-align.svg');
+}
+.toolbar-item i.justify-align {
+  background-image: url('https://lexical.dev/images/icons/justify-align.svg');
+}
+
+/* Adicione esta regra ao final da seção de estilos da Toolbar */
+.toolbar-item.export-btn {
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  padding: 6px 12px;
+  color: #333;
+}

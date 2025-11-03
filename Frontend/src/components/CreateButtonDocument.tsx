@@ -22,7 +22,7 @@ const CreateDocumentButton = () => {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    navigate('/documentos/novo');
+    navigate('/documento/novo');
   };
 
   return (

@@ -5,6 +5,7 @@ import {
   $isRangeSelection,
   FORMAT_TEXT_COMMAND,
   FORMAT_ELEMENT_COMMAND,
+  type LexicalCommand,
 } from 'lexical';
 import { $getSelectionStyleValueForProperty, $patchStyleText } from '@lexical/selection';
 import { INSERT_IMAGE_COMMAND } from './ImagePlugin';
@@ -31,6 +32,9 @@ import ImageIcon from '../assets/icons/image.svg';
 import UnorderedListIcon from '../assets/icons/ul.svg';
 import OrderedListIcon from '../assets/icons/ol.svg';
 import VideoIcon from '../assets/icons/video.svg';
+
+import VideoUploadModal from './VideoUploadModal';
+import type { CreateVideoNodePayload } from '../components/node/VideoNode';
 
 const FONT_FAMILY_OPTIONS: [string, string][] = [
   ['Arial', 'Arial'],
@@ -61,6 +65,8 @@ function Select({ onChange, className, options, value }: SelectProps) {
   );
 }
 
+const TypedInsertVideoCommand: LexicalCommand<CreateVideoNodePayload> = INSERT_VIDEO_COMMAND;
+
 export default function FormattingToolbarPlugin() {
   console.log(BoldIcon)
   const [editor] = useLexicalComposerContext();
@@ -76,8 +82,9 @@ export default function FormattingToolbarPlugin() {
   const [isUnorderedList, setIsUnorderedList] = useState(false);
   const [isOrderedList, setIsOrderedList] = useState(false);
 
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+
   const imageFileInputRef = useRef<HTMLInputElement>(null);
-  const videoFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const size = parseInt(fontSize, 10);
@@ -208,40 +215,7 @@ export default function FormattingToolbarPlugin() {
   
 
   const onInsertVideo = () => {
-    const choice = prompt("Digite 'url' para inserir um vídeo do YouTube ou 'upload' para escolher um arquivo local.");
-    
-    if (choice === 'url') {
-      const url = prompt('Digite a URL do vídeo do YouTube:');
-      if (url) {
-        const videoIDRegex = /(?:\?v=|\/embed\/|\.be\/)([^& \/\?]+)/;
-        const match = url.match(videoIDRegex);
-        if (match && match[1]) {
-          editor.dispatchCommand(INSERT_VIDEO_COMMAND, { sourceType: 'youtube', src: match[1] });
-        } else {
-          alert('URL do YouTube inválida.');
-        }
-      }
-    } else if (choice === 'upload') {
-      if (videoFileInputRef.current) {
-        videoFileInputRef.current.click();
-      }
-    }
-  };
-
-  const handleVideoFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files && e.target.files[0];
-    if (file) {
-      console.log("Arquivo de vídeo selecionado. Lógica de upload para o backend entraria aqui.", file);
-      const videoUrl = URL.createObjectURL(file);
-      
-      editor.dispatchCommand(INSERT_VIDEO_COMMAND, {
-        sourceType: 'generic',
-        src: videoUrl,
-      });
-    }
-    if (videoFileInputRef.current) {
-        videoFileInputRef.current.value = '';
-    }
+    setIsVideoModalOpen(true);
   };
 
   return (
@@ -253,13 +227,7 @@ export default function FormattingToolbarPlugin() {
         accept="image/*"
         onChange={handleFileSelect}
       />
-      <input
-        type="file"
-        ref={videoFileInputRef}
-        style={{ display: 'none' }}
-        accept="video/*"
-        onChange={handleVideoFileSelect}
-      />
+      
       
       <Select
         className="toolbar-item font-family"
@@ -359,6 +327,15 @@ export default function FormattingToolbarPlugin() {
           height="18" 
         />
       </button>
+      {isVideoModalOpen && (
+        <VideoUploadModal
+          onClose={() => setIsVideoModalOpen(false)}
+          onSubmit={(payload) => {
+            editor.dispatchCommand(TypedInsertVideoCommand, payload);
+            setIsVideoModalOpen(false); // Fecha o modal após o envio
+          }}
+        />
+      )}
       <div className="divider" />
       <button
         onClick={formatUnorderedList}

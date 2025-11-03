@@ -115,7 +115,6 @@ const CreateEditDocumentPage = () => {
           <div className="editor-inner-content">
             <RichTextPlugin
               contentEditable={<ContentEditable className="editor-input" />}
-              placeholder={<EditorPlaceholder />}
               ErrorBoundary={LexicalErrorBoundary}
             />
           </div>

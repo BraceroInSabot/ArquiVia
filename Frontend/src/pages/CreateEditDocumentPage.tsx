@@ -139,7 +139,7 @@ const CreateEditDocumentPage = () => {
     inactivityTimerRef.current = window.setTimeout(() => {
       console.log("Inatividade detectada: Salvando snapshot...");
       saveSnapshot(editorStateJSON);
-    }, 300); 
+    }, 300000); 
   };
 
   useEffect(() => {

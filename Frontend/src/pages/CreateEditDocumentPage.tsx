@@ -1,16 +1,26 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
 import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'; // Importe este hook
 import type { EditorState } from 'lexical';
+import { $getRoot, $isParagraphNode } from 'lexical';
+//@ts-ignore
 import Prism from 'prismjs';
 
 import { ListNode, ListItemNode } from '@lexical/list';
 import { HeadingNode, QuoteNode } from '@lexical/rich-text';
 import { LinkNode } from '@lexical/link';
+
+import {
+  addHistoryEntry,
+  getHistoryEntries,
+  getLatestHistoryEntry,
+  type HistoryEntry
+} from '../utils/history_manager';
 import { ImageNode } from '../components/node/ImageNode';
 import { VideoNode } from '../components/node/VideoNode';
 
@@ -25,11 +35,6 @@ import FormattingToolbarPlugin from '../plugin/ToolBarPlugin';
 import ActionsPlugin from '../plugin/DownBarPlugin';
 
 import '../assets/css/EditorTheme.css';
-
-interface HistoryEntry {
-  state: string;
-  timestamp: Date;
-}
 
 const initialConfig = {
   namespace: 'MyEditor',
@@ -70,38 +75,101 @@ const initialConfig = {
   ]
 };
 
-function EditorPlaceholder() {
-  return <div className="editor-placeholder">Digite seu texto...</div>;
-}
-
 const filteredTransformers = TRANSFORMERS.filter(t => t !== CODE);
 
+// Componente-filho para carregar o estado inicial
+function LoadInitialStatePlugin() {
+  const [editor] = useLexicalComposerContext();
+  
+  useEffect(() => {
+    const latestState = getLatestHistoryEntry();
+    if (latestState) {
+      try {
+        const initialEditorState = editor.parseEditorState(latestState.state);
+        editor.setEditorState(initialEditorState);
+      } catch (e) {
+        console.error("Falha ao carregar estado salvo, iniciando em branco.", e);
+      }
+    }
+  }, [editor]); // Roda uma vez quando o editor está pronto
+
+  return null;
+}
+
+// Componente Principal
 const CreateEditDocumentPage = () => {
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const debounceTimeoutRef = useRef<number | null>(null);
+  const [history, setHistory] = useState<HistoryEntry[]>(() => getHistoryEntries());
+  const [isAutosaveActive, setIsAutosaveActive] = useState(true);
+  const [isGlowing, setIsGlowing] = useState(false);
+
+  const inactivityTimerRef = useRef<number | null>(null);
+  const editorStateRef = useRef<string | null>(null);
+  const autosaveActiveRef = useRef<boolean>(true);
+
+  const triggerGlow = () => {
+    setIsGlowing(true);
+    setTimeout(() => {
+      setIsGlowing(false);
+    }, 1500);
+  };
+
+  const saveSnapshot = (currentState: string) => {
+    // Evita salvar se o estado estiver vazio
+    if (currentState === '{"root":{"children":[{"type":"paragraph","version":1}],"direction":null,"format":"","indent":0,"version":1}}') {
+        return;
+    }
+    
+    addHistoryEntry(currentState);
+    setHistory(getHistoryEntries()); 
+    triggerGlow();
+  };
 
   const handleOnChange = (editorState: EditorState) => {
-    if (editorState.isEmpty()) return;
-
     const editorStateJSON = JSON.stringify(editorState.toJSON());
+    editorStateRef.current = editorStateJSON;
 
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
+    if (!autosaveActiveRef.current) {
+      return;
     }
 
-    debounceTimeoutRef.current = window.setTimeout(() => {
-      const newEntry: HistoryEntry = {
-        state: editorStateJSON,
-        timestamp: new Date(),
-      };
-      
-      setHistory(prevHistory => {
-        const updatedHistory = [newEntry, ...prevHistory];
-        return updatedHistory.slice(0, 20); 
-      });
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current);
+    }
 
-    }, 2000);
+    inactivityTimerRef.current = window.setTimeout(() => {
+      console.log("Inatividade detectada: Salvando snapshot...");
+      saveSnapshot(editorStateJSON);
+    }, 300); 
   };
+
+  useEffect(() => {
+    autosaveActiveRef.current = isAutosaveActive;
+  }, [isAutosaveActive]);
+
+  useEffect(() => {
+    const handleSaveOnExit = (event: BeforeUnloadEvent) => {
+      if (!autosaveActiveRef.current) return;
+      
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+      }
+      
+      const currentState = editorStateRef.current;
+      if (currentState) {
+        console.log("Salvando snapshot antes de fechar...");
+        addHistoryEntry(currentState);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleSaveOnExit);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleSaveOnExit);
+    };
+  }, []); 
+
+  // --- O 'useEffect' que estava aqui foi REMOVIDO ---
+  // (Ele tentava usar 'editor' fora do escopo)
 
   return (
     <div style={{ padding: '2rem' }}>
@@ -129,7 +197,16 @@ const CreateEditDocumentPage = () => {
           <ImagePlugin />
           <VideoPlugin />
 
-          <ActionsPlugin history={history} />
+          <ActionsPlugin 
+            history={history}
+            isAutosaveActive={isAutosaveActive}
+            onAutosaveToggle={() => setIsAutosaveActive(prev => !prev)}
+            isGlowing={isGlowing}
+            // --- A prop 'onRestore' foi REMOVIDA daqui ---
+          />
+
+          {/* Este componente carrega o estado inicial */}
+          <LoadInitialStatePlugin />
 
         </div>
       </LexicalComposer>

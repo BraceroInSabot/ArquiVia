@@ -358,3 +358,115 @@
   border-radius: 4px;
   cursor: pointer;
 }
+
+
+/* --- Estilos do AutoSave Toggle --- */
+.autosave-toggle {
+  /* Alinha o texto 'ON'/'OFF' */
+  padding: 0 8px;
+  min-width: 45px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: #aaa;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+}
+
+.autosave-toggle.active {
+  color: #1a8a1a; /* Verde */
+  background-color: #e8f5e8;
+  border-color: #1a8a1a;
+}
+
+.autosave-toggle .autosave-icon {
+  vertical-align: middle;
+}
+
+/* --- Efeito de "Glow" (Brilho) --- */
+
+@keyframes glow-animation {
+  0%   { box-shadow: 0 0 0px 0px rgba(76, 175, 80, 0.7); }
+  50%  { box-shadow: 0 0 10px 5px rgba(76, 175, 80, 0.7); }
+  100% { box-shadow: 0 0 0px 0px rgba(76, 175, 80, 0); }
+}
+
+.history-btn.glowing {
+  /* Dispara a animação 'glow-animation' por 1.5 segundos */
+  animation: glow-animation 1.5s ease-out;
+  border-color: #4CAF50; /* Verde */
+}
+
+
+/* --- Estilos do Modal de Visualização de Histórico --- */
+
+/* Faz o modal de histórico ser maior que o de vídeo */
+.history-view-modal-content {
+  max-width: 800px; /* Maior */
+  width: 90%;
+  text-align: left;
+}
+
+.readonly-editor-container {
+  border: 1px solid #eee;
+  border-radius: 8px;
+  background-color: #fdfdfd;
+  margin-top: 1rem;
+  /* Define uma altura máxima e scroll */
+  max-height: 60vh;
+  overflow-y: auto;
+  /* Ajusta o padding para o 'editor-inner-content' */
+  padding: 0; 
+}
+
+/* Garante que o editor read-only não tenha bordas de foco */
+.readonly-editor-container .editor-input {
+  outline: none;
+  caret-color: transparent; /* Esconde o cursor de texto */
+  padding: 1rem 1.5rem; /* Adiciona padding interno */
+}
+
+/* --- Estilos da Lista de Histórico (Botões Voltar/Ver) --- */
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 4px;
+  border-bottom: 1px solid #eee;
+}
+
+.history-timestamp {
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.history-item-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.history-action-btn {
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.history-action-btn.view-btn {
+  border-color: #007bff;
+  color: #007bff;
+}
+.history-action-btn.view-btn:hover {
+  background-color: #f0f7ff;
+}
+
+.history-action-btn.restore-btn {
+  border-color: #28a745;
+  color: #28a745;
+}
+.history-action-btn.restore-btn:hover {
+  background-color: #f0f9f2;
+}

@@ -1,0 +1,90 @@
+/* --- Toolbar Responsiva --- */
+
+/* 1. O Contêiner Principal da Barra de Ferramentas */
+.toolbar {
+  display: flex;         /* Ativa o Flexbox */
+  flex-wrap: wrap;       /* ⭐️ Permite que os itens quebrem para a próxima linha */
+  align-items: center;   /* Alinha os itens verticalmente no centro */
+  gap: 6px;              /* Adiciona um pequeno espaço entre todos os itens */
+  
+  padding: 8px 10px;
+  margin-bottom: 1px;
+  background-color: #f9f9f9;
+  border-bottom: 1px solid #ddd;
+}
+
+/* 2. Estilos dos Itens Individuais (Botões, Selects, etc.) */
+.toolbar-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  height: 34px; /* Define uma altura padrão para todos os itens */
+  box-sizing: border-box; /* Garante que o padding não aumente o tamanho */
+}
+
+/* Botões de ícone */
+.toolbar-item:not(select):not(input) {
+  width: 34px; /* Faz os botões de ícone serem quadrados */
+  cursor: pointer;
+}
+
+.toolbar-item:hover:not(.active) {
+  background-color: #f0f0f0;
+}
+
+.toolbar-item.active {
+  background-color: #ddd;
+}
+
+/* 3. O 'divider' (separador |) */
+.divider {
+  width: 1px;
+  background-color: #ccc;
+  height: 24px;
+  margin: 0 4px;
+  border: none; /* Remove a borda padrão do .toolbar-item */
+  background: #ccc; /* Define a cor de fundo */
+}
+
+/* 4. Inputs Específicos */
+.toolbar-item.font-size {
+  width: 60px; /* Um tamanho pequeno para o input de número */
+  padding-left: 8px;
+  padding-right: 2px;
+}
+
+.toolbar-item.color-picker {
+   width: 34px;
+   padding: 2px;
+}
+
+/* 5. Seletor de Fonte */
+.toolbar-item.font-family {
+    padding: 0 6px;
+    /* Deixa ele crescer conforme o nome da fonte */
+    width: auto; 
+}
+
+
+/* --- Media Query para Telas Pequenas --- */
+@media (max-width: 600px) {
+  .toolbar {
+    gap: 4px; /* Diminui o espaço em telas pequenas */
+    padding: 6px 8px;
+  }
+
+  /* Oculta os divisores para economizar espaço */
+  .divider {
+    display: none;
+  }
+
+  /* Faz o seletor de fonte ficar menor */
+  .toolbar-item.font-family {
+    max-width: 110px; 
+    overflow: hidden;
+  }
+}

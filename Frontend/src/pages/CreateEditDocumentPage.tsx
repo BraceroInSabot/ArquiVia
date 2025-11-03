@@ -173,7 +173,7 @@ const CreateEditDocumentPage = () => {
 
   return (
     <div style={{ padding: '2rem' }}>
-      <h1>Criar/Editar Documento</h1>
+      <center><h1>Criar/Editar Documento</h1></center>
       
       <LexicalComposer initialConfig={initialConfig}>
         <div className="editor-container">

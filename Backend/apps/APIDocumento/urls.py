@@ -13,10 +13,10 @@ from .classificationUtils.urls import classification_urlpatterns
 from .categoryUtils.urls import category_urlpatterns
 
 urlpatterns = [
-    path("criar", CreateDocumentView.as_view(), name="criar-documento"),
-    path("visualizar", ListDocumentView.as_view(), name="criar-documento-slash"),
-    path("consultar", ShowDocumentView.as_view(), name="consultar-documento"),
-    path("editar", UpdateDocumentView.as_view(), name="editar-documento"),
-    path("ativar-desativar", ActivateOrDeactivateDocumentView.as_view(), name="ativar-ou-desativar-documento"),
-    path("deletar", DeleteDocumentView.as_view(), name="deletar-documento"),
+    path("criar/", CreateDocumentView.as_view(), name="criar-documento"),
+    path("consultar/<int:pk>/", ShowDocumentView.as_view(), name="consultar-documento"),
+    path("visualizar/", ListDocumentView.as_view(), name="visualizar-documento"),
+    path("alterar/<int:pk>/", UpdateDocumentView.as_view(), name="alterar-documento"),
+    path("ativar-desativar/<int:pk>/", ActivateOrDeactivateDocumentView.as_view(), name="ativar-ou-desativar-documento"),
+    path("excluir/<int:pk>/", DeleteDocumentView.as_view(), name="excluir-documento"),
 ] + classification_urlpatterns + category_urlpatterns

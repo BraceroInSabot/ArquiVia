@@ -125,8 +125,6 @@ export interface UpdateSectorData {
 export interface Document {
   id: string;
   title: string;
-  type: 'Contract' | 'Invoice' | 'Report';
-  createdAt: string;
   author: string;
 }
 

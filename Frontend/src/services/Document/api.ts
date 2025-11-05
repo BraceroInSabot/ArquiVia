@@ -1,5 +1,5 @@
 import api from '../core-api';
-import type { CreateDocument, Document, DocumentList, ResponseStructure} from '../core-api';
+import type { CreateDocument, Document, DocumentList, ResponseStructure, UpdateDocumentPayload} from '../core-api';
 
 const documentService = {
     /**
@@ -33,6 +33,13 @@ const documentService = {
    */
   editDocument(document_id: number, title: string, content: string): Promise<{ data: ResponseStructure<Document> }> {
     return api.put(`/documento/editar/${document_id}/`, { title, content });
+  },
+
+  /**    * Atualiza parcialmente um documento (título ou conteúdo).
+   * Usa o método PATCH.
+   */
+  updateDocument(document_id: number, payload: UpdateDocumentPayload): Promise<{ data: ResponseStructure<Document> }> {
+    return api.patch(`/documento/alterar/${document_id}/`, payload);
   },
 };
 

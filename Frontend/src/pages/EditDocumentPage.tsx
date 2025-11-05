@@ -14,7 +14,7 @@ import Prism from 'prismjs';
 
 // Imports de Serviços e Tipos
 import documentService from '../services/Document/api';
-import type { Document as ApiDocument } from '../services/core-api';
+import type { Document as ApiDocument } from '../services/core-api'; // (Interface do seu documento completo)
 import {
   addHistoryEntry,
   getHistoryEntries,
@@ -48,27 +48,7 @@ import '../assets/css/EditorTheme.css';
 const baseInitialConfig = {
   namespace: 'MyEditor',
   theme: {
-    list: {
-      ol: 'editor-list-ol',
-      ul: 'editor-list-ul',
-      listitem: 'editor-listitem',
-    },
-    image: 'editor-image',
-    video: 'editor-video',
-    heading: {
-      h1: 'editor-heading-h1',
-      h2: 'editor-heading-h2',
-      h3: 'editor-heading-h3',
-    },
-    quote: 'editor-quote',
-    code: 'editor-code',
-    link: 'editor-link',
-    text: {
-      bold: 'editor-text-bold',
-      italic: 'editor-text-italic',
-      underline: 'editor-text-underline',
-      highlight: 'editor-text-highlight',
-    },
+    // ... (seu tema)
   },
   onError(error: Error) {
     throw error;
@@ -88,14 +68,32 @@ const baseInitialConfig = {
 const filteredTransformers = TRANSFORMERS.filter(t => t !== CODE);
 
 
+// --- Componente-filho para carregar o estado inicial ---
+// (Movido para fora do componente principal para clareza)
+function LoadInitialStatePlugin({ initialContent }: { initialContent: string | null }) {
+  const [editor] = useLexicalComposerContext();
+  
+  useEffect(() => {
+    if (initialContent) {
+      try {
+        const initialEditorState = editor.parseEditorState(initialContent);
+        editor.setEditorState(initialEditorState);
+      } catch (e) {
+        console.error("Falha ao carregar estado salvo, iniciando em branco.", e);
+      }
+    }
+  }, [editor, initialContent]); 
+
+  return null;
+}
+
+
 const EditDocumentPage = () => {
   // Hooks de Roteamento e Estado
-  const { id } = useParams<{ id: string }>(); // Pega o ID da URL
-  const [title, setTitle] = useState(''); // Estado para o título do documento
-  const [isLoading, setIsLoading] = useState(true); // Estado de carregamento da página
-  
-  // Estado dinâmico do editor (para carregar dados da API)
-  const [editorConfig, setEditorConfig] = useState(baseInitialConfig);
+  const { id } = useParams<{ id: string }>(); 
+  const [title, setTitle] = useState(''); 
+  const [isLoading, setIsLoading] = useState(true); 
+  const [initialContent, setInitialContent] = useState<string | null>(null);
 
   // Estados do Histórico e Autosave
   const [history, setHistory] = useState<HistoryEntry[]>(() => getHistoryEntries());
@@ -115,38 +113,33 @@ const EditDocumentPage = () => {
         // --- MODO EDIÇÃO (tem ID) ---
         try {
           console.log(`Buscando documento ${id}...`);
-          // (Assumindo que você adicionou 'getDocumentById' ao seu service)
           const response = await documentService.getDocumentById(Number(id)); 
-          const doc = response.data.data; // (Ajuste o caminho se necessário)
+          const doc = response.data.data; 
 
           setTitle(doc.title || 'Documento Sem Título');
-          
-          // Define o estado inicial do editor com o conteúdo do banco
-          setEditorConfig({
-            ...baseInitialConfig,
-            editorState: doc.content_json, // Use a string JSON do seu backend
-          });
+          // Assumindo que seu backend retorna o JSON em 'content'
+          // Se for string JSON, .content está ok. Se for objeto, .content está ok.
+          setInitialContent(doc.content);
           
         } catch (error) {
           console.error("Falha ao buscar documento:", error);
           alert("Não foi possível carregar o documento. Verifique o console.");
-          setEditorConfig(baseInitialConfig); // Carrega em branco se falhar
+          setInitialContent(null);
         }
       } else {
-        // --- MODO CRIAÇÃO (sem ID, ex: /documento/novo) ---
-        // Tenta carregar do histórico local (localStorage)
+        // --- MODO CRIAÇÃO (sem ID) ---
         const latestState = getLatestHistoryEntry();
         if (latestState) {
-          setEditorConfig({ ...baseInitialConfig, editorState: latestState.state });
+          setInitialContent(latestState.state);
         } else {
-          setEditorConfig(baseInitialConfig); // Garante que carrega vazio
+          setInitialContent(null); 
         }
       }
       setIsLoading(false);
     };
 
     fetchDocument();
-  }, [id]); // Roda sempre que o ID na URL mudar
+  }, [id]); 
 
   // --- LÓGICA DE SALVAMENTO (AUTO-SAVE) ---
 
@@ -157,28 +150,26 @@ const EditDocumentPage = () => {
     }, 1500);
   };
 
-  // Função 'saveSnapshot' atualizada para salvar no Backend
+  // --- 1. 'saveSnapshot' (Auto-save) ATUALIZADO ---
   const saveSnapshot = useCallback(async (currentState: string) => {
-    // 1. Salva no localStorage (histórico rápido)
     addHistoryEntry(currentState);
     setHistory(getHistoryEntries()); 
     triggerGlow(); 
 
-    // 2. Salva no Backend (APENAS se estivermos editando um doc existente)
     if (id) {
       if (currentState === '{"root":{"children":[{"type":"paragraph","version":1}],"direction":null,"format":"","indent":0,"version":1}}') {
-          return; // Não salva estado vazio no backend
+          return; 
       }
       
       try {
-        // Chama a API com 'id', 'title' e 'content'
-        await documentService.editDocument(Number(id), title, currentState); 
-        console.log(`Snapshot salvo no backend para doc ${id}`);
+        // Envia APENAS o 'content' (payload parcial)
+        await documentService.updateDocument(Number(id), { content: currentState }); 
+        console.log(`Snapshot de CONTEÚDO salvo no backend para doc ${id}`);
       } catch (error) {
         console.error("Falha ao salvar snapshot no backend:", error);
       }
     }
-  }, [id, title]); // Depende do 'id' e 'title'
+  }, [id]); // Depende apenas do 'id'
 
   const handleOnChange = (editorState: EditorState) => {
     const editorStateJSON = JSON.stringify(editorState.toJSON());
@@ -192,45 +183,48 @@ const EditDocumentPage = () => {
       clearTimeout(inactivityTimerRef.current);
     }
 
-    // Salva 5 minutos (300.000 ms) após a *última* mudança
     inactivityTimerRef.current = window.setTimeout(() => {
       console.log("Inatividade detectada: Salvando snapshot...");
       saveSnapshot(editorStateJSON);
     }, 300000); 
   };
 
-  // Sincroniza o estado do 'toggle' com o Ref (para o 'beforeunload')
   useEffect(() => {
     autosaveActiveRef.current = isAutosaveActive;
   }, [isAutosaveActive]);
 
-  // Salva no localStorage ANTES de fechar a aba
   useEffect(() => {
     const handleSaveOnExit = (event: BeforeUnloadEvent) => {
       if (!autosaveActiveRef.current) return;
-      
-      if (inactivityTimerRef.current) {
-        clearTimeout(inactivityTimerRef.current);
-      }
-      
+      if (inactivityTimerRef.current) { clearTimeout(inactivityTimerRef.current); }
       const currentState = editorStateRef.current;
       if (currentState) {
         console.log("Salvando snapshot (localStorage) antes de fechar...");
         addHistoryEntry(currentState);
       }
     };
-
     window.addEventListener('beforeunload', handleSaveOnExit);
-
     return () => {
       window.removeEventListener('beforeunload', handleSaveOnExit);
     };
-  }, []); // Array vazio é intencional
+  }, []); 
 
+  // --- 2. NOVA FUNÇÃO: Salvamento Manual (para o botão) ---
+  const handleManualSave = () => {
+    const currentState = editorStateRef.current;
+
+    if (currentState) {
+      console.log("Salvamento manual disparado...");
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+      }
+      // Chama a mesma função do auto-save
+      saveSnapshot(currentState); 
+    }
+  };
 
   // --- RENDERIZAÇÃO ---
 
-  // Estado de Carregamento
   if (isLoading) {
     return (
       <div style={{ padding: '4rem', textAlign: 'center', fontFamily: 'Arial, sans-serif' }}>
@@ -239,20 +233,20 @@ const EditDocumentPage = () => {
     );
   }
 
-  // Editor Carregado
   return (
     <div style={{ padding: '2rem' }}>
       <center>
-        {/* --- Input de Título --- */}
         <input 
           type="text" 
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onBlur={() => {
-            // Salva o título no backend quando o usuário clica fora
+            // --- 3. 'onBlur' ATUALIZADO ---
+            // Salva APENAS o 'title' no backend (PATCH)
             if (id) {
               console.log("Salvando título...");
-              documentService.editDocument(Number(id), title, editorStateRef.current || "");
+              // Envia APENAS o 'title'
+              documentService.updateDocument(Number(id), { title: title });
             }
           }}
           placeholder="Título do Documento"
@@ -260,7 +254,7 @@ const EditDocumentPage = () => {
         />
       </center>
       
-      <LexicalComposer initialConfig={editorConfig}>
+      <LexicalComposer initialConfig={baseInitialConfig}>
         <div className="editor-container">
           
           <FormattingToolbarPlugin />
@@ -275,11 +269,9 @@ const EditDocumentPage = () => {
           
           <OnChangePlugin onChange={handleOnChange} />
           <HistoryPlugin />
-          
           <ListPlugin />
           <LinkPlugin />
           <MarkdownShortcutPlugin transformers={filteredTransformers} />
-
           <ImagePlugin />
           <VideoPlugin />
 
@@ -288,9 +280,12 @@ const EditDocumentPage = () => {
             isAutosaveActive={isAutosaveActive}
             onAutosaveToggle={() => setIsAutosaveActive(prev => !prev)}
             isGlowing={isGlowing}
+            onManualSave={handleManualSave} // Passa a função de salvar
           />
           
-          {/* O LoadInitialStatePlugin foi removido daqui */}
+          {/* O Plugin de Carregamento agora recebe o conteúdo inicial */}
+          <LoadInitialStatePlugin initialContent={initialContent} />
+
         </div>
       </LexicalComposer>
     </div>

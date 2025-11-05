@@ -154,6 +154,11 @@ export interface DocumentList {
   created_at: string;
 }
 
+export interface UpdateDocumentPayload {
+  title?: string;
+  content?: string;
+}
+
 const api = axios.create({
   baseURL: URL,
   withCredentials: true,

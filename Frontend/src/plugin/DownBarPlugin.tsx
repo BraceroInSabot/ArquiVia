@@ -5,10 +5,12 @@ import jsPDF from 'jspdf'; // A biblioteca jspdf
 import { type EditorState } from 'lexical';
 import HistoryViewModal from './HistoryViewModal'; // Importa o novo modal
 
-import PDFIcon from '../assets/icons/pdf-export.svg';
-import HistoryIcon from '../assets/icons/history.svg';
-import EyeIcon from '../assets/icons/eye.svg';
-import RestoreIcon from '../assets/icons/restore.svg';
+// --- 1. Importe TODOS os ícones ---
+import PDFIcon from '../assets/icons/pdf-export.svg?url';
+import HistoryIcon from '../assets/icons/history.svg?url';
+import EyeIcon from '../assets/icons/eye.svg?url';
+import RestoreIcon from '../assets/icons/restore.svg?url';
+import SaveIcon from '../assets/icons/save.svg?url'; // <-- Ícone de salvar
 
 import '../assets/css/EditorTheme.css'
 
@@ -18,21 +20,22 @@ interface HistoryEntry {
   timestamp: Date; // O objeto Date de quando foi salvo
 }
 
-// Define as props do componente
+// --- 2. Atualize a interface de props ---
 interface ActionsPluginProps {
   history: HistoryEntry[];
   isAutosaveActive: boolean;
   onAutosaveToggle: () => void;
   isGlowing: boolean;
-  // A prop 'onRestore' foi removida.
+  onManualSave: () => void; // <-- Adiciona a prop de salvar
 }
 
-// Aplica os tipos nas props e no retorno da função
+// --- 3. Atualize a assinatura do componente ---
 export default function ActionsPlugin({ 
   history,
   isAutosaveActive,
   onAutosaveToggle,
   isGlowing,
+  onManualSave // <-- Recebe a prop
 }: ActionsPluginProps): JSX.Element {
     const [viewingState, setViewingState] = useState<string | null>(null);
     
@@ -74,6 +77,16 @@ export default function ActionsPlugin({
     return (
         <div>
             <div className="actions-container">
+
+                {/* --- 4. NOVO BOTÃO DE SALVAR MANUAL (À ESQUERDA) --- */}
+                <button
+                    onClick={onManualSave}
+                    className="toolbar-item save-btn"
+                    aria-label="Salvar Agora"
+                    title="Salvar Agora"
+                >
+                    <img src={SaveIcon} alt="Salvar Agora" className="format" width="18" height="18" />
+                </button>
                 
                 {/* --- BOTÃO DE TOGGLE --- */}
                 <button
@@ -104,12 +117,11 @@ export default function ActionsPlugin({
                 </button>
             </div>
             
-            {isHistoryVisible && (
+           {isHistoryVisible && (
                 <div className="history-panel">
                     {history.length > 0 ? (
                         <ul className="history-list">
-                            {/* --- INÍCIO DA LÓGICA ATUALIZADA (VER/VOLTAR) --- */}
-                            {history.map((entry: HistoryEntry, index: number) => (
+                         {history.map((entry: HistoryEntry, index: number) => (
                                 <li key={index} className="history-item">
                                     <span className="history-timestamp">
                                       {entry.timestamp.toLocaleDateString()} {entry.timestamp.toLocaleTimeString()}
@@ -118,19 +130,17 @@ export default function ActionsPlugin({
                                       <button 
                                         className="history-action-btn view-btn" 
                                         onClick={() => setViewingState(entry.state)}
-                                      >
+                                   >
                                         <img src={EyeIcon} alt="Visualizar" className="format" width="18" height="18" />
                                       </button>
                                       <button 
-                                        className="history-action-btn restore-btn" 
-                                        onClick={() => handleRestore(entry.state)}
+                                        className="history-action-btn restore-btn" onClick={() => handleRestore(entry.state)}
                                       >
-                                        <img src={RestoreIcon} alt="Voltar" className="format" width="18" height="18" />
+                                       <img src={RestoreIcon} alt="Voltar" className="format" width="18" height="18" />
                                       </button>
                                     </div>
                                 </li>
                             ))}
-                            {/* --- FIM DA LÓGICA ATUALIZADA --- */}
                         </ul>
                     ) : (
                         <p>Nenhum ponto de histórico salvo ainda.</p>

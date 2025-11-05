@@ -150,3 +150,22 @@ class DocumentListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Document
         fields = ['document_id', 'title', 'creator_name', 'created_at']
+        
+class DocumentUpdateSerializer(serializers.ModelSerializer):
+    """
+    Serializer "leve" para a atualização de um documento.
+    Valida os campos 'title' e 'content'.
+    """
+    title = serializers.CharField(
+        max_length=200, 
+        min_length=3, 
+        required=False 
+    )
+    
+    content = serializers.JSONField(
+        required=False 
+    )
+
+    class Meta:
+        model = Document
+        fields = ['title', 'content']

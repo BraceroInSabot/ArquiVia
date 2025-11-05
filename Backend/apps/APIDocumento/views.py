@@ -5,7 +5,7 @@ from apps.APISetor.models import Sector, SectorUser
 from apps.APIDocumento.models import Document
 from rest_framework.permissions import IsAuthenticated
 from apps.APIDocumento.classificationUtils.views import ClassificationViewUtil
-from .serializers import DocumentCreateSerializer, DocumentDetailSerializer, DocumentListSerializer
+from .serializers import DocumentCreateSerializer, DocumentDetailSerializer, DocumentListSerializer, DocumentUpdateSerializer
 from rest_framework.parsers import JSONParser
 from apps.APIDocumento.permissions import IsLinkedToDocument
 from apps.core.utils import default_response
@@ -130,85 +130,48 @@ class RetrieveDocumentView(APIView):
         return res
     
 class UpdateDocumentView(APIView):
-    permission_classes = [IsAuthenticated]
-    
-    def put(self, request):
-        document_id = request.data.get('document_id', '')
-        new_title = request.data.get('title', '')
-        new_context_beta = request.data.get('context_beta', '')
-        
-        if type(document_id) != int:
-            ret = Response()
-            ret.status_code = 400
-            ret.data = {
-                "Data": {
-                    "sucesso": False,
-                    "mensagem": "ID inválido."
-                }
-            }
-            return ret
+    """
+    Atualiza parcialmente um documento (título ou conteúdo).
+    O ID do documento deve ser passado na URL.
+    A permissão é verificada pela classe IsLinkedToDocument.
+    """
+    permission_classes = [IsAuthenticated, IsLinkedToDocument]
 
-        try:
-            document = Document.objects.get(doc_id=document_id)
-        except Document.DoesNotExist:
-            ret = Response()
-            ret.status_code = 404
-            ret.data = {
-                "Data": {
-                    "sucesso": False,
-                    "mensagem": "Documento não encontrado."
-                }
-            }
-            return ret
-        
-        try:
-            if not (SectorUser.objects.filter(user=request.user, sector=document.sector).exists() 
-                or 
-                Sector.objects.filter(manager=request.user, sector_id=document.sector.sector_id).exists()):
-                ret = Response()
-                ret.status_code = 403
-                ret.data = {
-                    "Data": {
-                        "sucesso": False,
-                        "mensagem": "Você não tem permissão para completar essa ação."
-                    }
-                }
-                return ret
-        except Exception as e:
-            ret = Response()
-            ret.status_code = 500
-            ret.data = {
-                "Data": {
-                    "sucesso": False,
-                    "mensagem": f"Erro ao verificar permissão do usuário: {str(e)}"
-                }
-            }
-            return ret
-        
-        if len(new_title) < 3 or len(new_title) > 200:
-            ret = Response()
-            ret.status_code = 400
-            ret.data = {
-                "Data": {
-                    "sucesso": False,
-                    "mensagem": "Título deve ter entre 3 e 200 caracteres."
-                }
-            }
-            return ret
-            
-        document.title = new_title
-        document.context_beta = new_context_beta
-        document.save()
-        
-        ret = Response()
-        ret.status_code = 200
-        ret.data = {
-            "Data": {
-                "sucesso": True,
-                "mensagem": "Documento atualizado com sucesso."
-            }
-        }
-        return 
+    def patch(self, request, pk: int) -> HttpResponse:
+        """
+        Manipula a requisição PATCH para atualizar parcialmente um documento.
+
+        Args:
+            request (Request): O objeto da requisição do usuário.
+            pk (int): A chave primária do documento, vinda da URL.
+
+        Returns:
+            HttpResponse: Uma resposta contendo o documento atualizado ou um erro.
+        """
+        queryset = Document.objects.select_related(
+            'sector__enterprise__owner',
+            'sector__manager'
+        ).prefetch_related('sector__sector_links__user')
+        document = get_object_or_404(queryset, pk=pk)
+
+        self.check_object_permissions(request, document)
+
+        serializer = DocumentUpdateSerializer(
+            instance=document, 
+            data=request.data, 
+            partial=True
+        )
+
+        serializer.is_valid(raise_exception=True)
+
+        updated_document = serializer.save()
+
+        response_serializer = DocumentDetailSerializer(updated_document)
+
+        res: HttpResponse = Response()
+        res.status_code = 200
+        res.data = default_response(success=True, message="Documento atualizado com sucesso!", data=response_serializer.data)
+        return res
     
 class ActivateOrDeactivateDocumentView(APIView):
     permission_classes = [IsAuthenticated]

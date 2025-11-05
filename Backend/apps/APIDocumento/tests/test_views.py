@@ -103,7 +103,7 @@ class TestCreateDocumentAPI:
 
         response = api_client.post(url, payload, format="json")
 
-        assert response.status_code == 201 # type: ignore #type: ignore
+        assert response.status_code == 201 # type: ignore # type: ignore #type: ignore
         assert response.data['sucesso'] is True # type: ignore
         
         doc_id = response.data['data']['document_id'] # type: ignore
@@ -139,7 +139,7 @@ class TestCreateDocumentAPI:
 
         response = api_client.post(url, payload, format="json")
 
-        assert response.status_code == 400 #type: ignore #type: ignore
+        assert response.status_code == 400 # type: ignore #type: ignore #type: ignore
         assert response.data['sucesso'] is False # type: ignore
         assert "Você não tem permissão para criar documentos neste setor." in str(response.data) # type: ignore
 
@@ -165,7 +165,7 @@ class TestCreateDocumentAPI:
 
         response = api_client.post(url, payload, format="json")
 
-        assert response.status_code == 401 #type: ignore #type: ignore
+        assert response.status_code == 401 # type: ignore #type: ignore #type: ignore
         assert response.data['sucesso'] is False # type: ignore
 
     def test_create_document_missing_sector_fails(self, api_client: APIClient, scenario_data: Dict[str, Any]) -> None:
@@ -191,7 +191,7 @@ class TestCreateDocumentAPI:
 
         response = api_client.post(url, payload, format="json")
 
-        assert response.status_code == 400 #type: ignore #type: ignore
+        assert response.status_code == 400 # type: ignore #type: ignore #type: ignore
         assert response.data['sucesso'] is False # type: ignore
 
     def test_create_document_missing_defaults_fails(self, api_client: APIClient, scenario_data: Dict[str, Any]) -> None:
@@ -220,7 +220,7 @@ class TestCreateDocumentAPI:
 
         response = api_client.post(url, payload, format="json")
 
-        assert response.status_code == 400  #type: ignore #type: ignore
+        assert response.status_code == 400 # type: ignore  #type: ignore #type: ignore
         assert response.data['sucesso'] is False # type: ignore
 
 @pytest.mark.django_db
@@ -311,7 +311,7 @@ class TestRetrieveDocumentAPI:
 
         response = api_client.get(url)
 
-        assert response.status_code == 200 #type: ignore
+        assert response.status_code == 200 # type: ignore #type: ignore
         assert response.data['sucesso'] is True # type: ignore
         assert response.data['data']['document_id'] == document.pk # type: ignore
         assert response.data['data']['title'] == "Documento de Teste para Recuperação" # type: ignore
@@ -339,7 +339,7 @@ class TestRetrieveDocumentAPI:
 
         response = api_client.get(url)
                 
-        assert response.status_code == 404 #type: ignore
+        assert response.status_code == 404 # type: ignore #type: ignore
         assert response.data['sucesso'] is False # type: ignore
 
     def test_retrieve_document_by_anonymous_fails(self, api_client: APIClient, scenario_data: Dict[str, Any]) -> None:
@@ -359,7 +359,7 @@ class TestRetrieveDocumentAPI:
 
         response = api_client.get(url)
 
-        assert response.status_code == 401 #type: ignore
+        assert response.status_code == 401 # type: ignore #type: ignore
         assert response.data['sucesso'] is False # type: ignore
 
     def test_retrieve_document_by_outsider_fails(self, api_client: APIClient, scenario_data: Dict[str, Any]) -> None:
@@ -381,5 +381,153 @@ class TestRetrieveDocumentAPI:
 
         response = api_client.get(url)
 
-        assert response.status_code == 403 #type: ignore
+        assert response.status_code == 403 # type: ignore #type: ignore
+        assert response.data['sucesso'] is False # type: ignore
+
+@pytest.mark.django_db
+class TestListDocumentsAPI:
+    """
+    Suíte de testes para o endpoint ListDocumentsView (/visualizar/).
+    """
+
+    @pytest.fixture
+    def api_client(self) -> APIClient:
+        """Returns an APIClient instance for use in tests."""
+        return APIClient()
+
+    @pytest.fixture
+    def scenario_data(self) -> Dict[str, Any]:
+        """
+        Cria um cenário complexo para testar todas as 4 regras de visibilidade de documentos.
+        
+        Usuários:
+        - test_user: O usuário que fará a requisição.
+        - other_user: Um outro usuário para ser o criador de alguns documentos.
+
+        Documentos:
+        - doc_created_by_me: Criado pelo 'test_user' (Regra: Criador).
+        - doc_in_owned_enterprise: Criado pelo 'other_user' em um setor de uma empresa do 'test_user' (Regra: Dono da Empresa).
+        - doc_in_managed_sector: Criado pelo 'other_user' em um setor gerenciado pelo 'test_user' (Regra: Gerente do Setor).
+        - doc_in_member_sector: Criado pelo 'other_user' em um setor onde o 'test_user' é membro (Regra: Membro do Setor).
+        - doc_unrelated: Um documento sem nenhuma relação com o 'test_user'.
+        """
+        # --- Criar Usuários ---
+        test_user = User.objects.create_user(username="list_doc_user", password="pw", email="list@e.com", name="List User")
+        other_user = User.objects.create_user(username="other_doc_user", password="pw", email="other@e.com", name="Other User")
+
+        # --- Cenário 1: test_user é Dono da Empresa ---
+        enterprise_owned = Enterprise.objects.create(name="Empresa do Test User", owner=test_user)
+        sector_in_owned = Sector.objects.create(name="Setor da Empresa Própria", enterprise=enterprise_owned, manager=other_user)
+        doc_in_owned_enterprise = Document.objects.create(title="Doc (Dono)", content={}, creator=other_user, sector=sector_in_owned)
+
+        # --- Cenário 2: test_user é Gerente do Setor ---
+        enterprise_other1 = Enterprise.objects.create(name="Outra Empresa 1", owner=other_user)
+        sector_managed = Sector.objects.create(name="Setor Gerenciado", enterprise=enterprise_other1, manager=test_user)
+        doc_in_managed_sector = Document.objects.create(title="Doc (Gerente)", content={}, creator=other_user, sector=sector_managed)
+
+        # --- Cenário 3: test_user é Membro do Setor ---
+        enterprise_other2 = Enterprise.objects.create(name="Outra Empresa 2", owner=other_user)
+        sector_member = Sector.objects.create(name="Setor de Membro", enterprise=enterprise_other2, manager=other_user)
+        SectorUser.objects.create(user=test_user, sector=sector_member)
+        doc_in_member_sector = Document.objects.create(title="Doc (Membro)", content={}, creator=other_user, sector=sector_member)
+
+        # --- Cenário 4: test_user é o Criador ---
+        # Este documento está em um setor/empresa totalmente aleatório
+        enterprise_other3 = Enterprise.objects.create(name="Outra Empresa 3", owner=other_user)
+        sector_unrelated = Sector.objects.create(name="Setor Aleatório", enterprise=enterprise_other3, manager=other_user)
+        doc_created_by_me = Document.objects.create(title="Doc (Criador)", content={}, creator=test_user, sector=sector_unrelated)
+
+        # --- Cenário 5: Documento Não Relacionado ---
+        doc_unrelated = Document.objects.create(title="Doc (Não Relacionado)", content={}, creator=other_user, sector=sector_unrelated)
+
+        return {
+            "test_user": test_user,
+            "other_user": other_user,
+            "doc_created_by_me": doc_created_by_me,
+            "doc_in_owned_enterprise": doc_in_owned_enterprise,
+            "doc_in_managed_sector": doc_in_managed_sector,
+            "doc_in_member_sector": doc_in_member_sector,
+            "doc_unrelated": doc_unrelated
+        }
+
+    # Success
+
+    def test_list_documents_success(self, api_client: APIClient, scenario_data: Dict[str, Any]) -> None:
+        """
+        Testa se a 'ListDocumentsView' retorna com sucesso todos os 4 documentos
+        vinculados ao usuário, e nenhum documento não relacionado.
+
+        Args:
+            self: A instância de teste.
+            api_client (APIClient) : cliente de API para uso em login
+            scenario_data (Dict[str, object]) : cenário para simular um ambiente determinado
+        
+        Return:
+            None
+        """
+        test_user: User = scenario_data["test_user"] # type: ignore
+        api_client.force_authenticate(user=test_user)
+        url: str = reverse("visualizar-documentos") 
+
+        response = api_client.get(url)
+
+        assert response.status_code == 200 # type: ignore
+        assert response.data['sucesso'] is True # type: ignore
+        
+        data_list: List[Dict[str, Any]] = response.data['data'] # type: ignore
+        
+        assert len(data_list) == 4
+
+        returned_doc_ids = {item['document_id'] for item in data_list}
+
+        assert scenario_data["doc_created_by_me"].pk in returned_doc_ids # type: ignore
+        assert scenario_data["doc_in_owned_enterprise"].pk in returned_doc_ids # type: ignore
+        assert scenario_data["doc_in_managed_sector"].pk in returned_doc_ids # type: ignore
+        assert scenario_data["doc_in_member_sector"].pk in returned_doc_ids # type: ignore
+        
+        assert scenario_data["doc_unrelated"].pk not in returned_doc_ids # type: ignore
+
+    def test_list_documents_no_links_success(self, api_client: APIClient) -> None:
+        """
+        Testa se um utilizador autenticado mas sem vínculos a nenhum documento
+        recebe uma lista vazia.
+
+        Args:
+            self: A instância de teste.
+            api_client (APIClient) : cliente de API para uso em login
+        
+        Return:
+            None
+        """
+        no_link_user = User.objects.create_user(username="no_link_doc_user", password="pw", email="nolink_doc@e.com", name="No Link")
+        api_client.force_authenticate(user=no_link_user)
+        url: str = reverse("visualizar-documentos")
+
+        response = api_client.get(url)
+        
+        with open('log.txt', 'w') as f:
+            f.write(str(response.data)) # type: ignore
+
+        assert response.status_code == 200 # type: ignore
+        assert response.data['sucesso'] is True # type: ignore
+        assert "Nenhum documento encontrado." in response.data['mensagem'] # type: ignore
+
+    # Failure
+
+    def test_list_documents_anonymous_fails(self, api_client: APIClient) -> None:
+        """
+        Testa se um utilizador não autenticado (anônimo) recebe um erro 401.
+
+        Args:
+            self: A instância de teste.
+            api_client (APIClient) : cliente de API para uso em login
+        
+        Return:
+            None
+        """
+        url: str = reverse("visualizar-documentos")
+
+        response = api_client.get(url)
+
+        assert response.status_code == 401 # type: ignore
         assert response.data['sucesso'] is False # type: ignore

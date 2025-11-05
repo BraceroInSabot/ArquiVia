@@ -103,7 +103,7 @@ class TestCreateDocumentAPI:
 
         response = api_client.post(url, payload, format="json")
 
-        assert response.status_code == 201 # type: ignore # type: ignore #type: ignore
+        assert response.status_code == 201 # type: ignore # type: ignore # type: ignore #type: ignore
         assert response.data['sucesso'] is True # type: ignore
         
         doc_id = response.data['data']['document_id'] # type: ignore
@@ -139,7 +139,7 @@ class TestCreateDocumentAPI:
 
         response = api_client.post(url, payload, format="json")
 
-        assert response.status_code == 400 # type: ignore #type: ignore #type: ignore
+        assert response.status_code == 400 # type: ignore # type: ignore #type: ignore #type: ignore
         assert response.data['sucesso'] is False # type: ignore
         assert "Você não tem permissão para criar documentos neste setor." in str(response.data) # type: ignore
 
@@ -165,7 +165,7 @@ class TestCreateDocumentAPI:
 
         response = api_client.post(url, payload, format="json")
 
-        assert response.status_code == 401 # type: ignore #type: ignore #type: ignore
+        assert response.status_code == 401 # type: ignore # type: ignore #type: ignore #type: ignore
         assert response.data['sucesso'] is False # type: ignore
 
     def test_create_document_missing_sector_fails(self, api_client: APIClient, scenario_data: Dict[str, Any]) -> None:
@@ -191,7 +191,7 @@ class TestCreateDocumentAPI:
 
         response = api_client.post(url, payload, format="json")
 
-        assert response.status_code == 400 # type: ignore #type: ignore #type: ignore
+        assert response.status_code == 400 # type: ignore # type: ignore #type: ignore #type: ignore
         assert response.data['sucesso'] is False # type: ignore
 
     def test_create_document_missing_defaults_fails(self, api_client: APIClient, scenario_data: Dict[str, Any]) -> None:
@@ -220,7 +220,7 @@ class TestCreateDocumentAPI:
 
         response = api_client.post(url, payload, format="json")
 
-        assert response.status_code == 400 # type: ignore  #type: ignore #type: ignore
+        assert response.status_code == 400 # type: ignore # type: ignore  #type: ignore #type: ignore
         assert response.data['sucesso'] is False # type: ignore
 
 @pytest.mark.django_db
@@ -311,7 +311,7 @@ class TestRetrieveDocumentAPI:
 
         response = api_client.get(url)
 
-        assert response.status_code == 200 # type: ignore #type: ignore
+        assert response.status_code == 200 # type: ignore # type: ignore #type: ignore
         assert response.data['sucesso'] is True # type: ignore
         assert response.data['data']['document_id'] == document.pk # type: ignore
         assert response.data['data']['title'] == "Documento de Teste para Recuperação" # type: ignore
@@ -339,7 +339,7 @@ class TestRetrieveDocumentAPI:
 
         response = api_client.get(url)
                 
-        assert response.status_code == 404 # type: ignore #type: ignore
+        assert response.status_code == 404 # type: ignore # type: ignore #type: ignore
         assert response.data['sucesso'] is False # type: ignore
 
     def test_retrieve_document_by_anonymous_fails(self, api_client: APIClient, scenario_data: Dict[str, Any]) -> None:
@@ -359,7 +359,7 @@ class TestRetrieveDocumentAPI:
 
         response = api_client.get(url)
 
-        assert response.status_code == 401 # type: ignore #type: ignore
+        assert response.status_code == 401 # type: ignore # type: ignore #type: ignore
         assert response.data['sucesso'] is False # type: ignore
 
     def test_retrieve_document_by_outsider_fails(self, api_client: APIClient, scenario_data: Dict[str, Any]) -> None:
@@ -381,7 +381,7 @@ class TestRetrieveDocumentAPI:
 
         response = api_client.get(url)
 
-        assert response.status_code == 403 # type: ignore #type: ignore
+        assert response.status_code == 403 # type: ignore # type: ignore #type: ignore
         assert response.data['sucesso'] is False # type: ignore
 
 @pytest.mark.django_db
@@ -471,7 +471,7 @@ class TestListDocumentsAPI:
 
         response = api_client.get(url)
 
-        assert response.status_code == 200 # type: ignore
+        assert response.status_code == 200 # type: ignore # type: ignore
         assert response.data['sucesso'] is True # type: ignore
         
         data_list: List[Dict[str, Any]] = response.data['data'] # type: ignore
@@ -508,7 +508,7 @@ class TestListDocumentsAPI:
         with open('log.txt', 'w') as f:
             f.write(str(response.data)) # type: ignore
 
-        assert response.status_code == 200 # type: ignore
+        assert response.status_code == 200 # type: ignore # type: ignore
         assert response.data['sucesso'] is True # type: ignore
         assert "Nenhum documento encontrado." in response.data['mensagem'] # type: ignore
 
@@ -529,5 +529,232 @@ class TestListDocumentsAPI:
 
         response = api_client.get(url)
 
+        assert response.status_code == 401 # type: ignore # type: ignore
+        assert response.data['sucesso'] is False # type: ignore
+        
+@pytest.mark.django_db
+class TestUpdateDocumentAPI:
+    """
+    Suíte de testes para o endpoint UpdateDocumentView (/alterar/<int:pk>/).
+    """
+
+    @pytest.fixture
+    def api_client(self) -> APIClient:
+        """Returns an APIClient instance for use in tests."""
+        return APIClient()
+
+    @pytest.fixture
+    def scenario_data(self) -> Dict[str, Any]:
+        """
+        Cria um cenário com todos os papéis necessários para testar as permissões de atualização.
+        
+        Papéis:
+        - owner: Dono da empresa
+        - manager: Gestor do setor
+        - member: Membro comum do setor
+        - creator: Criador do documento (em um setor não relacionado)
+        - outsider: Usuário autenticado sem vínculo
+        - document_to_edit: O documento alvo
+        """
+        owner = User.objects.create_user(username="update_owner", password="pw", email="update_owner@e.com", name="Update Owner")
+        manager = User.objects.create_user(username="update_manager", password="pw", email="update_manager@e.com", name="Update Manager")
+        member = User.objects.create_user(username="update_member", password="pw", email="update_member@e.com", name="Update Member")
+        creator = User.objects.create_user(username="update_creator", password="pw", email="update_creator@e.com", name="Update Creator")
+        outsider = User.objects.create_user(username="update_outsider", password="pw", email="update_outsider@e.com", name="Update Outsider")
+
+        # Empresa principal
+        enterprise = Enterprise.objects.create(name="Update Corp", owner=owner)
+        sector = Sector.objects.create(name="Update Sector", enterprise=enterprise, manager=manager)
+        SectorUser.objects.create(user=member, sector=sector)
+
+        # Documento alvo (criado pelo 'creator' mas no setor principal)
+        document_to_edit = Document.objects.create(
+            title="Título Original",
+            content={"versao": 1},
+            creator=creator,
+            sector=sector 
+        )
+        
+        # Dados de classificação (necessários para o serializer de resposta)
+        status, _ = Classification_Status.objects.get_or_create(status="Em andamento")
+        privacity, _ = Classification_Privacity.objects.get_or_create(privacity="Privado")
+        Classification.objects.create(
+            document=document_to_edit,
+            classification_status=status,
+            privacity=privacity,
+            reviewer=manager
+        )
+        category = Category.objects.create(category="EditTest", category_enterprise=enterprise)
+        document_to_edit.categories.set([category])
+
+        return {
+            "owner": owner,
+            "manager": manager,
+            "member": member,
+            "creator": creator,
+            "outsider": outsider,
+            "document_to_edit": document_to_edit,
+        }
+
+    # Success
+
+    @pytest.mark.parametrize("role", ["owner", "manager", "member", "creator"])
+    def test_update_document_by_authorized_user_success(
+        self, api_client: APIClient, scenario_data: Dict[str, Any], role: str
+    ) -> None:
+        """
+        Testa se utilizadores autorizados (owner, manager, member, creator) podem editar o documento.
+
+        Args:
+            self: A instância de teste.
+            api_client (APIClient) : cliente de API para uso em login
+            scenario_data (Dict[str, object]) : cenário para simular um ambiente determinado
+            role: (str): Possíveis papéis de utilizador
+        
+        Return:
+            None
+        """
+        actor: User = scenario_data[role] # type: ignore
+        document: Document = scenario_data["document_to_edit"] # type: ignore
+        api_client.force_authenticate(user=actor)
+        url: str = reverse("alterar-documento", kwargs={'pk': document.pk})
+        
+        payload: Dict[str, Any] = {
+            "title": "Título Atualizado",
+            "content": {"versao": 2}
+        }
+        
+        response = api_client.patch(url, payload, format="json")
+
+        assert response.status_code == 200 # type: ignore
+        assert response.data['sucesso'] is True # type: ignore
+        assert response.data['data']['title'] == "Título Atualizado" # type: ignore
+        assert response.data['data']['content'] == {"versao": 2} # type: ignore
+
+        document.refresh_from_db()
+        assert document.title == "Título Atualizado"
+        assert document.content == {"versao": 2} # type: ignore
+
+    def test_update_document_partial_success(self, api_client: APIClient, scenario_data: Dict[str, Any]) -> None:
+        """
+        Testa se um utilizador autorizado pode atualizar parcialmente o documento (apenas o título).
+
+        Args:
+            self: A instância de teste.
+            api_client (APIClient) : cliente de API para uso em login
+            scenario_data (Dict[str, object]) : cenário para simular um ambiente determinado
+        
+        Return:
+            None
+        """
+        owner: User = scenario_data["owner"] # type: ignore
+        document: Document = scenario_data["document_to_edit"] # type: ignore
+        api_client.force_authenticate(user=owner)
+        url: str = reverse("alterar-documento", kwargs={'pk': document.pk})
+        
+        payload: Dict[str, Any] = {"title": "Título Parcialmente Atualizado"}
+        original_content: Dict = document.content # type: ignore
+
+        response = api_client.patch(url, payload, format="json")
+
+        assert response.status_code == 200 # type: ignore
+        assert response.data['sucesso'] is True # type: ignore
+        assert response.data['data']['title'] == "Título Parcialmente Atualizado" # type: ignore
+        
+        document.refresh_from_db()
+        assert document.title == "Título Parcialmente Atualizado"
+        assert document.content == original_content 
+
+    # Failures
+    
+    def test_update_non_existent_document_fails(self, api_client: APIClient, scenario_data: Dict[str, Any]) -> None:
+        """
+        Testa se tentar editar um documento com PK inexistente retorna 404.
+
+        Args:
+            self: A instância de teste.
+            api_client (APIClient) : cliente de API para uso em login
+            scenario_data (Dict[str, object]) : cenário para simular um ambiente determinado
+        
+        Return:
+            None
+        """
+        owner: User = scenario_data["owner"] # type: ignore
+        api_client.force_authenticate(user=owner)
+        non_existent_pk: int = 999
+        url: str = reverse("alterar-documento", kwargs={'pk': non_existent_pk})
+        payload: Dict[str, str] = {"title": "Falha"}
+
+        response = api_client.patch(url, payload, format="json")
+                
+        assert response.status_code == 404 # type: ignore
+        assert response.data['sucesso'] is False # type: ignore
+
+    def test_update_document_by_anonymous_fails(self, api_client: APIClient, scenario_data: Dict[str, Any]) -> None:
+        """
+        Testa se um utilizador não autenticado (anônimo) recebe um erro 401.
+
+        Args:
+            self: A instância de teste.
+            api_client (APIClient) : cliente de API para uso em login
+            scenario_data (Dict[str, object]) : cenário para simular um ambiente determinado
+        
+        Return:
+            None
+        """
+        document: Document = scenario_data["document_to_edit"] # type: ignore
+        url: str = reverse("alterar-documento", kwargs={'pk': document.pk})
+        payload: Dict[str, str] = {"title": "Falha"}
+
+        response = api_client.patch(url, payload, format="json")
+
         assert response.status_code == 401 # type: ignore
         assert response.data['sucesso'] is False # type: ignore
+
+    def test_update_document_by_outsider_fails(self, api_client: APIClient, scenario_data: Dict[str, Any]) -> None:
+        """
+        Testa se um utilizador autenticado mas não vinculado (outsider) recebe um erro 403.
+
+        Args:
+            self: A instância de teste.
+            api_client (APIClient) : cliente de API para uso em login
+            scenario_data (Dict[str, object]) : cenário para simular um ambiente determinado
+        
+        Return:
+            None
+        """
+        outsider: User = scenario_data["outsider"] # type: ignore
+        document: Document = scenario_data["document_to_edit"] # type: ignore
+        api_client.force_authenticate(user=outsider)
+        url: str = reverse("alterar-documento", kwargs={'pk': document.pk})
+        payload: Dict[str, str] = {"title": "Falha"}
+
+        response = api_client.patch(url, payload, format="json")
+
+        assert response.status_code == 403 # type: ignore
+        assert response.data['sucesso'] is False # type: ignore
+
+    def test_update_document_invalid_data_fails(self, api_client: APIClient, scenario_data: Dict[str, Any]) -> None:
+        """
+        Testa se enviar dados inválidos (ex: título muito curto) retorna um erro 400.
+
+        Args:
+            self: A instância de teste.
+            api_client (APIClient) : cliente de API para uso em login
+            scenario_data (Dict[str, object]) : cenário para simular um ambiente determinado
+        
+        Return:
+            None
+        """
+        owner: User = scenario_data["owner"] # type: ignore
+        document: Document = scenario_data["document_to_edit"] # type: ignore
+        api_client.force_authenticate(user=owner)
+        url: str = reverse("alterar-documento", kwargs={'pk': document.pk})
+        
+        invalid_payload: Dict[str, str] = {"title": "a"}
+
+        response = api_client.patch(url, invalid_payload, format="json")
+
+        assert response.status_code == 400 # type: ignore
+        assert response.data['sucesso'] is False # type: ignore
+        assert "title" in response.data['data'] # type: ignore

@@ -103,7 +103,7 @@ class TestCreateDocumentAPI:
 
         response = api_client.post(url, payload, format="json")
 
-        assert response.status_code == 201 # type: ignore
+        assert response.status_code == 201 # type: ignore #type: ignore
         assert response.data['sucesso'] is True # type: ignore
         
         doc_id = response.data['data']['document_id'] # type: ignore
@@ -139,7 +139,7 @@ class TestCreateDocumentAPI:
 
         response = api_client.post(url, payload, format="json")
 
-        assert response.status_code == 400 #type: ignore
+        assert response.status_code == 400 #type: ignore #type: ignore
         assert response.data['sucesso'] is False # type: ignore
         assert "Você não tem permissão para criar documentos neste setor." in str(response.data) # type: ignore
 
@@ -165,7 +165,7 @@ class TestCreateDocumentAPI:
 
         response = api_client.post(url, payload, format="json")
 
-        assert response.status_code == 401 #type: ignore
+        assert response.status_code == 401 #type: ignore #type: ignore
         assert response.data['sucesso'] is False # type: ignore
 
     def test_create_document_missing_sector_fails(self, api_client: APIClient, scenario_data: Dict[str, Any]) -> None:
@@ -191,7 +191,7 @@ class TestCreateDocumentAPI:
 
         response = api_client.post(url, payload, format="json")
 
-        assert response.status_code == 400 #type: ignore
+        assert response.status_code == 400 #type: ignore #type: ignore
         assert response.data['sucesso'] is False # type: ignore
 
     def test_create_document_missing_defaults_fails(self, api_client: APIClient, scenario_data: Dict[str, Any]) -> None:
@@ -220,6 +220,166 @@ class TestCreateDocumentAPI:
 
         response = api_client.post(url, payload, format="json")
 
-        assert response.status_code == 400  #type: ignore
+        assert response.status_code == 400  #type: ignore #type: ignore
         assert response.data['sucesso'] is False # type: ignore
+
+@pytest.mark.django_db
+class TestRetrieveDocumentAPI:
+    """
+    Suíte de testes para o endpoint RetrieveDocumentView (/consultar/<int:pk>/).
+    """
+
+    @pytest.fixture
+    def api_client(self) -> APIClient:
+        """Returns an APIClient instance for use in tests."""
+        return APIClient()
+
+    @pytest.fixture
+    def scenario_data(self) -> Dict[str, Any]:
+        """
+        Cria um cenário com utilizadores, empresa, setor e um documento
+        com todas as suas relações para testes de permissão.
+        """
+        # 1. Criar Utilizadores
+        owner = User.objects.create_user(username="retrieve_owner", password="pw", email="retrieve_owner@e.com", name="Retrieve Owner")
+        manager = User.objects.create_user(username="retrieve_manager", password="pw", email="retrieve_manager@e.com", name="Retrieve Manager")
+        member = User.objects.create_user(username="retrieve_member", password="pw", email="retrieve_member@e.com", name="Retrieve Member")
+        outsider = User.objects.create_user(username="retrieve_outsider", password="pw", email="retrieve_outsider@e.com", name="Retrieve Outsider")
+
+        # 2. Criar Estrutura
+        enterprise = Enterprise.objects.create(name="Retrieve Corp", owner=owner)
+        sector = Sector.objects.create(name="Retrieve Sector", enterprise=enterprise, manager=manager)
         
+        # 3. Vincular membro ao setor
+        SectorUser.objects.create(user=member, sector=sector)
+
+        # 4. Criar Dados Padrão (necessários para a Classificação)
+        status_padrao = Classification_Status.objects.create(status="Em andamento")
+        privacidade_padrao = Classification_Privacity.objects.create(privacity="Privado")
+
+        # 5. Criar o Documento (o alvo do teste)
+        # O 'member' será o criador
+        document = Document.objects.create(
+            title="Documento de Teste para Recuperação",
+            content={"ops": [{"insert": "Teste."}]},
+            creator=member,
+            sector=sector
+        )
+        
+        # 6. Criar a Classificação associada
+        Classification.objects.create(
+            document=document,
+            classification_status=status_padrao,
+            privacity=privacidade_padrao,
+            reviewer=manager
+        )
+        
+        # 7. Criar e associar Categorias
+        category = Category.objects.create(category="Teste", category_enterprise=enterprise)
+        document.categories.set([category])
+
+        return {
+            "owner": owner,
+            "manager": manager,
+            "member": member,
+            "outsider": outsider,
+            "document": document,
+        }
+
+    # Success
+
+    @pytest.mark.parametrize("role", ["owner", "manager", "member"])
+    def test_retrieve_document_by_authorized_user_success(
+        self, api_client: APIClient, scenario_data: Dict[str, Any], role: str
+    ) -> None:
+        """
+        Testa se utilizadores autorizados (owner, manager, member/creator) podem ver o documento.
+
+        Args:
+            self: A instância de teste.
+            api_client (APIClient) : cliente de API para uso em login
+            scenario_data (Dict[str, object]) : cenário para simular um ambiente determinado
+            role: (str): Possíveis papéis de utilizador
+        
+        Return:
+            None
+        """
+        actor: User = scenario_data[role] # type: ignore
+        document: Document = scenario_data["document"] # type: ignore
+        api_client.force_authenticate(user=actor)
+        url: str = reverse("consultar-documento", kwargs={'pk': document.pk})
+
+        response = api_client.get(url)
+
+        assert response.status_code == 200 #type: ignore
+        assert response.data['sucesso'] is True # type: ignore
+        assert response.data['data']['document_id'] == document.pk # type: ignore
+        assert response.data['data']['title'] == "Documento de Teste para Recuperação" # type: ignore
+        assert "classification" in response.data['data'] # type: ignore
+        assert "categories" in response.data['data'] # type: ignore
+
+    # Failures
+
+    def test_retrieve_non_existent_document_fails(self, api_client: APIClient, scenario_data: Dict[str, Any]) -> None:
+        """
+        Testa se requisitar um documento com PK inexistente retorna 404.
+
+        Args:
+            self: A instância de teste.
+            api_client (APIClient) : cliente de API para uso em login
+            scenario_data (Dict[str, object]) : cenário para simular um ambiente determinado
+        
+        Return:
+            None
+        """
+        owner: User = scenario_data["owner"] # type: ignore
+        api_client.force_authenticate(user=owner)
+        non_existent_pk: int = 999
+        url: str = reverse("consultar-documento", kwargs={'pk': non_existent_pk})
+
+        response = api_client.get(url)
+                
+        assert response.status_code == 404 #type: ignore
+        assert response.data['sucesso'] is False # type: ignore
+
+    def test_retrieve_document_by_anonymous_fails(self, api_client: APIClient, scenario_data: Dict[str, Any]) -> None:
+        """
+        Testa se um utilizador não autenticado (anônimo) recebe um erro 401.
+
+        Args:
+            self: A instância de teste.
+            api_client (APIClient) : cliente de API para uso em login
+            scenario_data (Dict[str, object]) : cenário para simular um ambiente determinado
+        
+        Return:
+            None
+        """
+        document: Document = scenario_data["document"] # type: ignore
+        url: str = reverse("consultar-documento", kwargs={'pk': document.pk})
+
+        response = api_client.get(url)
+
+        assert response.status_code == 401 #type: ignore
+        assert response.data['sucesso'] is False # type: ignore
+
+    def test_retrieve_document_by_outsider_fails(self, api_client: APIClient, scenario_data: Dict[str, Any]) -> None:
+        """
+        Testa se um utilizador autenticado mas não vinculado (outsider) recebe um erro 403.
+
+        Args:
+            self: A instância de teste.
+            api_client (APIClient) : cliente de API para uso em login
+            scenario_data (Dict[str, object]) : cenário para simular um ambiente determinado
+        
+        Return:
+            None
+        """
+        outsider: User = scenario_data["outsider"] # type: ignore
+        document: Document = scenario_data["document"] # type: ignore
+        api_client.force_authenticate(user=outsider)
+        url: str = reverse("consultar-documento", kwargs={'pk': document.pk})
+
+        response = api_client.get(url)
+
+        assert response.status_code == 403 #type: ignore
+        assert response.data['sucesso'] is False # type: ignore

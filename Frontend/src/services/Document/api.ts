@@ -1,13 +1,14 @@
 import api from '../core-api';
-import type { Document, ResponseStructure} from '../core-api';
+import type { CreateDocument, Document, ResponseStructure} from '../core-api';
 
 const documentService = {
     /**
      * Cria um objeto de documento.
      * @param sector_id - Define o setor (e empresa) que vai ser vinculado ao documento.
      */
-  createDocument(sector_id: number): Promise<{ data: ResponseStructure<Document> }> {
-    return api.post('/documento/criar/', {sector_id});
+  createDocument(data: CreateDocument): Promise<{ data: ResponseStructure<Document> }> {
+    console.log(data);
+    return api.post('/documento/criar/', data);
   },
 
   /** 

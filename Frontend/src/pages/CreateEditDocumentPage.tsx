@@ -77,7 +77,6 @@ const initialConfig = {
 
 const filteredTransformers = TRANSFORMERS.filter(t => t !== CODE);
 
-// Componente-filho para carregar o estado inicial
 function LoadInitialStatePlugin() {
   const [editor] = useLexicalComposerContext();
   
@@ -91,12 +90,11 @@ function LoadInitialStatePlugin() {
         console.error("Falha ao carregar estado salvo, iniciando em branco.", e);
       }
     }
-  }, [editor]); // Roda uma vez quando o editor está pronto
+  }, [editor]); 
 
   return null;
 }
 
-// Componente Principal
 const CreateEditDocumentPage = () => {
   const [history, setHistory] = useState<HistoryEntry[]>(() => getHistoryEntries());
   const [isAutosaveActive, setIsAutosaveActive] = useState(true);
@@ -114,7 +112,6 @@ const CreateEditDocumentPage = () => {
   };
 
   const saveSnapshot = (currentState: string) => {
-    // Evita salvar se o estado estiver vazio
     if (currentState === '{"root":{"children":[{"type":"paragraph","version":1}],"direction":null,"format":"","indent":0,"version":1}}') {
         return;
     }
@@ -168,8 +165,6 @@ const CreateEditDocumentPage = () => {
     };
   }, []); 
 
-  // --- O 'useEffect' que estava aqui foi REMOVIDO ---
-  // (Ele tentava usar 'editor' fora do escopo)
 
   return (
     <div style={{ padding: '2rem' }}>
@@ -202,10 +197,8 @@ const CreateEditDocumentPage = () => {
             isAutosaveActive={isAutosaveActive}
             onAutosaveToggle={() => setIsAutosaveActive(prev => !prev)}
             isGlowing={isGlowing}
-            // --- A prop 'onRestore' foi REMOVIDA daqui ---
           />
 
-          {/* Este componente carrega o estado inicial */}
           <LoadInitialStatePlugin />
 
         </div>

@@ -123,9 +123,21 @@ export interface UpdateSectorData {
 }
 
 export interface Document {
-  id: string;
+  document_id: number;
+  content: {
+    [key: string]: any;
+  };
   title: string;
+  categories: string[];
   author: string;
+}
+
+export interface CreateDocument {
+  content: {
+    [key: string]: any;
+  };
+  sector: number;
+  categories: string[];
 }
 
 export interface DocumentFilters {

@@ -471,3 +471,52 @@
 .history-action-btn.restore-btn:hover {
   background-color: #f0f9f2;
 }
+
+/* --- Estilos do Modal de Seleção de Setor --- */
+.sector-list-container {
+  max-height: 50vh;
+  overflow-y: auto;
+  margin-top: 1.5rem;
+}
+
+.sector-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sector-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0.5rem;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.sector-list-item:hover {
+  background-color: #f9f9f9;
+}
+
+.sector-name {
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.sector-enterprise {
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.sector-hierarchy {
+  font-size: 0.9rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+/* Estes nomes (proprietário, gestor) batem com o hierarchy_level do seu backend */
+.sector-hierarchy.proprietário { background-color: #ffc107; color: #333; }
+.sector-hierarchy.gestor { background-color: #007bff; color: white; }
+.sector-hierarchy.administrador { background-color: #17a2b8; color: white; }
+.sector-hierarchy.membro { background-color: #6c757d; color: white; }

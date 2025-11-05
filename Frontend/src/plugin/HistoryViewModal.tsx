@@ -88,6 +88,7 @@ export default function HistoryViewModal({ editorStateString, onClose }: History
               <RichTextPlugin
                 contentEditable={
                   // A "mágica" está aqui: editable={false}
+                  //@ts-ignore
                   <ContentEditable className="editor-input" editable={false} />
                 }
                 placeholder={null}

@@ -120,6 +120,7 @@ const EditDocumentPage = () => {
           setTitle(doc.title || 'Documento Sem Título');
           // Assumindo que seu backend retorna o JSON em 'content'
           // Se for string JSON, .content está ok. Se for objeto, .content está ok.
+          //@ts-ignore
           setInitialContent(doc.content);
           
         } catch (error) {

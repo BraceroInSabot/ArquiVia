@@ -21,6 +21,7 @@ export default function ImagePlugin() {
             (payload) => {
                 const selection = $getSelection();
                 if ($isRangeSelection(selection)) {
+                    //@ts-ignore
                     const imageNode = $createImageNode(payload);
                     selection.insertNodes([imageNode]);
                 }
@@ -32,6 +33,7 @@ export default function ImagePlugin() {
         const unregisterPasteCommand = editor.registerCommand(
             PASTE_COMMAND,
             (event) => {
+                //@ts-ignore
                 const clipboardData = event.clipboardData;
 
                 // --- CORREÇÃO AQUI ---

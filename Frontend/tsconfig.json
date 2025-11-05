@@ -4,9 +4,11 @@
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" }
   ],
+  "compilerOptions": {
+    "types": ["node"]
+  },
   "include": [
     "src/assets/icons",
     "src/custom.d.ts"
-  ],
-  "types": ["node"]  
+  ]
 }

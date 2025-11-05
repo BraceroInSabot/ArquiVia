@@ -504,9 +504,6 @@ class TestListDocumentsAPI:
         url: str = reverse("visualizar-documentos")
 
         response = api_client.get(url)
-        
-        with open('log.txt', 'w') as f:
-            f.write(str(response.data)) # type: ignore
 
         assert response.status_code == 200 # type: ignore # type: ignore
         assert response.data['sucesso'] is True # type: ignore

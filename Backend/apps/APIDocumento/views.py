@@ -74,9 +74,6 @@ class ListDocumentsView(APIView):
 
         serializer = DocumentListSerializer(documents_queryset, many=True)
         
-        with open('log2.txt', 'w') as f:
-            f.write(str(serializer.data))
-        
         if not serializer.data:
             res: HttpResponse = Response()
             res.status_code = 200

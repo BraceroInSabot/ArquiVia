@@ -94,3 +94,44 @@ class DocumentCreateSerializer(serializers.ModelSerializer):
             )
             
         return documento
+
+class ClassificationDetailSerializer(serializers.ModelSerializer):
+    status = serializers.CharField(source='classification_status.status', read_only=True)
+    privacity = serializers.CharField(source='privacity.privacity', read_only=True)
+    reviewer_name = serializers.CharField(source='reviewer.name', read_only=True, default=None)
+
+    class Meta:
+        model = Classification
+        fields = ['is_reviewed', 'status', 'privacity', 'reviewer_name']
+
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ['category_id', 'category']
+
+class DocumentDetailSerializer(serializers.ModelSerializer):
+    document_id = serializers.IntegerField(source='pk')
+    
+    created_at = serializers.DateTimeField(format="%H:%M:%S - %d-%m-%Y", read_only=True) # type: ignore
+    
+    sector_id = serializers.IntegerField(source='sector.sector_id', read_only=True)
+    sector_name = serializers.CharField(source='sector.name', read_only=True)
+    
+    classification = ClassificationDetailSerializer(read_only=True)
+    
+    categories = CategorySerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Document
+        fields = [
+            'document_id', 
+            'title', 
+            'content', 
+            'created_at', 
+            'sector_id', 
+            'sector_name', 
+            'is_active',
+            'classification',
+            'categories'
+        ]
+        

@@ -11,6 +11,15 @@ const documentService = {
     return api.post('/documento/criar/', data);
   },
 
+  /**
+   * Consulta o documento pelo id.
+   * @param sector_id - Confirma o id do setor para a consulta do documento.
+   */
+  getDocumentById(document_id: number): Promise<{ data: ResponseStructure<Document> }> {
+    return api.get(`/documento/consultar/${document_id}/`);
+  },
+
+
   /** 
    * Edita o documento já criado.
    * @param document_id - ID do documento.

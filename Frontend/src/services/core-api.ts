@@ -147,6 +147,13 @@ export interface DocumentFilters {
   dateTo?: string;
 }
 
+export interface DocumentList {
+  document_id: number;
+  title: string;
+  creator_name: string;
+  created_at: string;
+}
+
 const api = axios.create({
   baseURL: URL,
   withCredentials: true,

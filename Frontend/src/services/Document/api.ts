@@ -1,5 +1,5 @@
 import api from '../core-api';
-import type { CreateDocument, Document, ResponseStructure} from '../core-api';
+import type { CreateDocument, Document, DocumentList, ResponseStructure} from '../core-api';
 
 const documentService = {
     /**
@@ -13,12 +13,17 @@ const documentService = {
 
   /**
    * Consulta o documento pelo id.
-   * @param sector_id - Confirma o id do setor para a consulta do documento.
    */
   getDocumentById(document_id: number): Promise<{ data: ResponseStructure<Document> }> {
     return api.get(`/documento/consultar/${document_id}/`);
   },
 
+  /**
+   * Consulta os documentos vinculados ao usuário.
+   */
+  getDocuments(): Promise<{ data: ResponseStructure<DocumentList[]> }> {
+    return api.get('/documento/visualizar/');
+  },
 
   /** 
    * Edita o documento já criado.

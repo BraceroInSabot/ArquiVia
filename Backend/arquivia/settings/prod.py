@@ -4,20 +4,28 @@ import os
 from datetime import timedelta
 import dj_database_url
 
-load_dotenv(".env")
+load_dotenv("/.env")
 
 SECRET_KEY = os.getenv("S_KEY")
 
-DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1", 't')
+DEBUG = os.getenv("DEBUG", "False")
 
 ALLOWED_HOSTS = ["bracero.com.br", "www.bracero.com.br"]
 
+DB_USER = os.getenv('POSTGRES_USER')
+DB_PASSWORD = os.getenv('POSTGRES_PASSWORD')
+DB_NAME = os.getenv('POSTGRES_DB')
+
+DB_HOST = 'postgres-service'
+DB_PORT = '5432'
+
+DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+
 DATABASES = {
     'default': dj_database_url.parse(
-        os.getenv('DB_URL', ''),
+        DATABASE_URL,
         conn_max_age=600, 
-        conn_health_checks=True,
-        ssl_require=os.getenv('DB_SSL_REQUIRE', 'False').lower() in ('true', '1', 't') 
+        conn_health_checks=True
     )
 }
 

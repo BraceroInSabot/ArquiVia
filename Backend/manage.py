@@ -9,7 +9,7 @@ load_dotenv(".env")
 
 def main():
     """Run administrative tasks."""
-    if os.getenv("DEBUG"):
+    if (os.getenv("DEBUG", 'False').lower() in ("true", "1", "t", "y", "yes", "on")):
         os.environ.setdefault("DJANGO_SETTINGS_MODULE", "arquivia.settings.dev")
     else:
         os.environ.setdefault("DJANGO_SETTINGS_MODULE", "arquivia.settings.prod")

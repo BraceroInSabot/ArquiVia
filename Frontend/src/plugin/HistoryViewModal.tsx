@@ -1,4 +1,4 @@
-import React, { type JSX }from 'react';
+import { type JSX }from 'react';
 import { createPortal } from 'react-dom';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';

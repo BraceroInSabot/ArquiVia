@@ -10,6 +10,7 @@ import 'prismjs/themes/prism-tomorrow.css';
 import 'prismjs/components/prism-javascript';
 import 'prismjs/components/prism-css';
 import 'prismjs/components/prism-python';
+//@ts-ignore
 import Prism from "prismjs";
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

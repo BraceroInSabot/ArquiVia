@@ -8,13 +8,14 @@ import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import type { EditorState } from 'lexical';
+//@ts-ignore
 import { $getRoot, $isParagraphNode } from 'lexical';
 //@ts-ignore
 import Prism from 'prismjs';
 
 // Imports de Serviços e Tipos
 import documentService from '../services/Document/api';
-import type { Document as ApiDocument } from '../services/core-api'; // (Interface do seu documento completo)
+
 import {
   addHistoryEntry,
   getHistoryEntries,
@@ -194,6 +195,7 @@ const EditDocumentPage = () => {
   }, [isAutosaveActive]);
 
   useEffect(() => {
+    //@ts-ignore
     const handleSaveOnExit = (event: BeforeUnloadEvent) => {
       if (!autosaveActiveRef.current) return;
       if (inactivityTimerRef.current) { clearTimeout(inactivityTimerRef.current); }

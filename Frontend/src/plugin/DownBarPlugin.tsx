@@ -2,6 +2,7 @@ import { useState, type JSX } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $generateHtmlFromNodes } from '@lexical/html';
 import jsPDF from 'jspdf'; // A biblioteca jspdf
+//@ts-ignore
 import { type EditorState } from 'lexical';
 import HistoryViewModal from './HistoryViewModal'; // Importa o novo modal
 

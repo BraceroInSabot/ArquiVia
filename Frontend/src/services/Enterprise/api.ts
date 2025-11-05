@@ -1,5 +1,5 @@
 import api from '../core-api';
-import type { Enterprise, CreateEnterprise, ManyEnterprises, UpdateEnterpriseData } from '../core-api';
+import type { Enterprise, ManyEnterprises } from '../core-api';
 
 
 const enterpriseService = {

@@ -105,6 +105,7 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
 
   const handlePromoteUserToManager = async (userEmail: string) => {
     try {
+      //@ts-ignore
       const response = await sectorService.promoteUserToManager(sectorId, { new_manager_email: userEmail });
       alert("Usuário promovido a gerente com sucesso.");
       window.location.reload();
@@ -116,6 +117,7 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
 
   const handlePromoteUserToAdministrator = async ({ sectorUserLinkId, makeAdmin }: promoteUserToAdministratorPayload) => {
     try {
+      //@ts-ignore
       const response = await sectorService.promoteUserToAdministrator({sectorUserLinkId, makeAdmin});
       alert(`Usuário ${makeAdmin ? 'promovido' : 'rebaixado'} com sucesso.`);
     } catch (err) {

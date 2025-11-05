@@ -14,7 +14,8 @@ interface ImageResizerProps {
 }
 
 function ImageResizer({ 
-  imageRef, 
+  imageRef,
+  //@ts-ignore 
   editor, 
   onResizeStart, 
   onResizeEnd 

@@ -134,4 +134,19 @@ class DocumentDetailSerializer(serializers.ModelSerializer):
             'classification',
             'categories'
         ]
-        
+
+class DocumentListSerializer(serializers.ModelSerializer):
+    """
+    Serializer "leve" para a listagem de documentos.
+    Retorna apenas metadados essenciais, excluindo o 'content' pesado.
+    """
+    
+    document_id = serializers.IntegerField(source='pk', read_only=True)
+    
+    creator_name = serializers.CharField(source='creator.name', read_only=True)
+    
+    created_at = serializers.DateTimeField(format="%H:%M:%S - %d-%m-%Y", read_only=True) # type: ignore
+
+    class Meta:
+        model = Document
+        fields = ['document_id', 'title', 'creator_name', 'created_at']

@@ -5,11 +5,12 @@ from apps.APISetor.models import Sector, SectorUser
 from apps.APIDocumento.models import Document
 from rest_framework.permissions import IsAuthenticated
 from apps.APIDocumento.classificationUtils.views import ClassificationViewUtil
-from .serializers import DocumentCreateSerializer, DocumentDetailSerializer
+from .serializers import DocumentCreateSerializer, DocumentDetailSerializer, DocumentListSerializer
 from rest_framework.parsers import JSONParser
 from apps.APIDocumento.permissions import IsLinkedToDocument
 from apps.core.utils import default_response
 from django.http import HttpResponse
+from django.db.models import Q
 
 User = get_user_model()
 
@@ -37,61 +38,55 @@ class CreateDocumentView(APIView):
         res.data = default_response(success=True, message="Documento criado com sucesso!", data={"document_id": documento.pk}) # type: ignore
         return res
     
-class ListDocumentView(APIView):
-    permission_classes = [IsAuthenticated]
+class ListDocumentsView(APIView):
+    """
+    Recupera uma lista de todos os documentos aos quais o usuário está vinculado.
+    Exclui o campo 'content' para uma resposta leve e otimizada.
     
-    def get(self, request):
-        sector_id = request.data.get('sector_id', '')
+    Um usuário está vinculado se for:
+    1. O criador do documento.
+    2. O dono da empresa do setor do documento.
+    3. O gerente do setor do documento.
+    4. Um membro (via SectorUser) do setor do documento.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request) -> HttpResponse:
+        """
+        Manipula a requisição GET para listar os documentos vinculados.
+
+        Args:
+            request (Request): O objeto da requisição do usuário.
+
+        Returns:
+            HttpResponse: Uma resposta contendo a lista de metadados dos documentos.
+        """
+        request_user = request.user
+
+        query = (
+            Q(creator=request_user) |
+            Q(sector__enterprise__owner=request_user) |
+            Q(sector__manager=request_user) |
+            Q(sector__sector_links__user=request_user)
+        )
+
+        documents_queryset = Document.objects.filter(query).select_related('creator').distinct()
+
+        serializer = DocumentListSerializer(documents_queryset, many=True)
         
-        if Sector.objects.filter(sector_id=sector_id).exists() is False:
-            ret = Response()
-            ret.status_code = 404
-            ret.data = {
-                "Data": {
-                    "sucesso": False,
-                    "mensagem": "Setor não encontrado."
-                }
-            }
-            return ret
+        with open('log2.txt', 'w') as f:
+            f.write(str(serializer.data))
         
-        documents = Document.objects.filter(creator=request.user, sector__sector_id=sector_id)
+        if not serializer.data:
+            res: HttpResponse = Response()
+            res.status_code = 200
+            res.data = default_response(success=True, message="Nenhum documento encontrado.", data=[])
+            return res
         
-        if not (SectorUser.objects.filter(user=request.user, sector__sector_id=sector_id).exists() 
-            or 
-            Sector.objects.filter(manager=request.user, sector_id=sector_id).exists()):
-            ret = Response()
-            ret.status_code = 403
-            ret.data = {
-                "Data": {
-                    "sucesso": False,
-                    "mensagem": "Usuário não pertence ao setor."
-                }
-            }
-            return ret
-            
-        document_list = [
-            {
-                "document_id": doc.doc_id,
-                "title": doc.title,
-                "context_beta": doc.context_beta,
-                "created_at": doc.data_criacao,
-                "sector_id": doc.sector.sector_id,
-                "sector_name": doc.sector.name,
-                "is_eliminate": doc.is_eliminate,
-                "classification": ClassificationViewUtil(doc, request.user).get_classification_by_ID(document_id=doc.doc_id)
-            }
-            for doc in documents
-        ]
-        
-        ret = Response()
-        ret.status_code = 200
-        ret.data = {
-            "Data": {
-                "sucesso": True,
-                "mensagem": document_list
-            }
-        }
-        return ret
+        res: HttpResponse = Response()
+        res.status_code = 200
+        res.data = default_response(success=True, message="Lista de documentos recuperada com sucesso.", data=serializer.data)
+        return res
     
 class RetrieveDocumentView(APIView):
     """

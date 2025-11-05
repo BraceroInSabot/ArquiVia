@@ -9,7 +9,7 @@ User = get_user_model()
 
 class Document(models.Model):
     document_id = models.AutoField(primary_key=True, db_column='PK_document')
-    title = models.CharField(max_length=200, db_column='title_document')
+    title = models.CharField(max_length=200, default="Novo Documento", db_column='title_document')
     content = models.JSONField(blank=True, null=True, db_column='content_document')
     creator = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, db_column='FK_creator_document')
     sector = models.ForeignKey(Sector, on_delete=models.SET_NULL, null=True, db_column='FK_sector_document')
@@ -46,11 +46,7 @@ class Classification_Status(models.Model):
     status = models.CharField(max_length=20, choices=status_choices, unique=True, db_column='status')
 
     def __str__(self):
-        return self.status 
-    
-    @classmethod
-    def get_default_status(cls):
-        return cls.objects.get_or_create(status='Em andamento')[0].pk
+        return self.status   
     
     class Meta:
         db_table = 'Classification_Status'
@@ -63,7 +59,7 @@ class Classification(models.Model):
     classification_status = models.ForeignKey(
         Classification_Status, 
         on_delete=models.PROTECT, 
-        default=Classification_Status.get_default_status, 
+        default=None, 
         db_column='FK_status_classification', 
         null=False)
     reviewer = models.ForeignKey(
@@ -125,7 +121,7 @@ class Category(models.Model):
     category_sector = models.ForeignKey(
         Sector, 
         on_delete=models.SET_NULL, 
-        db_column='FK_sector_category', 
+        db_column='FK_sector_category',
         null=True, 
         blank=True)
     category_enterprise = models.ForeignKey(

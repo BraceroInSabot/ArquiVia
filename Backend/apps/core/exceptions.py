@@ -7,7 +7,6 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import status
 from django.conf import settings
 
-
 # NATIVE
 from typing import Dict, Optional
 
@@ -16,54 +15,51 @@ from .utils import default_response
 
 def custom_exception_handler(exc: Exception, context: dict) -> Optional[Response]:
     """
-    Custom exception handler for DRF to standardize API error responses.
-
-    This function intercepts exceptions handled by Django Rest Framework. It first
-    calls the default DRF exception handler to get the basic error response 
-    (including the correct status code and error details). It then reformats 
-    that response into the project's standard error structure using the 
-    `default_response` utility function.
-
-    Args:
-        exc (Exception): The exception instance that was raised.
-        context (dict): A dictionary containing context data, such as the 
-                        view and the request that triggered the exception.
-
-    Returns:
-        Optional[Response]: A DRF Response object with the custom error format 
-                            if the exception is handled by DRF, otherwise None.
+    Handler de exceção robusto que padroniza todas as respostas de erro.
     """
+    # Primeiro, chama o handler padrão do DRF para obter o status e os dados do erro.
     response = exception_handler(exc, context)
-    
-    if response is not None: 
+
+    if response is not None:
+        
+        # Verificamos se a resposta gerada pelo DRF é um 404
         if response.status_code == status.HTTP_404_NOT_FOUND:
-            # Se for, substituímos a mensagem padrão pela nossa traduzida
-            response.data = "Recurso não encontrado."
+            response.data = default_response(
+                success=False, 
+                message=_("Recurso não encontrado.")
+            )
             
-        if isinstance(exc, ValidationError):
+        # --- ESTE É O BLOCO CORRIGIDO ---
+        # Lógica para erros de validação
+        elif isinstance(exc, ValidationError):
+            # Em vez de tentar adivinhar a mensagem, usamos uma mensagem genérica
+            # e passamos o dicionário de erros COMPLETO para a chave 'data'.
             response.data = default_response(
                 success=False,
-                message=list(response.data.values())[0][0], #type: ignore
+                message=_("Dados inválidos. Por favor, verifique os erros."),
+                data=response.data  # response.data aqui é o serializer.errors
             )
+        # ----------------------------------
+            
+        # Lógica para outros erros de API (401, 403, etc.)
         else:
             if isinstance(response.data, dict) and 'detail' in response.data:
                 msg = _(str(response.data['detail']))
             else:
                 msg = _(str(response.data))
-                
-            response.data = default_response(success=False, message=_(msg))
-        
+            response.data = default_response(success=False, message=msg)
 
+    # Lógica para erros 500 inesperados (onde response era None)
     elif response is None and isinstance(exc, Exception):
         
         if settings.DEBUG:
-            return None
+            # Em modo DEBUG, é melhor ver o traceback completo
+            return None 
         
-        print(111)
-        res: HttpResponse = Response()
-        res.status_code = 500
-        res.data = default_response(success=False, message="Houve um erro interno no servidor.")
-        
-        return res
-        
+        # Para todos os outros erros inesperados, mantemos o 500
+        response = Response(
+            default_response(success=False, message=_("Houve um erro interno no servidor.")),
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+            
     return response

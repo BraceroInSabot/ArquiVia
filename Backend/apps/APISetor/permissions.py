@@ -14,8 +14,7 @@ class IsEnterpriseOwner(BasePermission):
 
     def has_permission(self, request, view):
     
-    
-        enterprise_id = request.data.get('enterprise_id')
+        enterprise_id = int(request.data.get('enterprise_id'))
         
         if not enterprise_id or not isinstance(enterprise_id, int):
             self.message = "O campo 'enterprise_id' (ID da empresa) é obrigatório e deve ser um número."

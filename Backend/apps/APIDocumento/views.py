@@ -4,98 +4,36 @@ from apps.APISetor.models import Sector, SectorUser
 from apps.APIDocumento.models import Document
 from rest_framework.permissions import IsAuthenticated
 from apps.APIDocumento.classificationUtils.views import ClassificationViewUtil
+from .serializers import DocumentCreateSerializer
+from rest_framework.parsers import JSONParser
+from apps.core.utils import default_response
+from django.http import HttpResponse
 
 User = get_user_model()
 
 class CreateDocumentView(APIView):
+    """
+    Cria um novo documento.
+    A permissão de acesso é tratada pelo serializer (validate_sector).
+    """
     permission_classes = [IsAuthenticated]
+    parser_classes = [JSONParser] 
     
-    def post(self, request):
-        title = request.data.get('title')
-        context_beta = request.data.get('context_beta')
-        sector_id = request.data.get('sector_id')
-
-        try:
-            sector = Sector.objects.get(sector_id=sector_id)
-            
-        except Sector.DoesNotExist:
-            ret = Response()
-            ret.status_code = 404
-            ret.data = {
-                "Data": {
-                    "sucesso": False,
-                    "mensagem": "Setor não encontrado."
-                }
-            }
-            return ret
+    def post(self, request) -> HttpResponse:
+    
+        serializer = DocumentCreateSerializer(
+            data=request.data, 
+            context={'request': request}
+        )
         
-        try:
-            if (SectorUser.objects.filter(user=request.user, sector__sector_id=sector_id).exists() is False 
-            and 
-            Sector.objects.filter(manager=request.user).exists() is False):
-                ret = Response()
-                ret.status_code = 403
-                ret.data = {
-                    "Data": {
-                        "sucesso": False,
-                        "mensagem": "Usuário não pertence ao setor."
-                    }
-                }
-                return ret
-        except Exception as e:
-            ret = Response()
-            ret.status_code = 500
-            ret.data = {
-                "Data": {
-                    "sucesso": False,
-                    "mensagem": f"Erro ao verificar associação do usuário ao setor: {str(e)}"
-                }
-            }
-            return ret
-
-        try:
-            document = Document.objects.create(
-                title=title,
-                context_beta=context_beta,
-                creator=request.user,
-                sector=sector
-            )
-        except Exception as e:
-            ret = Response()
-            ret.status_code = 500
-            ret.data = {
-                "Data": {
-                    "sucesso": False,
-                    "mensagem": f"Erro ao criar documento: {str(e)}"
-                }
-            }
-            return ret
-        finally:
-            document.save()
+        serializer.is_valid(raise_exception=True)
         
-            classification_util = ClassificationViewUtil(document, request.user)
-            ret = classification_util.create_classification()
-            
-            if ret:
-                ret = Response()
-                ret.status_code = 500
-                ret.data = {
-                    "Data": {
-                        "sucesso": False,
-                        "mensagem": "Erro ao criar classificação do documento. Entre em contato com o administrador."
-                    }
-                }
-                return ret
-            
-        ret = Response()
-        ret.status_code = 200
-        ret.data = {
-            "Data": {
-                "sucesso": True,
-                "mensagem": "Documento criado com sucesso.",
-            }
-        }
-        return ret
+        documento = serializer.save()
+        
+        res: HttpResponse = Response()
+        res.status_code = 201
+        res.data = default_response(success=True, message="Documento criado com sucesso!", data={"document_id": documento.pk}) # type: ignore
+        return res
     
 class ListDocumentView(APIView):
     permission_classes = [IsAuthenticated]

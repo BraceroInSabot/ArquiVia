@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from apps.APIDocumento.models import Classification, Classification_Privacity, Classification_Status, Classification_Category, Document, Category
+from apps.APIDocumento.models import Classification, Classification_Privacity, Classification_Status, Document, Category
 from typing import Type
 from rest_framework.views import APIView, Response
 from rest_framework.permissions import IsAuthenticated

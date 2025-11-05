@@ -25,7 +25,7 @@ from apps.APIUser.models import AbsUser as UserModel
 USER = get_user_model()
 
 class CreateSectorView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsEnterpriseOwner]
     
     def post(self, request):
         """

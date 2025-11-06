@@ -4,7 +4,6 @@ from django.contrib.auth import get_user_model
 from apps.APISetor.models import Sector, SectorUser
 from apps.APIDocumento.models import Document
 from rest_framework.permissions import IsAuthenticated
-from apps.APIDocumento.classificationUtils.views import ClassificationViewUtil
 from .serializers import DocumentCreateSerializer, DocumentDetailSerializer, DocumentListSerializer, DocumentUpdateSerializer
 from rest_framework.parsers import JSONParser
 from apps.APIDocumento.permissions import IsLinkedToDocument

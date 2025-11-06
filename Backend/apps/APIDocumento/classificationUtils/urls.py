@@ -1,6 +1,6 @@
 from django.urls import path
-from .views import UpdateClasssificationView
+from .views import RetrieveClassificationView
 
 classification_urlpatterns = [
-    path('classificacao/editar', UpdateClasssificationView.as_view(), name='editar-classificacao'),
+    path('classificacao/consultar/<int:pk>/', RetrieveClassificationView.as_view(), name='visualizar-classificacao'),
 ]

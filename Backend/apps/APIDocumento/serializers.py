@@ -90,7 +90,6 @@ class DocumentCreateSerializer(serializers.ModelSerializer):
                 document=documento,
                 classification_status=status_padrao,
                 privacity=privacidade_padrao,
-                reviewer=sector.manager 
             )
             
         return documento

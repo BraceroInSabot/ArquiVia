@@ -50,7 +50,7 @@ class TestCreateDocumentAPI:
 
         # Dados padrão de classificação (essenciais para o .create() do serializer)
         status_padrao = Classification_Status.objects.create(status="Concluído", status_id=1)
-        status_padrao = Classification_Status.objects.create(status="Em Andamento", status_id=2)
+        status_padrao = Classification_Status.objects.create(status="Em andamento", status_id=2)
         status_padrao = Classification_Status.objects.create(status="Revisão necessária", status_id=3)
         status_padrao = Classification_Status.objects.create(status="Arquivado", status_id=4)
         
@@ -103,6 +103,9 @@ class TestCreateDocumentAPI:
 
         response = api_client.post(url, payload, format="json")
 
+        with open('log.txt', 'w') as f:
+            f.write(str(response.data))
+            
         assert response.status_code == 201 # type: ignore # type: ignore # type: ignore #type: ignore
         assert response.data['sucesso'] is True # type: ignore
         
@@ -111,7 +114,7 @@ class TestCreateDocumentAPI:
         new_doc: Document = Document.objects.get(pk=doc_id) # type: ignore
         assert new_doc.creator == actor
         assert new_doc.sector == sector
-        assert Classification.objects.filter(document=new_doc).exists()
+        assert Classification.objects.filter(pk=new_doc.classification.pk).exists()
 
     # Failures
 
@@ -257,22 +260,23 @@ class TestRetrieveDocumentAPI:
         status_padrao = Classification_Status.objects.create(status="Em andamento")
         privacidade_padrao = Classification_Privacity.objects.create(privacity="Privado")
 
+        # 6. Criar a Classificação associada
+        classification = Classification.objects.create(
+            classification_status=status_padrao,
+            privacity=privacidade_padrao,
+            reviewer=manager
+        )
+        
         # 5. Criar o Documento (o alvo do teste)
         # O 'member' será o criador
         document = Document.objects.create(
             title="Documento de Teste para Recuperação",
             content={"ops": [{"insert": "Teste."}]},
             creator=member,
-            sector=sector
+            sector=sector,
+            classification=classification
         )
         
-        # 6. Criar a Classificação associada
-        Classification.objects.create(
-            document=document,
-            classification_status=status_padrao,
-            privacity=privacidade_padrao,
-            reviewer=manager
-        )
         
         # 7. Criar e associar Categorias
         category = Category.objects.create(category="Teste", category_enterprise=enterprise)
@@ -564,6 +568,17 @@ class TestUpdateDocumentAPI:
         sector = Sector.objects.create(name="Update Sector", enterprise=enterprise, manager=manager)
         SectorUser.objects.create(user=member, sector=sector)
 
+        
+        # Dados de classificação (necessários para o serializer de resposta)
+        status, _ = Classification_Status.objects.get_or_create(status="Em andamento")
+        privacity, _ = Classification_Privacity.objects.get_or_create(privacity="Privado")
+        category = Category.objects.create(category="EditTest", category_enterprise=enterprise)
+        Classification.objects.create(
+            classification_status=status,
+            privacity=privacity,
+            reviewer=manager
+        )
+        
         # Documento alvo (criado pelo 'creator' mas no setor principal)
         document_to_edit = Document.objects.create(
             title="Título Original",
@@ -571,18 +586,8 @@ class TestUpdateDocumentAPI:
             creator=creator,
             sector=sector 
         )
-        
-        # Dados de classificação (necessários para o serializer de resposta)
-        status, _ = Classification_Status.objects.get_or_create(status="Em andamento")
-        privacity, _ = Classification_Privacity.objects.get_or_create(privacity="Privado")
-        Classification.objects.create(
-            document=document_to_edit,
-            classification_status=status,
-            privacity=privacity,
-            reviewer=manager
-        )
-        category = Category.objects.create(category="EditTest", category_enterprise=enterprise)
         document_to_edit.categories.set([category])
+        
 
         return {
             "owner": owner,
@@ -628,7 +633,7 @@ class TestUpdateDocumentAPI:
         assert response.data['data']['title'] == "Título Atualizado" # type: ignore
         assert response.data['data']['content'] == {"versao": 2} # type: ignore
 
-        document.refresh_from_db()
+        document.refresh_from_db() 
         assert document.title == "Título Atualizado"
         assert document.content == {"versao": 2} # type: ignore
 

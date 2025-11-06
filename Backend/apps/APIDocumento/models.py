@@ -18,6 +18,12 @@ class Document(models.Model):
         related_name='documents',
         blank=True
     )
+    classification = models.OneToOneField(
+        'Classification', 
+        on_delete=models.CASCADE, 
+        null=True, 
+        blank=True, 
+        db_column='FK_classification_document')
     created_at = models.DateTimeField(auto_now_add=True, db_column='date_created_at_document')
     is_active = models.BooleanField(default=False, db_column='is_active_document')
 
@@ -28,8 +34,6 @@ class Document(models.Model):
         db_table = 'Document'
         verbose_name = 'Document'
         verbose_name_plural = 'Documents'
-        # Otimiza a recuperação de informação
-        # Acelera consultas em colunas que possuem o tipo de dado = JSON ou JSONB
         indexes = [
             GinIndex(fields=['content'], name='document_content_gin_idx'),
         ]
@@ -68,11 +72,6 @@ class Classification(models.Model):
         null=True,
         db_column='FK_reviewer_classification', 
         related_name='reviewed_by_user')
-    document = models.OneToOneField(
-        Document, 
-        on_delete=models.CASCADE, 
-        db_column='FK_document_classification',
-        related_name='classification')
     privacity = models.ForeignKey(
         'Classification_Privacity', # Está assim pq não foi criada ainda
         on_delete=models.PROTECT, 
@@ -80,7 +79,7 @@ class Classification(models.Model):
         null=True)
 
     def __str__(self):
-        return f"{self.document.title} - {self.is_reviewed}" 
+        return f"Revisado por {self.is_reviewed}" 
     
     class Meta:
         db_table = 'Classification'
@@ -99,12 +98,6 @@ class Classification_Privacity(models.Model):
         unique=True, 
         choices=privacity_choices, 
         db_column='privacity_classification_privacity')
-    privacity_abreviation = models.CharField(
-        max_length=1, 
-        unique=True, 
-        default=None, 
-        null=True, 
-        db_column='abreviation_classification_privacity')
 
     def __str__(self):
         return self.privacity 

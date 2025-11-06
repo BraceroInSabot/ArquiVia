@@ -72,25 +72,25 @@ class DocumentCreateSerializer(serializers.ModelSerializer):
         sector = validated_data.get('sector')
         
         with transaction.atomic(): # enquanto ok, faça. Se der errado, rollback
+            try:
+                status_padrao = Classification_Status.objects.get(status='Em andamento')
+                privacidade_padrao = Classification_Privacity.objects.get(privacity='Privado')
+            except (Classification_Status.DoesNotExist, Classification_Privacity.DoesNotExist):
+                raise serializers.ValidationError("Erro interno: Configuração de status/privacidade padrão não encontrada.")
+            
+            classification_to_set = Classification.objects.create(
+                classification_status=status_padrao,
+                privacity=privacidade_padrao,
+            )
+            
             documento = Document.objects.create(
                 creator=user,
+                classification=classification_to_set,
                 **validated_data
             )
             
             if categories is not None:
                 documento.categories.set(categories)
-            
-            try:
-                status_padrao = Classification_Status.objects.get(status='Em Andamento')
-                privacidade_padrao = Classification_Privacity.objects.get(privacity='Privado')
-            except (Classification_Status.DoesNotExist, Classification_Privacity.DoesNotExist):
-                raise serializers.ValidationError("Erro interno: Configuração de status/privacidade padrão não encontrada.")
-            
-            Classification.objects.create(
-                document=documento,
-                classification_status=status_padrao,
-                privacity=privacidade_padrao,
-            )
             
         return documento
 

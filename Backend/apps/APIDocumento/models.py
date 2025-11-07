@@ -16,7 +16,9 @@ class Document(models.Model):
     categories = models.ManyToManyField(
         'Category',
         related_name='documents',
-        blank=True
+        blank=True,
+        db_column='FK_category_document',
+        db_table='Document_Category'
     )
     classification = models.OneToOneField(
         'Classification', 

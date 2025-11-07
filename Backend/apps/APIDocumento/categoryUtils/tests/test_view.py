@@ -13,6 +13,298 @@ from apps.APIDocumento.models import Category, Classification, Classification_Pr
 User = get_user_model()
 
 @pytest.mark.django_db
+class TestLinkCategoriesToDocumentAPI:
+    """
+    Suíte de testes para o endpoint LinkCategoriesToDocumentView 
+    (/documento/<int:pk>/vincular-categorias/).
+    
+    Testa a permissão IsDocumentEditor e a lógica do 
+    DocumentAddCategoriesSerializer (que recebe o pk pela URL).
+    """
+
+    @pytest.fixture
+    def api_client(self) -> APIClient:
+        """Retorna uma instância de APIClient para os testes."""
+        return APIClient()
+
+    @pytest.fixture
+    def scenario_data(self) -> Dict[str, Any]:
+        """
+        Cria um cenário para testar a vinculação de categorias.
+        (Fixture mantida, pois o cenário de dados ainda é válido)
+        """
+        # --- Usuários ---
+        owner = User.objects.create_user(username="owner_link", password="pw", name="Owner", email='user1@gmail.com')
+        manager_s1 = User.objects.create_user(username="manager_s1_link", password="pw", name="Manager S1", email='user2@gmail.com')
+        admin_s1 = User.objects.create_user(username="admin_s1_link", password="pw", name="Admin S1", email='user3@gmail.com')
+        member_s1 = User.objects.create_user(username="member_s1_link", password="pw", name="Member S1", email='user4@gmail.com')
+        manager_s2 = User.objects.create_user(username="manager_s2_link", password="pw", name="Manager S2", email='user5@gmail.com')
+        outsider = User.objects.create_user(username="outsider_link", password="pw", name="Outsider", email='user6@gmail.com')
+
+        # --- Empresas ---
+        enterprise_A = Enterprise.objects.create(name="Corp A Link", owner=owner)
+        enterprise_B = Enterprise.objects.create(name="Corp B Link", owner=outsider)
+
+        # --- Setores (Empresa A) ---
+        sector_1 = Sector.objects.create(name="Setor 1", enterprise=enterprise_A, manager=manager_s1)
+        Sector.objects.create(name="Setor 2", enterprise=enterprise_A, manager=manager_s2)
+
+        # --- Vínculos (SectorUser) ---
+        SectorUser.objects.create(user=admin_s1, sector=sector_1, is_adm=True)
+        SectorUser.objects.create(user=member_s1, sector=sector_1, is_adm=False)
+
+        # --- Categorias ---
+        cat_A_linked = Category.objects.create(category="Já Vinculada", category_enterprise=enterprise_A)
+        cat_A1_to_link = Category.objects.create(category="Para Vincular 1", category_enterprise=enterprise_A)
+        cat_A2_to_link = Category.objects.create(category="Para Vincular 2", category_enterprise=enterprise_A)
+        cat_B_foreign = Category.objects.create(category="Categoria B", category_enterprise=enterprise_B)
+        
+        # --- Dependência (Documento) ---
+        status = Classification_Status.objects.create(status="Aprovado")
+        privacity = Classification_Privacity.objects.create(privacity="Interno")
+        
+        classification = Classification.objects.create(classification_status=status, privacity=privacity)
+        doc_s1 = Document.objects.create(
+            title="Doc Com Classificação", 
+            content={}, 
+            creator=owner, 
+            sector=sector_1,
+            classification=classification
+            )
+        
+        doc_s1.categories.add(cat_A_linked)
+
+        return {
+            "owner": owner, "manager_s1": manager_s1, "admin_s1": admin_s1,
+            "member_s1": member_s1, "manager_s2": manager_s2, "outsider": outsider,
+            "doc_s1": doc_s1, "cat_A1_to_link": cat_A1_to_link,
+            "cat_A2_to_link": cat_A2_to_link, "cat_A_linked": cat_A_linked,
+            "cat_B_foreign": cat_B_foreign,
+        }
+
+    # --- Testes de Sucesso (Permissão - 200) ---
+    
+    @pytest.mark.parametrize("user_role", [
+        "owner",
+        "manager_s1",
+        "admin_s1",
+        "member_s1",
+    ])
+    def test_link_categories_with_valid_permissions_success(
+        self, api_client: APIClient, scenario_data: Dict[str, Any], user_role: str
+    ) -> None:
+        """
+        Testa se Owner, Manager, Admin e Member podem ADICIONAR categorias.
+        """
+        user: User = scenario_data[user_role] # type: ignore
+        api_client.force_authenticate(user=user)
+        
+        doc: Document = scenario_data["doc_s1"] # type: ignore
+        cat1: Category = scenario_data["cat_A1_to_link"] # type: ignore
+        
+        # ATUALIZADO: URL agora usa kwargs, data não tem document_id
+        url: str = reverse("vincular-categorias-documento", kwargs={'pk': doc.pk})
+        data: Dict[str, Any] = {
+            "categories_id": [cat1.pk]
+        }
+        
+        assert doc.categories.count() == 1 # Estado inicial
+        response = api_client.post(url, data, format='json')
+        
+        assert response.status_code == 200
+        assert response.data['sucesso'] is True # type: ignore
+        
+        doc.refresh_from_db()
+        assert doc.categories.count() == 2 # Estado final
+        assert cat1 in doc.categories.all()
+        assert len(response.data['data']) == 2 # type: ignore
+
+    # --- Testes de Lógica da View (Idempotência e Lista Vazia) ---
+
+    def test_link_idempotent_ignores_duplicates_success(
+        self, api_client: APIClient, scenario_data: Dict[str, Any]
+    ) -> None:
+        """
+        Testa se enviar uma categoria já vinculada (idempotência do .add())
+        e uma nova funciona corretamente.
+        """
+        user: User = scenario_data["owner"] # type: ignore
+        api_client.force_authenticate(user=user)
+        
+        doc: Document = scenario_data["doc_s1"] # type: ignore
+        cat_new: Category = scenario_data["cat_A1_to_link"] # type: ignore
+        cat_linked: Category = scenario_data["cat_A_linked"] # type: ignore
+        
+        # ATUALIZADO: URL agora usa kwargs, data não tem document_id
+        url: str = reverse("vincular-categorias-documento", kwargs={'pk': doc.pk})
+        data: Dict[str, Any] = {
+            "categories_id": [cat_new.pk, cat_linked.pk]
+        }
+        
+        assert doc.categories.count() == 1 # Estado inicial
+        response = api_client.post(url, data, format='json')
+        
+        assert response.status_code == 200
+        doc.refresh_from_db()
+        assert doc.categories.count() == 2 # Não 3
+        assert len(response.data['data']) == 2 # type: ignore
+
+    def test_link_empty_list_success(
+        self, api_client: APIClient, scenario_data: Dict[str, Any]
+    ) -> None:
+        """
+        Testa se enviar uma lista de categorias vazia é aceito e
+        não altera nada (e retorna a mensagem correta).
+        """
+        user: User = scenario_data["owner"] # type: ignore
+        api_client.force_authenticate(user=user)
+        
+        doc: Document = scenario_data["doc_s1"] # type: ignore
+        
+        # ATUALIZADO: URL agora usa kwargs, data não tem document_id
+        url: str = reverse("vincular-categorias-documento", kwargs={'pk': doc.pk})
+        data: Dict[str, Any] = {
+            "categories_id": [] # Lista vazia
+        }
+        
+        assert doc.categories.count() == 1 # Estado inicial
+        response = api_client.post(url, data, format='json')
+        
+        assert response.status_code == 200
+        assert response.data['sucesso'] is True # type: ignore
+        assert "Nenhuma categoria nova" in response.data['mensagem'] # type: ignore
+        
+        doc.refresh_from_db()
+        assert doc.categories.count() == 1 # Estado final (sem mudanças)
+        assert len(response.data['data']) == 1 # type: ignore
+        
+    # --- Testes de Falha (Permissão - 403) ---
+    
+    @pytest.mark.parametrize("user_role", [
+        "manager_s2", # Gestor de outro setor
+        "outsider",   # Usuário de outra empresa
+    ])
+    def test_link_categories_invalid_permissions_fails(
+        self, api_client: APIClient, scenario_data: Dict[str, Any], user_role: str
+    ) -> None:
+        """
+        Testa se usuários sem permissão no Documento (Manager S2, Outsider)
+        são bloqueados (403).
+        """
+        user: User = scenario_data[user_role] # type: ignore
+        api_client.force_authenticate(user=user)
+        
+        doc: Document = scenario_data["doc_s1"] # type: ignore
+        cat1: Category = scenario_data["cat_A1_to_link"] # type: ignore
+        
+        # ATUALIZADO: URL agora usa kwargs, data não tem document_id
+        url: str = reverse("vincular-categorias-documento", kwargs={'pk': doc.pk})
+        data: Dict[str, Any] = {
+            "categories_id": [cat1.pk]
+        }
+        
+        response = api_client.post(url, data, format='json')
+        
+        assert response.status_code == 403
+        assert response.data['sucesso'] is False # type: ignore
+        assert "Você não tem permissão" in response.data['mensagem'] # type: ignore
+        assert doc.categories.count() == 1 # Sem mudanças
+
+    # --- Testes de Falha (Input/Estado - 400, 401, 404) ---
+
+    def test_link_by_anonymous_fails(
+        self, api_client: APIClient, scenario_data: Dict[str, Any]
+    ) -> None:
+        """
+        Testa se um usuário não autenticado (anônimo) recebe 401.
+        """
+        doc: Document = scenario_data["doc_s1"] # type: ignore
+        cat1: Category = scenario_data["cat_A1_to_link"] # type: ignore
+        
+        # ATUALIZADO: URL agora usa kwargs, data não tem document_id
+        url: str = reverse("vincular-categorias-documento", kwargs={'pk': doc.pk})
+        data: Dict[str, Any] = {
+            "categories_id": [cat1.pk]
+        }
+        
+        response = api_client.post(url, data, format='json')
+        
+        assert response.status_code == 401
+        assert response.data['sucesso'] is False # type: ignore
+
+    def test_link_category_from_other_enterprise_fails(
+        self, api_client: APIClient, scenario_data: Dict[str, Any]
+    ) -> None:
+        """
+        Testa a validação do Serializer (400) ao tentar vincular
+        uma categoria de outra empresa.
+        """
+        user: User = scenario_data["owner"] # type: ignore
+        api_client.force_authenticate(user=user)
+        
+        doc: Document = scenario_data["doc_s1"] # type: ignore
+        cat_foreign: Category = scenario_data["cat_B_foreign"] # type: ignore
+        
+        # ATUALIZADO: URL agora usa kwargs, data não tem document_id
+        url: str = reverse("vincular-categorias-documento", kwargs={'pk': doc.pk})
+        data: Dict[str, Any] = {
+            "categories_id": [cat_foreign.pk] # Categoria da Empresa B
+        }
+        
+        response = api_client.post(url, data, format='json')
+        
+        assert response.status_code == 400
+        assert response.data['sucesso'] is False # type: ignore
+        assert doc.categories.count() == 1 # Sem mudanças
+
+    def test_link_to_non_existent_document_fails(
+        self, api_client: APIClient, scenario_data: Dict[str, Any]
+    ) -> None:
+        """
+        Testa a falha (404) ao enviar um pk inexistente na URL.
+        """
+        user: User = scenario_data["owner"] # type: ignore
+        api_client.force_authenticate(user=user)
+        
+        cat1: Category = scenario_data["cat_A1_to_link"] # type: ignore
+        
+        # ATUALIZADO: PK Inexistente vai na URL
+        non_existent_pk = 9999
+        url: str = reverse("vincular-categorias-documento", kwargs={'pk': non_existent_pk})
+        data: Dict[str, Any] = {
+            "categories_id": [cat1.pk]
+        }
+        
+        response = api_client.post(url, data, format='json')
+        
+        # ATUALIZADO: Espera 404 do get_object_or_404
+        assert response.status_code == 404
+        assert response.data['sucesso'] is False # type: ignore
+        assert "não encontrado" in response.data['mensagem'] # type: ignore
+        
+    def test_link_with_non_existent_category_fails(
+        self, api_client: APIClient, scenario_data: Dict[str, Any]
+    ) -> None:
+        """
+        Testa a falha (400) ao enviar um ID de categoria inexistente na lista.
+        """
+        user: User = scenario_data["owner"] # type: ignore
+        api_client.force_authenticate(user=user)
+        
+        doc: Document = scenario_data["doc_s1"] # type: ignore
+        
+        # ATUALIZADO: URL agora usa kwargs, data não tem document_id
+        url: str = reverse("vincular-categorias-documento", kwargs={'pk': doc.pk})
+        data: Dict[str, Any] = {
+            "categories_id": [9999] # PK Inexistente
+        }
+        
+        response = api_client.post(url, data, format='json')
+        
+        assert response.status_code == 400
+        assert response.data['sucesso'] is False # type: ignore
+        
+@pytest.mark.django_db
 class TestDeleteCategoryAPI:
     """
     Suíte de testes para o endpoint DeleteCategoryView (/categoria/excluir/<int:pk>/).

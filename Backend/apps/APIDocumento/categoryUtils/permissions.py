@@ -2,7 +2,7 @@ from rest_framework.permissions import BasePermission
 from django.db.models import Q
 from apps.APISetor.models import SectorUser
 from apps.APIEmpresa.models import Enterprise
-from apps.APIDocumento.models import Category
+from apps.APIDocumento.models import Category, Document
 
 class IsCategoryVisible(BasePermission):
     """
@@ -58,6 +58,40 @@ class IsCategoryEditor(BasePermission):
             user=user,
             sector=obj.category_sector,
             is_adm=True
+        ).exists():
+            return True
+
+        return False
+    
+class IsDocumentEditor(BasePermission):
+    """
+    Concede permissão para editar/modificar um Documento se o usuário for:
+    1. O Dono da Empresa à qual o Documento pertence.
+    2. O Gestor do Setor ao qual o Documento está vinculado.
+    3. Um Administrador do Setor ao qual o Documento está vinculado.
+    4. Um Membro do Setor ao qual o Documento está vinculado.
+    """
+    message = "Você não tem permissão para modificar este documento."
+
+    def has_object_permission(self, request, view, obj):
+        if not isinstance(obj, Document):
+            return False
+
+        user = request.user
+        document = obj
+
+        if document.sector.enterprise.owner == user: #type: ignore
+            return True
+
+        if not document.sector:
+            return False
+
+        if document.sector.manager == user:
+            return True
+
+        if SectorUser.objects.filter(
+            user=user,
+            sector=document.sector
         ).exists():
             return True
 

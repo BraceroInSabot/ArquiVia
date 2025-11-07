@@ -1,10 +1,10 @@
 from django.contrib.auth import get_user_model
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
-from apps.APIDocumento.categoryUtils.permissions import IsCategoryEditor, IsCategoryVisible
+from apps.APIDocumento.categoryUtils.permissions import IsCategoryEditor, IsCategoryVisible, IsDocumentEditor
 from apps.APIDocumento.permissions import IsLinkedToDocument
 from apps.core.utils import default_response
-from apps.APIDocumento.categoryUtils.serializers import CategoryDetailSerializer, CategoryListSerializer, CreateCategorySerializer, DeleteCategorySerializer, UpdateCategorySerializer
+from apps.APIDocumento.categoryUtils.serializers import CategoryDetailSerializer, CategoryListSerializer, CreateCategorySerializer, DeleteCategorySerializer, DocumentAddCategoriesSerializer, UpdateCategorySerializer
 from apps.APIDocumento.models import Classification, Classification_Privacity, Classification_Status, Document, Category
 from typing import Type
 from rest_framework.views import APIView, Response
@@ -205,3 +205,61 @@ class DeleteCategoryView(APIView):
         )
         return res
     
+class LinkCategoriesToDocumentView(APIView):
+    """
+    View de Ação para VINCULAR (add) uma ou mais Categorias a um Documento.
+    
+    O ID do Documento é passado na URL (doc_pk).
+    O payload contém 'categories_id' (lista).
+    A permissão é checada contra o Documento (IsDocumentEditor).
+    """
+    permission_classes = [IsAuthenticated, IsDocumentEditor]
+
+    serializer_class = DocumentAddCategoriesSerializer
+
+    def post(self, request, pk: int) -> HttpResponse:
+        """
+        Manipula a requisição POST para adicionar categorias.
+        
+        Args:
+            request (Request): Contém o payload {categories_id[]}.
+            pk (int): A chave primária do Documento, vinda da URL.
+
+        Returns:
+            HttpResponse: O status da operação e a lista atualizada
+                          de categorias do documento.
+        """
+        queryset = Document.objects.select_related(
+            'sector__enterprise__owner',
+            'sector__manager'
+        )
+        document = get_object_or_404(queryset, pk=pk)
+        
+        self.check_object_permissions(request, document)
+
+        serializer_context = {'document': document}
+        serializer = self.serializer_class(
+            data=request.data,
+            context=serializer_context
+        )
+        serializer.is_valid(raise_exception=True)
+        
+        categories_to_add = serializer.validated_data['categories'] # type: ignore
+        
+        if categories_to_add:
+            document.categories.add(*categories_to_add)
+            message = "Categorias vinculadas com sucesso."
+        else:
+            message = "Nenhuma categoria nova para adicionar."
+        
+        all_doc_categories = document.categories.all()
+        response_serializer = CategoryDetailSerializer(all_doc_categories, many=True)
+
+        res: HttpResponse = Response()
+        res.status_code = 200
+        res.data = default_response(
+            success=True, 
+            message=message,
+            data=response_serializer.data
+        )
+        return res

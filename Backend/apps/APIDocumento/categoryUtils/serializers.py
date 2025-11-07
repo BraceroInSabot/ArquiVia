@@ -1,5 +1,5 @@
 from rest_framework.serializers import ModelSerializer
-from apps.APIDocumento.models import Category
+from apps.APIDocumento.models import Category, Document
 from apps.APISetor.models import Sector, SectorUser
 from apps.APIEmpresa.models import Enterprise
 from rest_framework import serializers
@@ -191,5 +191,47 @@ class DeleteCategorySerializer(serializers.Serializer):
                 f"Ela está associada a {document_count} documento(s). "
                 "Primeiro, remova todos os documentos desta categoria."
             )
+        
+        return data
+    
+class DocumentAddCategoriesSerializer(serializers.Serializer):
+    """
+    Serializer para validar uma lista de IDs de categoria.
+    
+    Ele espera receber o objeto 'document' no 'context'
+    da view para validar se as categorias pertencem
+    à mesma empresa do documento.
+    """
+    categories_id = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.select_related('category_enterprise').all(), 
+        source='categories',
+        many=True, 
+        write_only=True,
+        allow_empty=True 
+    )
+
+    class Meta:
+        fields = ['categories_id']
+
+    def validate(self, data):
+        """
+        Validação cruzada: Garante que as categorias 
+        pertencem à empresa do documento (fornecido via context).
+        """
+        categories_to_add = data.get('categories', [])
+        
+        document = self.context.get('document')
+
+        if not document:
+            raise serializers.ValidationError("Contexto do documento não fornecido.")
+
+        doc_enterprise = document.sector.enterprise
+        
+        for category in categories_to_add:
+            if category.category_enterprise != doc_enterprise:
+                raise serializers.ValidationError(
+                    f"A categoria '{category.category}' (ID: {category.pk}) "
+                    f"não pertence à empresa do documento ({doc_enterprise.name})."
+                )
         
         return data

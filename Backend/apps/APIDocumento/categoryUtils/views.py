@@ -1,6 +1,8 @@
 from django.contrib.auth import get_user_model
+from django.http import HttpResponse
+from apps.APIDocumento.permissions import IsLinkedToDocument
 from apps.core.utils import default_response
-from apps.APIDocumento.categoryUtils.serializers import CreateCategorySerializer
+from apps.APIDocumento.categoryUtils.serializers import CategoryListSerializer, CreateCategorySerializer
 from apps.APIDocumento.models import Classification, Classification_Privacity, Classification_Status, Document, Category
 from typing import Type
 from rest_framework.views import APIView, Response
@@ -30,156 +32,51 @@ class CreateCategoryView(APIView):
         ret.data = default_response(success=True, message="Categoria criada com sucesso!", data={"category_id": category_created.category_id}) # type: ignore
         return ret
     
-class ShowCategoryView(APIView):
-    permission_classes = [IsAuthenticated]
-    
-    def get(self, request):
-        category_id = request.data.get('category_id')
-        user = request.user
-        
-        try:
-            category: Type[Category] = Category.objects.get(category_id=category_id) #type: ignore
-        except Category.DoesNotExist:
-            ret = Response()
-            ret.status_code = 404
-            ret.data = {
-                "Data": {
-                    "sucesso": False,
-                    "mensagem": "Categoria não encontrada."
-                }
-            }
-            return ret
-
-        try:
-            vinculo: Type[SectorUser] = SectorUser.objects.filter(user=user, sector=category.category_sector).first() #type: ignore
-        except SectorUser.DoesNotExist:
-            ret = Response()
-            ret.status_code = 403
-            ret.data = {
-                "Data": {
-                    "sucesso": False,
-                    "mensagem": "Você não tem permissão para visualizar essa categoria."
-                }
-            }
-        
-        try:
-            if vinculo is None and category.category_sector.manager != user and Enterprise.objects.get(owner=user) != category.category_enterprise: #type: ignore
-                ret = Response()
-                ret.status_code = 403
-                ret.data = {
-                    "Data": {
-                        "sucesso": False,
-                        "mensagem": "Você não tem permissão para visualizar essa categoria."
-                    }
-                }
-                return ret
-        except:
-            ret = Response()
-            ret.status_code = 500
-            ret.data = {
-                "Data": {
-                    "sucesso": False,
-                    "mensagem": "Você não tem permissão para visualizar essa categoria."
-                }
-            }
-            return ret
-        
-        data = {
-            "category_id": category.category_id,
-            "titulo": category.category,
-            "descricao": category.description,
-            "setor": {
-                "sector_id": category.category_sector.sector_id, #type: ignore
-                "sector_name": category.category_sector.name #type: ignore
-            } if category.category_sector else None,
-            "empresa": {
-                "enterprise_id": category.category_enterprise.ent_id, #type: ignore
-                "enterprise_name": category.category_enterprise.name #type: ignore
-            } if category.category_enterprise else None
-        }
-        
-        ret = Response()
-        ret.status_code = 200
-        ret.data = {
-            "Data": {
-                "sucesso": True,
-                "mensagem": data
-            }
-        }
-        return ret
-
 class ListCategoryView(APIView):
+    """
+    Recupera uma lista de todas as Categorias visíveis para o usuário.
+
+    Um usuário pode ver uma Categoria se:
+    1. A Categoria for pública (is_public=True).
+    2. A Categoria pertencer a uma Empresa à qual o usuário está vinculado
+       (seja como dono, gerente de setor ou membro de setor).
+    """
     permission_classes = [IsAuthenticated]
-    
-    def get(self, request):
-        user = request.user
-        authority_level: bool = request.data.get('authority_level')
-        
-        category_list = []
-        category = []
-        
-        base_queryset = Category.objects.select_related('category_sector', 'category_enterprise')
-        print(authority_level)
-        
-        if authority_level:
-            queryset = base_queryset.filter(
-                Q(category_enterprise__owner=user) | Q(category_sector__manager=user)
-            ).distinct()
-        else:
-            user_sectors = SectorUser.objects.filter(user=user).values_list('sector_id', flat=True)
-            queryset = base_queryset.filter(category_sector__sector_id__in=user_sectors)
-        
-        try:
-            category_list = []
-            for c in queryset:
-                category_data = {
-                    "category_id": c.category_id,
-                    "titulo": c.category,
-                    "descricao": c.description,
-                    "setor": None,
-                    "empresa": None
-                }
-                if c.category_sector:
-                    category_data["setor"] = {
-                        "sector_id": c.category_sector.sector_id,
-                        "sector_name": c.category_sector.name
-                    }
-                if c.category_enterprise:
-                    category_data["empresa"] = {
-                        "enterprise_id": c.category_enterprise.ent_id,
-                        "enterprise_name": c.category_enterprise.name
-                    }
-                category_list.append(category_data)
-        except (Enterprise.DoesNotExist, SectorUser.DoesNotExist):
-            ret = Response()
-            ret.status_code = 403
-            ret.data = {
-                "Data": {
-                    "sucesso": False,
-                    "mensagem": "Nenhuma categoria encontrada."
-                }
-            }
-            return ret
-        except Exception as e:
-            ret = Response()
-            ret.status_code = 500
-            ret.data = {
-                "Data": {
-                    "sucesso": False,
-                    "mensagem": f"Ocorreu um erro ao listar as categorias. Tente novamente mais tarde {e}."
-                }
-            }
-            return ret
-        
-        ret = Response()
-        ret.status_code = 200
-        ret.data = {
-            "Data": {
-                "sucesso": True,
-                "mensagem": category_list
-            }
-        }
-        return ret  
+
+    def get(self, request) -> HttpResponse:
+        """
+        Manipula a requisição GET para listar as categorias filtradas.
+
+        Args:
+            request (Request): O objeto da requisição do usuário.
+
+        Returns:
+            HttpResponse: Uma resposta contendo a lista de categorias.
+        """
+        request_user = request.user
+
+        linked_enterprise_ids = Enterprise.objects.filter(
+            Q(owner=request_user) |
+            Q(sectors__manager=request_user) |
+            Q(sectors__sector_links__user=request_user)
+        ).values_list('pk', flat=True).distinct()
+
+        category_query = (
+            Q(is_public=True) |
+            Q(category_enterprise__pk__in=linked_enterprise_ids)
+        )
+
+        categories_queryset = Category.objects.filter(category_query).select_related(
+            'category_enterprise', 
+            'category_sector'
+        ).distinct()
+
+        serializer = CategoryListSerializer(categories_queryset, many=True)
+
+        res: HttpResponse = Response()
+        res.status_code = 200
+        res.data = default_response(success=True, message="Lista de categorias recuperada com sucesso.", data=serializer.data)
+        return res
 
 class UpdateCategoryView(APIView):
     permission_classes = [IsAuthenticated]

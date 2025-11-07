@@ -97,3 +97,22 @@ class CreateCategorySerializer(ModelSerializer):
             'category_enterprise',
             'is_public',
         ]
+        
+class CategoryListSerializer(serializers.ModelSerializer):
+    """
+    Serializer "leve" para a listagem de Categorias, incluindo
+    os nomes das suas relações (Empresa e Setor).
+    """
+    enterprise_name = serializers.CharField(source='category_enterprise.name', read_only=True)
+    sector_name = serializers.CharField(source='category_sector.name', read_only=True, default=None)
+
+    class Meta:
+        model = Category
+        fields = [
+            'category_id',
+            'category',
+            'description',
+            'is_public',
+            'enterprise_name',
+            'sector_name'
+        ]

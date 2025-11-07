@@ -20,7 +20,7 @@ class Document(models.Model):
     )
     classification = models.OneToOneField(
         'Classification', 
-        on_delete=models.CASCADE, 
+        on_delete=models.PROTECT, 
         null=True, 
         blank=True, 
         db_column='FK_classification_document')

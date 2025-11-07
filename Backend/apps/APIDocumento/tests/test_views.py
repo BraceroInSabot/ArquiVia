@@ -102,9 +102,6 @@ class TestCreateDocumentAPI:
         }
 
         response = api_client.post(url, payload, format="json")
-
-        with open('log.txt', 'w') as f:
-            f.write(str(response.data))
             
         assert response.status_code == 201 # type: ignore # type: ignore # type: ignore #type: ignore
         assert response.data['sucesso'] is True # type: ignore

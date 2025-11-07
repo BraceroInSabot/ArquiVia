@@ -14,6 +14,7 @@ class IsLinkedToDocument(BasePermission):
     def has_object_permission(self, request, view, obj):
         user = request.user
 
+        print(f"OBJETO: {obj}", f"TIPO: {type(obj)}")
         if not obj.sector:
             return obj.creator == user
 

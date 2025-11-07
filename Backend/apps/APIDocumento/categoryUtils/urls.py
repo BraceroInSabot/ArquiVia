@@ -6,5 +6,5 @@ category_urlpatterns = [
     path('categoria/consultar/<int:pk>/', RetrieveCategoryView.as_view(), name='consultar-categoria'),
     path('categoria/visualizar', ListCategoryView.as_view(), name='listar-categorias'),
     path('categoria/alterar/<int:pk>/', UpdateCategoryView.as_view(), name='alterar-categoria'),
-    path('categoria/deletar', DeleteCategoryView.as_view(), name='deletar-categoria')
+    path('categoria/excluir/<int:pk>/', DeleteCategoryView.as_view(), name='excluir-categoria')
 ]

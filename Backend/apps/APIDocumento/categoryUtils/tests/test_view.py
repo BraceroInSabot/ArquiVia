@@ -12,6 +12,269 @@ from apps.APIDocumento.models import Category, Classification, Classification_Pr
 
 User = get_user_model()
 
+@pytest.mark.django_db
+class TestDeleteCategoryAPI:
+    """
+    Suíte de testes para o endpoint DeleteCategoryView (/categoria/excluir/<int:pk>/).
+    
+    Testa todos os cenários de permissão (IsCategoryEditor),
+    a validação de integridade (DeleteCategorySerializer) e as
+    respostas de sucesso e erro.
+    """
+
+    @pytest.fixture
+    def api_client(self) -> APIClient:
+        """Retorna uma instância de APIClient para os testes."""
+        return APIClient()
+
+    @pytest.fixture
+    def scenario_data(self) -> Dict[str, Any]:
+        """
+        Cria um cenário complexo para testar as permissões de exclusão:
+        - 1 Empresa (Corp A)
+        - 1 Setor (S1)
+        - 5 Usuários (Owner, Manager S1, Admin S1, Member S1, Outsider)
+        - 3 Categorias:
+            - 'cat_s1_clean': Vinculada ao S1, sem documentos (pode ser excluída)
+            - 'cat_in_use': Vinculada ao S1, COM 1 documento (NÃO pode ser excluída)
+            - 'cat_enterprise': Global da empresa, sem documentos (pode ser excluída)
+        """
+        # --- Usuários ---
+        owner = User.objects.create_user(username="owner_del", password="pw", name="Owner", email='user@gmail.com')
+        manager_s1 = User.objects.create_user(username="manager_s1_del", password="pw", name="Manager S1", email='user2@gmail.com')
+        admin_s1 = User.objects.create_user(username="admin_s1_del", password="pw", name="Admin S1", email='user3@gmail.com')
+        member_s1 = User.objects.create_user(username="member_s1_del", password="pw", name="Member S1", email='user4@gmail.com')
+        outsider = User.objects.create_user(username="outsider_del", password="pw", name="Outsider", email='user5@gmail.com')
+
+        # --- Empresas ---
+        enterprise_A = Enterprise.objects.create(name="Corp A Delete", owner=owner)
+        Enterprise.objects.create(name="Corp B Delete", owner=outsider)
+
+        # --- Setores ---
+        sector_1 = Sector.objects.create(name="Setor 1", enterprise=enterprise_A, manager=manager_s1)
+
+        # --- Vínculos (SectorUser) ---
+        SectorUser.objects.create(user=admin_s1, sector=sector_1, is_adm=True)
+        SectorUser.objects.create(user=member_s1, sector=sector_1, is_adm=False)
+
+        # --- Categorias (Objetos de Teste) ---
+        cat_s1_clean = Category.objects.create(
+            category="Categoria S1 Limpa", 
+            category_enterprise=enterprise_A, 
+            category_sector=sector_1
+        )
+        cat_in_use = Category.objects.create(
+            category="Categoria S1 Em Uso",
+            category_enterprise=enterprise_A,
+            category_sector=sector_1
+        )
+        cat_enterprise = Category.objects.create(
+            category="Categoria Empresa Limpa",
+            category_enterprise=enterprise_A,
+            category_sector=None
+        )
+
+        # --- Dependência (Documento) ---
+        # (Dados básicos para criar a Classificação obrigatória do Documento)
+        status = Classification_Status.objects.create(status="Aprovado")
+        privacity = Classification_Privacity.objects.create(privacity="Interno")
+        
+        classification = Classification.objects.create(
+            classification_status=status, 
+            privacity=privacity,
+            reviewer=owner
+        )
+        
+        doc_1 = Document.objects.create(
+            title="Doc Com Classificação", 
+            content={}, 
+            creator=owner, 
+            sector=sector_1,
+            classification=classification
+            )
+        
+        doc_1.categories.add(cat_in_use)
+
+
+        return {
+            "owner": owner,
+            "manager_s1": manager_s1,
+            "admin_s1": admin_s1,
+            "member_s1": member_s1,
+            "outsider": outsider,
+            "cat_s1_clean": cat_s1_clean,
+            "cat_in_use": cat_in_use,
+            "cat_enterprise": cat_enterprise,
+        }
+
+    # Success
+
+    def test_delete_sector_category_as_owner_success(
+        self, api_client: APIClient, scenario_data: Dict[str, Any]
+    ) -> None:
+        """
+        Testa se o Dono da Empresa pode excluir uma categoria de setor (limpa).
+        """
+        user: User = scenario_data["owner"] # type: ignore
+        category: Category = scenario_data["cat_s1_clean"] # type: ignore
+        category_pk = category.pk
+        api_client.force_authenticate(user=user)
+        
+        url: str = reverse("excluir-categoria", kwargs={'pk': category_pk})
+        
+        response = api_client.delete(url)
+        
+        assert response.status_code == 200
+        assert response.data['sucesso'] is True # type: ignore
+        
+        assert not Category.objects.filter(pk=category_pk).exists()
+
+    def test_delete_sector_category_as_sector_manager_success(
+        self, api_client: APIClient, scenario_data: Dict[str, Any]
+    ) -> None:
+        """
+        Testa se o Gestor do Setor pode excluir a categoria (limpa).
+        """
+        user: User = scenario_data["manager_s1"] # type: ignore
+        category: Category = scenario_data["cat_s1_clean"] # type: ignore
+        category_pk = category.pk
+        api_client.force_authenticate(user=user)
+        
+        url: str = reverse("excluir-categoria", kwargs={'pk': category_pk})
+        
+        response = api_client.delete(url)
+        
+        assert response.status_code == 200
+        assert not Category.objects.filter(pk=category_pk).exists()
+
+    def test_delete_sector_category_as_sector_admin_success(
+        self, api_client: APIClient, scenario_data: Dict[str, Any]
+    ) -> None:
+        """
+        Testa se o Administrador do Setor pode excluir a categoria (limpa).
+        """
+        user: User = scenario_data["admin_s1"] # type: ignore
+        category: Category = scenario_data["cat_s1_clean"] # type: ignore
+        category_pk = category.pk
+        api_client.force_authenticate(user=user)
+        
+        url: str = reverse("excluir-categoria", kwargs={'pk': category_pk})
+        
+        response = api_client.delete(url)
+        
+        assert response.status_code == 200
+        assert not Category.objects.filter(pk=category_pk).exists()
+
+    # Failures
+
+    def test_delete_sector_category_as_sector_member_fails(
+        self, api_client: APIClient, scenario_data: Dict[str, Any]
+    ) -> None:
+        """
+        Testa se um Membro comum do setor é bloqueado (403).
+        """
+        user: User = scenario_data["member_s1"] # type: ignore
+        category: Category = scenario_data["cat_s1_clean"] # type: ignore
+        category_pk = category.pk
+        api_client.force_authenticate(user=user)
+        
+        url: str = reverse("excluir-categoria", kwargs={'pk': category_pk})
+        
+        response = api_client.delete(url)
+        
+        assert response.status_code == 403
+        assert response.data['sucesso'] is False # type: ignore
+        assert Category.objects.filter(pk=category_pk).exists()
+
+    def test_delete_enterprise_category_as_sector_manager_fails(
+        self, api_client: APIClient, scenario_data: Dict[str, Any]
+    ) -> None:
+        """
+        Testa se um Gestor de Setor (Manager S1) é bloqueado (403) ao
+        tentar excluir uma categoria global da empresa (sem setor).
+        """
+        user: User = scenario_data["manager_s1"] # type: ignore
+        category: Category = scenario_data["cat_enterprise"] # type: ignore
+        category_pk = category.pk
+        api_client.force_authenticate(user=user)
+        
+        url: str = reverse("excluir-categoria", kwargs={'pk': category_pk})
+        
+        response = api_client.delete(url)
+        
+        assert response.status_code == 403
+        assert Category.objects.filter(pk=category_pk).exists() 
+
+    def test_delete_category_as_outsider_fails(
+        self, api_client: APIClient, scenario_data: Dict[str, Any]
+    ) -> None:
+        """
+        Testa se um usuário de outra empresa é bloqueado (403).
+        """
+        user: User = scenario_data["outsider"] # type: ignore
+        category: Category = scenario_data["cat_s1_clean"] # type: ignore
+        category_pk = category.pk
+        api_client.force_authenticate(user=user)
+        
+        url: str = reverse("excluir-categoria", kwargs={'pk': category_pk})
+        
+        response = api_client.delete(url)
+        
+        assert response.status_code == 403
+        assert Category.objects.filter(pk=category_pk).exists() 
+
+    def test_delete_category_by_anonymous_fails(
+        self, api_client: APIClient, scenario_data: Dict[str, Any]
+    ) -> None:
+        """
+        Testa se um usuário não autenticado (anônimo) recebe 401.
+        """
+        category: Category = scenario_data["cat_s1_clean"] # type: ignore
+        category_pk = category.pk
+        url: str = reverse("excluir-categoria", kwargs={'pk': category_pk})
+
+        response = api_client.delete(url)
+        
+        assert response.status_code == 401
+        assert response.data['sucesso'] is False # type: ignore
+        assert Category.objects.filter(pk=category_pk).exists() 
+        
+    def test_delete_non_existent_category_fails(
+        self, api_client: APIClient, scenario_data: Dict[str, Any]
+    ) -> None:
+        """
+        Testa se requisitar uma categoria com PK inexistente retorna 404.
+        """
+        user: User = scenario_data["owner"] # type: ignore
+        api_client.force_authenticate(user=user)
+        non_existent_pk: int = 9999
+        url: str = reverse("excluir-categoria", kwargs={'pk': non_existent_pk})
+        
+        response = api_client.delete(url)
+        
+        assert response.status_code == 404
+        assert response.data['sucesso'] is False # type: ignore
+
+    def test_delete_category_in_use_by_document_fails(
+        self, api_client: APIClient, scenario_data: Dict[str, Any]
+    ) -> None:
+        """
+        Testa se a exclusão é barrada (400) se a categoria estiver
+        associada a um documento (validação do DeleteCategorySerializer).
+        """
+        user: User = scenario_data["owner"] # type: ignore
+        category: Category = scenario_data["cat_in_use"] # type: ignore
+        category_pk = category.pk
+        api_client.force_authenticate(user=user)
+        
+        url: str = reverse("excluir-categoria", kwargs={'pk': category_pk})
+        
+        response = api_client.delete(url)
+        
+        assert response.status_code == 400
+        assert response.data['sucesso'] is False # type: ignore
+        
+        assert Category.objects.filter(pk=category_pk).exists()
 
 @pytest.mark.django_db
 class TestUpdateCategoryAPI:

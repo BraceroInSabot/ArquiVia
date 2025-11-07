@@ -166,3 +166,30 @@ class UpdateCategorySerializer(serializers.ModelSerializer):
         ).exclude(pk=self.instance.pk).exists():# type: ignore
             raise serializers.ValidationError("Uma categoria com este nome já existe nesta empresa.")
         return value
+    
+class DeleteCategorySerializer(serializers.Serializer):
+    """
+    Validador para a exclusão de Categoria.
+    
+    Garante que a categoria não está sendo usada por
+    nenhum documento antes de ser excluída.
+    Este serializer não possui campos, ele usa apenas o método validate().
+    """
+    
+    def validate(self, data):
+        """
+        Verifica se a categoria (injetada como 'self.instance' pela view)
+        tem algum documento associado.
+        """
+        category = self.instance 
+        
+        document_count = category.documents.count() # type: ignore
+
+        if document_count > 0:
+            raise serializers.ValidationError(
+                f"Esta categoria não pode ser excluída. "
+                f"Ela está associada a {document_count} documento(s). "
+                "Primeiro, remova todos os documentos desta categoria."
+            )
+        
+        return data

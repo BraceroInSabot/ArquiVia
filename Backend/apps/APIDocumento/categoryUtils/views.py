@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404
 from apps.APIDocumento.categoryUtils.permissions import IsCategoryEditor, IsCategoryVisible
 from apps.APIDocumento.permissions import IsLinkedToDocument
 from apps.core.utils import default_response
-from apps.APIDocumento.categoryUtils.serializers import CategoryDetailSerializer, CategoryListSerializer, CreateCategorySerializer, UpdateCategorySerializer
+from apps.APIDocumento.categoryUtils.serializers import CategoryDetailSerializer, CategoryListSerializer, CreateCategorySerializer, DeleteCategorySerializer, UpdateCategorySerializer
 from apps.APIDocumento.models import Classification, Classification_Privacity, Classification_Status, Document, Category
 from typing import Type
 from rest_framework.views import APIView, Response
@@ -161,81 +161,47 @@ class UpdateCategoryView(APIView):
         return res
     
 class DeleteCategoryView(APIView):
-    permission_classes = [IsAuthenticated]
+    """
+    Exclui uma Categoria.
+    O ID da Categoria deve ser passado na URL.
+    A permissão é verificada pela classe IsCategoryEditor.
+    A exclusão é barrada se a categoria estiver em uso.
+    """
+    permission_classes = [IsAuthenticated, IsCategoryEditor]
+
+    def delete(self, request, pk: int) -> HttpResponse:
+        """
+        Manipula a requisição DELETE para excluir uma categoria.
+
+        Args:
+            request (Request): O objeto da requisição do usuário.
+            pk (int): A chave primária da Categoria, vinda da URL.
+
+        Returns:
+            HttpResponse: Uma resposta (200) indicando sucesso na exclusão.
+        """
+        queryset = Category.objects.select_related(
+            'category_enterprise__owner',
+            'category_sector__manager'
+        )
+        category = get_object_or_404(queryset, pk=pk)
+
+        self.check_object_permissions(request, category)
+
+        delete_serializer = DeleteCategorySerializer(
+            instance=category,
+            data={} 
+        )
+        
+        delete_serializer.is_valid(raise_exception=True)
+
+        category.delete()
+
+        res: HttpResponse = Response()
+        res.status_code = 200 
+        res.data = default_response(
+            success=True, 
+            message="Categoria excluída com sucesso.",
+        )
+        return res
     
-    def delete(self, request):
-        user: Type[User] = request.user #type: ignore
-        category_id: str = request.data.get('category_id')
-        
-        try:
-            category: Type[Category] = Category.objects.get(category_id=category_id) #type: ignore
-        except Category.DoesNotExist:
-            ret = Response()
-            ret.status_code = 404
-            ret.data = {
-                "Data": {
-                    "sucesso": False,
-                    "mensagem": "Categoria não encontrada."
-                }
-            }
-            return ret
-        
-        try: 
-            vinculo: Type[SectorUser] = SectorUser.objects.filter(user=user, sector=category.category_sector).first() #type: ignore
-            setor: Type[Sector] = category.category_sector #type: ignore
-            if  setor.manager != user and Enterprise.objects.get(owner=user) != setor.enterprise and vinculo is None: #type: ignore
-                ret = Response()
-                ret.status_code = 403
-                ret.data = {
-                    "Data": {
-                        "sucesso": False,
-                        "mensagem": "Você não tem permissão para deletar essa categoria."
-                    }
-                }
-                
-                if not vinculo.is_adm:
-                    return ret
-        except Enterprise.DoesNotExist:
-            ret = Response()
-            ret.status_code = 403
-            ret.data = {
-                "Data": {
-                    "sucesso": False,
-                    "mensagem": "Você não tem permissão para deletar essa categoria."
-                }
-            }
-            return ret
-        except Exception as e:
-            ret = Response()
-            ret.status_code = 500
-            ret.data = {
-                "Data": {
-                    "sucesso": False,
-                    "mensagem": f"Ocorreu um erro ao deletar a categoria. Tente novamente mais tarde {e}."
-                }
-            }
-            return ret
-        
-        try:
-            category.delete()
-            
-        except Exception as e:
-            ret = Response()
-            ret.status_code = 500
-            ret.data = {
-                "Data": {
-                    "sucesso": False,
-                    "mensagem": "Ocorreu um erro ao deletar a categoria. Tente novamente mais tarde."
-                }
-            }
-            return ret
-        
-        ret = Response()
-        ret.status_code = 200
-        ret.data = {
-            "Data": {
-                "sucesso": True,
-                "mensagem": "Categoria deletada com sucesso."
-            }
-        }
-        return ret

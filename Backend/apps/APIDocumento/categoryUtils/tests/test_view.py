@@ -8,9 +8,349 @@ from typing import Dict, Any, List
 # Importe os seus modelos
 from apps.APIEmpresa.models import Enterprise
 from apps.APISetor.models import Sector, SectorUser
-from apps.APIDocumento.models import Category
+from apps.APIDocumento.models import Category, Classification, Classification_Privacity, Classification_Status, Document
 
 User = get_user_model()
+
+
+@pytest.mark.django_db
+class TestUpdateCategoryAPI:
+    """
+    Suíte de testes para o endpoint UpdateCategoryView (/categoria/atualizar/<int:pk>/).
+    
+    Testa todos os cenários de permissão (IsCategoryEditor), validações
+    de dados (UpdateCategorySerializer) e respostas de sucesso e erro.
+    """
+
+    @pytest.fixture
+    def api_client(self) -> APIClient:
+        """Retorna uma instância de APIClient para os testes."""
+        return APIClient()
+
+    @pytest.fixture
+    def scenario_data(self) -> Dict[str, Any]:
+        """
+        Cria um cenário complexo para testar as permissões de edição:
+        - 1 Empresa (Corp A)
+        - 2 Setores (S1, S2)
+        - 6 Usuários (Owner, Manager S1, Admin S1, Member S1, Manager S2, Outsider)
+        - 3 Categorias (1 em S1, 1 global na empresa, 1 para teste de colisão)
+        """
+        # --- Usuários ---
+        owner = User.objects.create_user(username="owner_upd", password="pw", name="Owner", email="user1@gmail.com")
+        manager_s1 = User.objects.create_user(username="manager_s1_upd", password="pw", name="Manager S1", email="user2@gmail.com")
+        admin_s1 = User.objects.create_user(username="admin_s1_upd", password="pw", name="Admin S1", email="user3@gmail.com")
+        member_s1 = User.objects.create_user(username="member_s1_upd", password="pw", name="Member S1", email="user4@gmail.com")
+        manager_s2 = User.objects.create_user(username="manager_s2_upd", password="pw", name="Manager S2", email="user5@gmail.com")
+        outsider = User.objects.create_user(username="outsider_upd", password="pw", name="Outsider", email="user6@gmail.com")
+
+        # --- Empresas ---
+        enterprise_A = Enterprise.objects.create(name="Corp A Update", owner=owner)
+        Enterprise.objects.create(name="Corp B Update", owner=outsider) # Empresa do Outsider
+
+        # --- Setores ---
+        sector_1 = Sector.objects.create(name="Setor 1", enterprise=enterprise_A, manager=manager_s1)
+        sector_2 = Sector.objects.create(name="Setor 2", enterprise=enterprise_A, manager=manager_s2)
+
+        # --- Vínculos (SectorUser) ---
+        SectorUser.objects.create(user=admin_s1, sector=sector_1, is_adm=True)
+        SectorUser.objects.create(user=member_s1, sector=sector_1, is_adm=False)
+
+        # --- Categorias (Objetos de Teste) ---
+        # Categoria privada, vinculada ao Setor 1
+        cat_s1 = Category.objects.create(
+            category="Categoria S1", 
+            category_enterprise=enterprise_A, 
+            category_sector=sector_1,
+            is_public=False
+        )
+        # Categoria pública, global da Empresa A (sem setor)
+        cat_enterprise = Category.objects.create(
+            category="Categoria Empresa",
+            category_enterprise=enterprise_A,
+            category_sector=None,
+            is_public=True
+        )
+        # Categoria para testar colisão de nome
+        cat_collision_target = Category.objects.create(
+            category="Nome Alvo",
+            category_enterprise=enterprise_A,
+            category_sector=None
+        )
+
+        return {
+            "owner": owner,
+            "manager_s1": manager_s1,
+            "admin_s1": admin_s1,
+            "member_s1": member_s1,
+            "manager_s2": manager_s2,
+            "outsider": outsider,
+            "enterprise_A": enterprise_A,
+            "sector_1": sector_1,
+            "sector_2": sector_2,
+            "cat_s1": cat_s1,
+            "cat_enterprise": cat_enterprise,
+            "cat_collision_target": cat_collision_target,
+        }
+
+    # --- Testes de Sucesso (Permissão) ---
+
+    def test_update_sector_category_as_owner_success(
+        self, api_client: APIClient, scenario_data: Dict[str, Any]
+    ) -> None:
+        """
+        Testa se o Dono da Empresa pode atualizar uma categoria de setor.
+        """
+        user: User = scenario_data["owner"] # type: ignore
+        category: Category = scenario_data["cat_s1"] # type: ignore
+        api_client.force_authenticate(user=user)
+        
+        url: str = reverse("alterar-categoria", kwargs={'pk': category.pk})
+        data: Dict[str, str] = {"category": "Atualizado pelo Dono"}
+        
+        response = api_client.patch(url, data, format='json')
+        
+        assert response.status_code == 200
+        assert response.data['sucesso'] is True # type: ignore
+        assert response.data['data']['category'] == data['category'] # type: ignore
+        category.refresh_from_db()
+        assert category.category == data['category']
+
+    def test_update_sector_category_as_sector_manager_success(
+        self, api_client: APIClient, scenario_data: Dict[str, Any]
+    ) -> None:
+        """
+        Testa se o Gestor do Setor pode atualizar a categoria.
+        """
+        user: User = scenario_data["manager_s1"] # type: ignore
+        category: Category = scenario_data["cat_s1"] # type: ignore
+        api_client.force_authenticate(user=user)
+        
+        url: str = reverse("alterar-categoria", kwargs={'pk': category.pk})
+        data: Dict[str, str] = {"category": "Atualizado pelo Gestor S1"}
+        
+        response = api_client.patch(url, data, format='json')
+        
+        assert response.status_code == 200
+        assert response.data['sucesso'] is True # type: ignore
+
+    def test_update_sector_category_as_sector_admin_success(
+        self, api_client: APIClient, scenario_data: Dict[str, Any]
+    ) -> None:
+        """
+        Testa se o Administrador do Setor pode atualizar a categoria.
+        """
+        user: User = scenario_data["admin_s1"] # type: ignore
+        category: Category = scenario_data["cat_s1"] # type: ignore
+        api_client.force_authenticate(user=user)
+        
+        url: str = reverse("alterar-categoria", kwargs={'pk': category.pk})
+        data: Dict[str, str] = {"category": "Atualizado pelo Admin S1"}
+        
+        response = api_client.patch(url, data, format='json')
+        
+        assert response.status_code == 200
+        assert response.data['sucesso'] is True # type: ignore
+
+    def test_update_enterprise_category_as_owner_success(
+        self, api_client: APIClient, scenario_data: Dict[str, Any]
+    ) -> None:
+        """
+        Testa se o Dono pode atualizar uma categoria global da empresa (sem setor).
+        """
+        user: User = scenario_data["owner"] # type: ignore
+        category: Category = scenario_data["cat_enterprise"] # type: ignore
+        api_client.force_authenticate(user=user)
+        
+        url: str = reverse("alterar-categoria", kwargs={'pk': category.pk})
+        data: Dict[str, str] = {"description": "Descrição atualizada pelo Dono"}
+        
+        response = api_client.patch(url, data, format='json')
+        
+        assert response.status_code == 200
+        assert response.data['sucesso'] is True # type: ignore
+        assert response.data['data']['description'] == data['description'] # type: ignore
+
+    # --- Testes de Falha (Permissão - 403) ---
+
+    def test_update_sector_category_as_sector_member_fails(
+        self, api_client: APIClient, scenario_data: Dict[str, Any]
+    ) -> None:
+        """
+        Testa se um Membro comum do setor é bloqueado (403).
+        """
+        user: User = scenario_data["member_s1"] # type: ignore
+        category: Category = scenario_data["cat_s1"] # type: ignore
+        api_client.force_authenticate(user=user)
+        
+        url: str = reverse("alterar-categoria", kwargs={'pk': category.pk})
+        data: Dict[str, str] = {"category": "Falha (Membro)"}
+        
+        response = api_client.patch(url, data, format='json')
+        
+        assert response.status_code == 403
+        assert response.data['sucesso'] is False # type: ignore
+
+    def test_update_sector_category_as_other_sector_manager_fails(
+        self, api_client: APIClient, scenario_data: Dict[str, Any]
+    ) -> None:
+        """
+        Testa se um Gestor de outro setor (Manager S2) é bloqueado (403).
+        """
+        user: User = scenario_data["manager_s2"] # type: ignore
+        category: Category = scenario_data["cat_s1"] # Categoria do Setor 1
+        api_client.force_authenticate(user=user)
+        
+        url: str = reverse("alterar-categoria", kwargs={'pk': category.pk})
+        data: Dict[str, str] = {"category": "Falha (Manager S2)"}
+        
+        response = api_client.patch(url, data, format='json')
+        
+        assert response.status_code == 403
+        assert response.data['sucesso'] is False # type: ignore
+
+    def test_update_sector_category_as_outsider_fails(
+        self, api_client: APIClient, scenario_data: Dict[str, Any]
+    ) -> None:
+        """
+        Testa se um usuário de outra empresa é bloqueado (403).
+        """
+        user: User = scenario_data["outsider"] # type: ignore
+        category: Category = scenario_data["cat_s1"] # type: ignore
+        api_client.force_authenticate(user=user)
+        
+        url: str = reverse("alterar-categoria", kwargs={'pk': category.pk})
+        data: Dict[str, str] = {"category": "Falha (Outsider)"}
+        
+        response = api_client.patch(url, data, format='json')
+        
+        assert response.status_code == 403
+        assert response.data['sucesso'] is False # type: ignore
+
+    def test_update_enterprise_category_as_sector_manager_fails(
+        self, api_client: APIClient, scenario_data: Dict[str, Any]
+    ) -> None:
+        """
+        Testa se um Gestor de Setor (Manager S1) é bloqueado (403) ao
+        tentar editar uma categoria global da empresa (sem setor).
+        """
+        user: User = scenario_data["manager_s1"] # type: ignore
+        category: Category = scenario_data["cat_enterprise"] # Categoria da Empresa
+        api_client.force_authenticate(user=user)
+        
+        url: str = reverse("alterar-categoria", kwargs={'pk': category.pk})
+        data: Dict[str, str] = {"category": "Falha (Manager S1 em Cat Empresa)"}
+        
+        response = api_client.patch(url, data, format='json')
+        
+        assert response.status_code == 403
+        assert response.data['sucesso'] is False # type: ignore
+
+    # --- Testes de Falha (Input/Estado - 400, 401, 404) ---
+
+    def test_update_category_by_anonymous_fails(
+        self, api_client: APIClient, scenario_data: Dict[str, Any]
+    ) -> None:
+        """
+        Testa se um usuário não autenticado (anônimo) recebe 401.
+        """
+        category: Category = scenario_data["cat_s1"] # type: ignore
+        url: str = reverse("alterar-categoria", kwargs={'pk': category.pk})
+        data: Dict[str, str] = {"category": "Falha (Anônimo)"}
+
+        response = api_client.patch(url, data, format='json')
+        
+        assert response.status_code == 401
+        assert response.data['sucesso'] is False # type: ignore
+
+    def test_update_non_existent_category_fails(
+        self, api_client: APIClient, scenario_data: Dict[str, Any]
+    ) -> None:
+        """
+        Testa se requisitar uma categoria com PK inexistente retorna 404.
+        """
+        user: User = scenario_data["owner"] # type: ignore
+        api_client.force_authenticate(user=user)
+        non_existent_pk: int = 9999
+        url: str = reverse("alterar-categoria", kwargs={'pk': non_existent_pk})
+        data: Dict[str, str] = {"category": "Falha (404)"}
+        
+        response = api_client.patch(url, data, format='json')
+        
+        assert response.status_code == 404
+        assert response.data['sucesso'] is False # type: ignore
+
+    def test_update_category_with_duplicate_name_fails(
+        self, api_client: APIClient, scenario_data: Dict[str, Any]
+    ) -> None:
+        """
+        Testa a validação (validate_category) que impede nomes duplicados
+        na mesma empresa. Retorna 400.
+        """
+        user: User = scenario_data["owner"] # type: ignore
+        api_client.force_authenticate(user=user)
+        
+        category_to_update: Category = scenario_data["cat_s1"] # type: ignore
+        target_category: Category = scenario_data["cat_collision_target"] # type: ignore
+        
+        url: str = reverse("alterar-categoria", kwargs={'pk': category_to_update.pk})
+        
+        # Tenta renomear 'cat_s1' com o nome da 'cat_collision_target'
+        data: Dict[str, str] = {"category": target_category.category}
+        
+        response = api_client.patch(url, data, format='json')
+        
+        assert response.status_code == 400
+        assert response.data['sucesso'] is False # type: ignore
+
+    def test_update_category_with_invalid_data_fails(
+        self, api_client: APIClient, scenario_data: Dict[str, Any]
+    ) -> None:
+        """
+        Testa as validações de tipo de dados do serializer (ex: 'category'
+        muito curto). Retorna 400.
+        """
+        user: User = scenario_data["owner"] # type: ignore
+        api_client.force_authenticate(user=user)
+        category: Category = scenario_data["cat_s1"] # type: ignore
+        url: str = reverse("alterar-categoria", kwargs={'pk': category.pk})
+        
+        data: Dict[str, Any] = {
+            "category": "a", # min_length=3
+            "is_public": "nao-booleano" 
+        }
+        
+        response = api_client.patch(url, data, format='json')
+        
+        assert response.status_code == 400
+        assert response.data['sucesso'] is False # type: ignore
+
+    # --- Testes de Lógica de Atualização (Sucesso) ---
+
+    def test_update_category_move_sector_success(
+        self, api_client: APIClient, scenario_data: Dict[str, Any]
+    ) -> None:
+        """
+        Testa se o Dono pode mover uma categoria do Setor 1 para o Setor 2.
+        """
+        user: User = scenario_data["owner"] # type: ignore
+        api_client.force_authenticate(user=user)
+        
+        category: Category = scenario_data["cat_s1"] # type: ignore
+        sector_2: Sector = scenario_data["sector_2"] # type: ignore
+        url: str = reverse("alterar-categoria", kwargs={'pk': category.pk})
+
+        data: Dict[str, Any] = {
+            "category_sector": sector_2.pk
+        }
+        
+        response = api_client.patch(url, data, format='json')
+        
+        assert response.status_code == 200
+        assert response.data['sucesso'] is True # type: ignore
+        
+        category.refresh_from_db()
+        assert category.category_sector == sector_2
 
 @pytest.mark.django_db
 class TestCreateCategoryAPI:

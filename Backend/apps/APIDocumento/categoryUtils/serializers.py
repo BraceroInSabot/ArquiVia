@@ -134,3 +134,35 @@ class CategoryDetailSerializer(serializers.ModelSerializer):
             'enterprise_name',
             'sector_name'
         ]
+        
+class UpdateCategorySerializer(serializers.ModelSerializer):
+    """
+    Serializer para a atualização (PATCH) de uma Categoria.
+    Valida os campos que podem ser alterados.
+    """
+    category = serializers.CharField(min_length=3, max_length=100, required=False)
+    description = serializers.CharField(max_length=1000, required=False, allow_blank=True)
+    
+    category_sector = serializers.PrimaryKeyRelatedField(
+        queryset=Sector.objects.all(),
+        required=False,
+        allow_null=True
+    )
+    is_public = serializers.BooleanField(required=False)
+
+    class Meta:
+        model = Category
+        fields = ['category', 'description', 'category_sector', 'is_public']
+
+    def validate_category(self, value):
+        """
+        Garante que o novo nome da categoria não entre em conflito
+        com outro nome na mesma empresa.
+        """
+        enterprise = self.instance.category_enterprise # type: ignore
+        if Category.objects.filter(
+            category_enterprise=enterprise, 
+            category=value
+        ).exclude(pk=self.instance.pk).exists():# type: ignore
+            raise serializers.ValidationError("Uma categoria com este nome já existe nesta empresa.")
+        return value

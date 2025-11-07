@@ -1,8 +1,10 @@
 from django.contrib.auth import get_user_model
 from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from apps.APIDocumento.categoryUtils.permissions import IsCategoryVisible
 from apps.APIDocumento.permissions import IsLinkedToDocument
 from apps.core.utils import default_response
-from apps.APIDocumento.categoryUtils.serializers import CategoryListSerializer, CreateCategorySerializer
+from apps.APIDocumento.categoryUtils.serializers import CategoryDetailSerializer, CategoryListSerializer, CreateCategorySerializer
 from apps.APIDocumento.models import Classification, Classification_Privacity, Classification_Status, Document, Category
 from typing import Type
 from rest_framework.views import APIView, Response
@@ -31,7 +33,43 @@ class CreateCategoryView(APIView):
         ret.status_code = 201
         ret.data = default_response(success=True, message="Categoria criada com sucesso!", data={"category_id": category_created.category_id}) # type: ignore
         return ret
+
+class RetrieveCategoryView(APIView):
+    """
+    Recupera os detalhes de uma única Categoria, identificada pelo 'pk' na URL.
     
+    A permissão é verificada pela classe IsCategoryVisible:
+    - Garante que o usuário esteja autenticado.
+    - Garante que a categoria seja pública ou que o usuário pertença à empresa.
+    """
+    permission_classes = [IsAuthenticated, IsCategoryVisible]
+
+    def get(self, request, pk: int) -> HttpResponse:
+        """
+        Manipula a requisição GET para recuperar uma categoria específica.
+
+        Args:
+            request (Request): O objeto da requisição do usuário.
+            pk (int): A chave primária da Categoria, vinda da URL.
+
+        Returns:
+            HttpResponse: Uma resposta contendo os detalhes da categoria.
+        """
+        queryset = Category.objects.select_related(
+            'category_enterprise__owner', 
+            'category_sector'
+        )
+        category = get_object_or_404(queryset, pk=pk)
+
+        self.check_object_permissions(request, category)
+
+        serializer = CategoryDetailSerializer(category)
+
+        res: HttpResponse = Response()
+        res.status_code = 200
+        res.data = default_response(success=True, data=serializer.data)
+        return res
+
 class ListCategoryView(APIView):
     """
     Recupera uma lista de todas as Categorias visíveis para o usuário.

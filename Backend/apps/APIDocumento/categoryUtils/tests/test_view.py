@@ -347,3 +347,168 @@ class TestListCategoryView:
 
         assert response.status_code == 401
         assert response.data['sucesso'] is False # type: ignore
+        
+@pytest.mark.django_db
+class TestRetrieveCategoryAPI:
+    """
+    Suíte de testes para o endpoint RetrieveCategoryView (/categoria/consultar/<int:pk>/).
+    """
+
+    @pytest.fixture
+    def api_client(self) -> APIClient:
+        """Returns an APIClient instance for use in tests."""
+        return APIClient()
+
+    @pytest.fixture
+    def scenario_data(self) -> Dict[str, Any]:
+        """
+        Cria um cenário com utilizadores, empresas e categorias
+        para testar a lógica de visibilidade (público vs. privado-vinculado).
+        """
+        user_A = User.objects.create_user(username="retrieve_cat_A", password="pw", email="A@e.com", name="User A")
+        user_B = User.objects.create_user(username="retrieve_cat_B", password="pw", email="B@e.com", name="User B")
+
+        enterprise_A = Enterprise.objects.create(name="Corp A", owner=user_A)
+        enterprise_B = Enterprise.objects.create(name="Corp B", owner=user_B)
+        
+        # Categoria 1: Privada e Vinculada ao User A
+        cat_A_private = Category.objects.create(category="Privada A", category_enterprise=enterprise_A, is_public=False)
+        
+        # Categoria 2: Pública (em uma empresa não relacionada)
+        cat_public = Category.objects.create(category="Pública", category_enterprise=enterprise_B, is_public=True)
+        
+        # Categoria 3: Privada e Não Vinculada ao User A
+        cat_B_private = Category.objects.create(category="Privada B", category_enterprise=enterprise_B, is_public=False)
+
+        return {
+            "user_A": user_A,
+            "user_B": user_B,
+            "cat_A_private": cat_A_private,
+            "cat_public": cat_public,
+            "cat_B_private": cat_B_private,
+        }
+
+    # Success
+
+    def test_retrieve_linked_private_category_success(
+        self, api_client: APIClient, scenario_data: Dict[str, Any]
+    ) -> None:
+        """
+        Testa se um utilizador vinculado pode ver a sua categoria privada.
+
+        Args:
+            self: A instância de teste.
+            api_client (APIClient) : cliente de API para uso em login
+            scenario_data (Dict[str, object]) : cenário para simular um ambiente determinado
+        
+        Return:
+            None
+        """
+        user: User = scenario_data["user_A"] # type: ignore
+        category: Category = scenario_data["cat_A_private"] # type: ignore
+        api_client.force_authenticate(user=user)
+        url: str = reverse("consultar-categoria", kwargs={'pk': category.pk}) # Assumindo o nome da URL
+
+        response = api_client.get(url)
+
+        assert response.status_code == 200
+        assert response.data['sucesso'] is True # type: ignore
+        assert response.data['data']['category_id'] == category.pk # type: ignore
+        assert response.data['data']['category'] == "Privada A" # type: ignore
+
+    def test_retrieve_public_category_success(
+        self, api_client: APIClient, scenario_data: Dict[str, Any]
+    ) -> None:
+        """
+        Testa se um utilizador (mesmo não vinculado) pode ver uma categoria pública.
+
+        Args:
+            self: A instância de teste.
+            api_client (APIClient) : cliente de API para uso em login
+            scenario_data (Dict[str, object]) : cenário para simular um ambiente determinado
+        
+        Return:
+            None
+        """
+        user: User = scenario_data["user_A"] # type: ignore
+        category: Category = scenario_data["cat_public"] # type: ignore
+        api_client.force_authenticate(user=user)
+        url: str = reverse("consultar-categoria", kwargs={'pk': category.pk})
+
+        response = api_client.get(url)
+
+        assert response.status_code == 200
+        assert response.data['sucesso'] is True # type: ignore
+        assert response.data['data']['category'] == "Pública" # type: ignore
+
+    # Failures
+
+    def test_retrieve_unlinked_private_category_fails(
+        self, api_client: APIClient, scenario_data: Dict[str, Any]
+    ) -> None:
+        """
+        Testa se um utilizador não vinculado recebe 403 ao tentar ver uma categoria privada.
+
+        Args:
+            self: A instância de teste.
+            api_client (APIClient) : cliente de API para uso em login
+            scenario_data (Dict[str, object]) : cenário para simular um ambiente determinado
+        
+        Return:
+            None
+        """
+        user: User = scenario_data["user_A"] # type: ignore
+        category: Category = scenario_data["cat_B_private"] # type: ignore
+        api_client.force_authenticate(user=user)
+        url: str = reverse("consultar-categoria", kwargs={'pk': category.pk})
+
+        response = api_client.get(url)
+
+        assert response.status_code == 403
+        assert response.data['sucesso'] is False # type: ignore
+
+    def test_retrieve_non_existent_category_fails(
+        self, api_client: APIClient, scenario_data: Dict[str, Any]
+    ) -> None:
+        """
+        Testa se requisitar uma categoria com PK inexistente retorna 404.
+
+        Args:
+            self: A instância de teste.
+            api_client (APIClient) : cliente de API para uso em login
+            scenario_data (Dict[str, object]) : cenário para simular um ambiente determinado
+        
+        Return:
+            None
+        """
+        user: User = scenario_data["user_A"] # type: ignore
+        api_client.force_authenticate(user=user)
+        non_existent_pk: int = 999
+        url: str = reverse("consultar-categoria", kwargs={'pk': non_existent_pk})
+
+        response = api_client.get(url)
+                
+        assert response.status_code == 404
+        assert response.data['sucesso'] is False # type: ignore
+
+    def test_retrieve_category_by_anonymous_fails(
+        self, api_client: APIClient, scenario_data: Dict[str, Any]
+    ) -> None:
+        """
+        Testa se um utilizador não autenticado (anônimo) recebe um erro 401.
+
+        Args:
+            self: A instância de teste.
+            api_client (APIClient) : cliente de API para uso em login
+            scenario_data (Dict[str, object]) : cenário para simular um ambiente determinado
+        
+        Return:
+            None
+        """
+        category: Category = scenario_data["cat_A_private"] # type: ignore
+        url: str = reverse("consultar-categoria", kwargs={'pk': category.pk})
+
+        response = api_client.get(url)
+
+        assert response.status_code == 401
+        assert response.data['sucesso'] is False # type: ignore

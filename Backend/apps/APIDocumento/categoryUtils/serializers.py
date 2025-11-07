@@ -116,3 +116,21 @@ class CategoryListSerializer(serializers.ModelSerializer):
             'enterprise_name',
             'sector_name'
         ]
+        
+class CategoryDetailSerializer(serializers.ModelSerializer):
+    """
+    Serializer para exibir os detalhes de uma Categoria.
+    """
+    enterprise_name = serializers.CharField(source='category_enterprise.name', read_only=True)
+    sector_name = serializers.CharField(source='category_sector.name', read_only=True, allow_null=True)
+
+    class Meta:
+        model = Category
+        fields = [
+            'category_id',
+            'category',
+            'description',
+            'is_public',
+            'enterprise_name',
+            'sector_name'
+        ]

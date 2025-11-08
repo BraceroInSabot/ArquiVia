@@ -32,18 +32,13 @@ const CreateEnterpriseForm = () => {
               setLoading(false); // Pare o loading se a validação falhar
               return;
             }
-
-            // 3. Verifique se um arquivo foi selecionado
-            if (!imageFile) {
-              setError("Por favor, selecione uma imagem.");
-              setLoading(false);
-              return;
-            }
             
             // 4. Crie o FormData
             const formData = new FormData();
             formData.append('name', name);
-            formData.append('image', imageFile);
+            if (imageFile) {
+              formData.append('image', imageFile);
+            }
 
             // 5. Envie o formData para o serviço
             const api_response = await enterpriseService.createEnterprise(formData);
@@ -83,7 +78,6 @@ const CreateEnterpriseForm = () => {
                     id="image"
                       accept="image/jpeg, image/png, image/svg+xml"
                       onChange={handleImageChange}
-                    required
                 />
                 <br />
                 <button type="submit" disabled={loading}>

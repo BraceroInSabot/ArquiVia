@@ -49,16 +49,15 @@ class UpdateClassificationSerializer(ModelSerializer):
         required=False,
         allow_null=True
     )
-    reviewer = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(),
-        required=False,
-        allow_null=True
-    )
+    reviewer_id = serializers.IntegerField(source='reviewer.id', read_only=True, allow_null=True)
+    reviewer_username = serializers.CharField(source='reviewer.username', read_only=True, allow_null=True)
+    
     class Meta:
         model = Classification
         fields = [
             'is_reviewed',
             'classification_status',
-            'reviewer',
+            'reviewer_id',
+            'reviewer_username',
             'privacity',
         ]

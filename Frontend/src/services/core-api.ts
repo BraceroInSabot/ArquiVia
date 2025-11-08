@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-const BASE: string = "https://bracero.com.br/"
-// const BASE: string = "http://127.0.0.1:8000/"
+// const BASE: string = "https://bracero.com.br/"
+const BASE: string = "http://127.0.0.1:8000/"
 const VERSION: string = "api/v2/"
 const URL: string = BASE + VERSION
 
@@ -157,6 +157,30 @@ export interface DocumentList {
 export interface UpdateDocumentPayload {
   title?: string;
   content?: string;
+}
+
+export interface ClassificationStatus {
+  status: string;
+}
+
+export interface ClassificationPrivacity {
+  privacity: string;
+}
+
+export interface Classification {
+  classification_id: number;
+  is_reviewed: boolean;
+  classification_status: ClassificationStatus | null;
+  reviewer_username: string | null; 
+  reviewer_id: number | null;   
+  privacity: ClassificationPrivacity | null;
+}
+
+export interface UpdateClassificationPayload {
+  is_reviewed?: boolean;
+  classification_status?: number | null;
+  privacity?: number | null;
+  reviewer?: number | null;
 }
 
 const api = axios.create({

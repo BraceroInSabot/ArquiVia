@@ -1,5 +1,5 @@
 import api from '../core-api';
-import type { CreateDocument, Document, DocumentList, ResponseStructure, UpdateDocumentPayload} from '../core-api';
+import type { Classification, CreateDocument, Document, DocumentList, ResponseStructure, UpdateDocumentPayload, UpdateClassificationPayload} from '../core-api';
 
 const documentService = {
     /**
@@ -40,6 +40,24 @@ const documentService = {
    */
   updateDocument(document_id: number, payload: UpdateDocumentPayload): Promise<{ data: ResponseStructure<Document> }> {
     return api.patch(`/documento/alterar/${document_id}/`, payload);
+  },
+
+  /**
+   * Recupera os dados de classificação de um documento.
+   * @param document_id - O ID (pk) do documento.
+   */
+  getClassification(document_id: number): Promise<{ data: ResponseStructure<Classification> }> {
+  	return api.get(`/documento/classificacao/consultar/${document_id}/`);
+  },
+
+  /**
+   * Altera os dados da classificação do documento parcialmente.
+   * @param document_id 
+   * @param payload 
+   * @returns 
+   */
+  updateClassification(document_id: number, payload: UpdateClassificationPayload): Promise<{ data: ResponseStructure<Classification> }> {
+    return api.patch(`/documento/classificacao/alterar/${document_id}/`, payload);
   },
 };
 

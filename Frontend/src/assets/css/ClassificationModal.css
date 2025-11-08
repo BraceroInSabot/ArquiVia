@@ -1,0 +1,34 @@
+/* Este arquivo é focado nos detalhes da classificação.
+   Ele reutiliza .modal-overlay, .modal-content, .modal-close-btn 
+   do seu CSS 'EditorTheme.css' (assumindo que eles estão lá). */
+
+.classification-details {
+  margin-top: 1.5rem;
+  font-size: 1.1rem;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 4px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.info-label {
+  font-weight: bold;
+  color: #333;
+}
+
+.info-value {
+  color: #555;
+  font-style: italic;
+}
+
+.classification-error {
+  color: #D8000C; /* Vermelho */
+  background-color: #FFD2D2;
+  border: 1px solid #D8000C;
+  padding: 10px;
+  border-radius: 4px;
+  text-align: center;
+}

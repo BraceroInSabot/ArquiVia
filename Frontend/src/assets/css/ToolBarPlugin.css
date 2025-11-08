@@ -6,11 +6,13 @@
   flex-wrap: wrap;       /* ⭐️ Permite que os itens quebrem para a próxima linha */
   align-items: center;   /* Alinha os itens verticalmente no centro */
   gap: 6px;              /* Adiciona um pequeno espaço entre todos os itens */
-  
+  position: sticky;
+  top: 0;
   padding: 8px 10px;
   margin-bottom: 1px;
-  background-color: #f9f9f9;
+  background-color: #f9f9f9 !important;
   border-bottom: 1px solid #ddd;
+  overlay: 100%;
 }
 
 /* 2. Estilos dos Itens Individuais (Botões, Selects, etc.) */

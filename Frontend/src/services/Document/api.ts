@@ -1,5 +1,5 @@
 import api from '../core-api';
-import type { Classification, CreateDocument, Document, DocumentList, ResponseStructure, UpdateDocumentPayload, UpdateClassificationPayload} from '../core-api';
+import type { Classification, CreateDocument, Document, DocumentList, ResponseStructure, UpdateDocumentPayload, UpdateClassificationPayload, Category, AddCategoriesPayload} from '../core-api';
 
 const documentService = {
     /**
@@ -59,6 +59,24 @@ const documentService = {
   updateClassification(document_id: number, payload: UpdateClassificationPayload): Promise<{ data: ResponseStructure<Classification> }> {
     return api.patch(`/documento/classificacao/alterar/${document_id}/`, payload);
   },
+
+  /**
+   * Retorna as categorias vinculadas ao documento.
+   * @param document_id - O ID (pk) do documento.
+   */
+  listCategoriesByDocument(document_id: number): Promise<{ data: ResponseStructure<Category[]> }> {
+    return api.get(`/documento/categoria/visualizar/vinculos/${document_id}/`);
+  },
+  
+  /**
+   * Vincula a lista de categorias para o documento.
+   * @param document_id - Documento a ser vinculado.
+   * @param payload - Lista de categorias.
+   * @returns 
+   */
+  linkCategoriesToDocument(document_id: number, payload: AddCategoriesPayload): Promise<{ data: ResponseStructure<Category[]> }> {
+    return api.post(`/documento/categoria/vincular-categorias/${document_id}/`, payload);
+  }
 };
 
 export default documentService;

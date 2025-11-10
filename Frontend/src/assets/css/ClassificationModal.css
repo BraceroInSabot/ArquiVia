@@ -64,3 +64,65 @@
   background-color: #007bff;
   color: white;
 }
+
+/* ... (Seus estilos existentes para .form-item, .modal-save-btn, etc.) ... */
+
+/* --- Divisor entre Classificação e Categorias --- */
+.modal-divider {
+  border: none;
+  border-top: 1px solid #eee;
+  margin: 1.5rem 0;
+}
+
+/* --- Estilos do Gerenciador de Categorias --- */
+.category-manager {
+  width: 100%;
+}
+
+.section-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #333;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 8px;
+}
+
+.category-empty-text {
+  font-style: italic;
+  color: #888;
+  text-align: center;
+  margin: 1rem 0;
+}
+
+.category-pill-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.category-pill {
+  background-color: #e9ecef;
+  color: #495057;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+}
+
+/* (Estilo para o botão 'x' de remover - para o futuro) */
+.remove-pill-btn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: #888;
+  cursor: pointer;
+  margin-left: 6px;
+  padding: 0 4px;
+}
+.remove-pill-btn:hover {
+  color: #333;
+}

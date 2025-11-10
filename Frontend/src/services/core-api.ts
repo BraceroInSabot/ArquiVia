@@ -184,6 +184,15 @@ export interface UpdateClassificationPayload {
   reviewer?: number | null;
 }
 
+export interface Category {
+  category_id: number;
+  category: string;
+}
+
+export interface AddCategoriesPayload {
+  categories_id: number[];
+}
+
 const api = axios.create({
   baseURL: URL,
   withCredentials: true,

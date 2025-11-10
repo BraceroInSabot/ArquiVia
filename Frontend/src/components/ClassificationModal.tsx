@@ -1,14 +1,19 @@
 import { useState, useEffect, useMemo, type ChangeEvent } from 'react';
 import { createPortal } from 'react-dom';
 import documentService from '../services/Document/api';
-import type { Classification, UpdateClassificationPayload } from '../services/core-api';
-import { useAuth } from '../contexts/AuthContext';
+import type { 
+  Classification, 
+  UpdateClassificationPayload,
+  Category // <-- 1. Importe o tipo Category
+} from '../services/core-api';
+import { useAuth } from '../contexts/AuthContext'; 
 import '../assets/css/ClassificationModal.css';
 
-// 1. Importe os novos componentes e tipos
+// Importe os componentes filhos e tipos
 import { type ClassificationFormData, STATUS_OPTIONS, PRIVACITY_OPTIONS } from '../types/classification';
 import ConfirmCloseModal from './ConfirmCloseModal';
 import ClassificationForm from './ClassificationForm';
+import CategoryManager from './CategoryManager'; // <-- 2. Importe o Gerenciador de Categoria
 
 interface ClassificationModalProps {
   documentId: number;
@@ -22,6 +27,9 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
   const [formData, setFormData] = useState<ClassificationFormData | null>(null);
   const [reviewerName, setReviewerName] = useState<string>("Nenhum");
   
+  // --- 3. ADICIONE O ESTADO PARA CATEGORIAS ---
+  const [categories, setCategories] = useState<Category[]>([]);
+  
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,20 +39,24 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
     return JSON.stringify(originalData) !== JSON.stringify(formData);
   }, [originalData, formData]);
 
-  // --- Lógica de Busca (Sem mudanças) ---
+  // --- 4. ATUALIZE A LÓGICA DE BUSCA (Promise.all) ---
   useEffect(() => {
     const fetchData = async () => {
       if (!documentId) return;
       setIsLoading(true);
       setError(null);
       try {
-        const response = await documentService.getClassification(documentId);
-        const classificationData = response.data.data;
+        // Busca Classificação E Categorias em paralelo
+        const [classificationRes, categoriesRes] = await Promise.all([
+          documentService.getClassification(documentId),
+          documentService.listCategoriesByDocument(documentId)
+        ]);
 
+        // Processa Classificação
+        const classificationData = classificationRes.data.data;
         const statusId = STATUS_OPTIONS.find(
           opt => opt.name === classificationData.classification_status?.status
         )?.id || null;
-        
         const privacityId = PRIVACITY_OPTIONS.find(
           opt => opt.name === classificationData.privacity?.privacity
         )?.id || null;
@@ -60,6 +72,9 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
         setFormData(initialFormData);
         setReviewerName(classificationData.reviewer?.name || "Nenhum");
 
+        // Processa Categorias
+        setCategories(categoriesRes.data.data || []);
+
       } catch (err: any) {
         console.error("Erro ao buscar dados do modal:", err);
         const errMsg = err.response?.data?.message || "Falha ao carregar dados.";
@@ -71,7 +86,7 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
     fetchData();
   }, [documentId]);
   
-  // --- Lógica de Salvar (Sem mudanças) ---
+  // --- (Lógica de handleSave - Sem mudanças) ---
   const handleSave = async () => {
     if (!formData || !isDirty || !user || !user.data) {
        if (!user || !user.data) {
@@ -116,7 +131,7 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
     }
   };
 
-  // --- Lógica de Fechar (Sem mudanças) ---
+  // --- (Lógica de handleCloseAttempt, handleFormChange, handleTakeReview - Sem mudanças) ---
   const handleCloseAttempt = () => {
     if (isDirty) {
       setShowConfirmClose(true);
@@ -125,7 +140,6 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
     }
   };
 
-  // --- Handlers do Formulário (Sem mudanças) ---
   const handleFormChange = (e: ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
     const { name, value } = e.target;
 
@@ -155,7 +169,6 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
     
     setFormData(prev => ({
       ...prev,
-      // Garante que todos os campos da interface estão presentes
       is_reviewed: true,
       classification_status: prev?.classification_status || null,
       privacity: prev?.privacity || null,
@@ -165,30 +178,42 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
     setReviewerName(user.data.name);
   };
 
-  // --- RENDERIZAÇÃO (Refatorada) ---
+
+  // --- 5. RENDERIZAÇÃO ATUALIZADA ---
   const renderContent = () => {
-    if (isLoading || !formData) {
-      return <p>Carregando classification...</p>;
+    if (isLoading) { 
+      return <p>Carregando dados do documento...</p>;
     }
     if (error) {
       return <p className="classification-error">{error}</p>;
     }
+    if (!formData) {
+      return <p>Nenhuma informação de classificação encontrada.</p>;
+    }
 
     const isCurrentUserTheReviewer = formData.reviewer !== null && formData.reviewer === user?.data.user_id;
 
-    // 2. Renderiza o componente de formulário
     return (
-      <ClassificationForm
-        formData={formData}
-        reviewerName={reviewerName}
-        isCurrentUserTheReviewer={isCurrentUserTheReviewer}
-        isDirty={isDirty}
-        isSaving={isSaving}
-        onFormChange={handleFormChange}
-        onTakeReview={handleTakeReview}
-        onSave={handleSave}
-      />
-    );
+      <>
+        {/* Componente 1: Formulário de Classificação */}
+        <ClassificationForm
+          formData={formData}
+          reviewerName={reviewerName}
+          isCurrentUserTheReviewer={isCurrentUserTheReviewer}
+          isDirty={isDirty}
+          isSaving={isSaving}
+          onFormChange={handleFormChange}
+          onTakeReview={handleTakeReview}
+          onSave={handleSave}
+        />
+
+        {/* Divisor Visual */}
+        <hr className="modal-divider" />
+
+        {/* Componente 2: Gerenciador de Categorias */}
+        <CategoryManager categories={categories} />
+      </>
+   );
   };
 
   return createPortal(
@@ -196,19 +221,18 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
       <div className="modal-overlay" onClick={handleCloseAttempt}>
         <div className="modal-content" onClick={(e) => e.stopPropagation()}>
           <button className="modal-close-btn" onClick={handleCloseAttempt}>&times;</button>
-          <h2>Editar Classificação</h2>
+          <h2>Editar Documento</h2> 
           {renderContent()}
         </div>
       </div>
 
-      {/* 3. Renderiza o modal de confirmação */}
       {showConfirmClose && (
         <ConfirmCloseModal
           onCancel={() => setShowConfirmClose(false)}
           onConfirm={() => {
             setShowConfirmClose(false);
             onClose();
-          }}
+         }}
         />
       )}
     </>

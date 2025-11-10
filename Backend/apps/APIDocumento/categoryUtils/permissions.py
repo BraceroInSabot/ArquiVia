@@ -44,7 +44,6 @@ class IsCategoryEditor(BasePermission):
             return False
 
         user = request.user
-
         if obj.category_enterprise.owner == user:
             return True
 

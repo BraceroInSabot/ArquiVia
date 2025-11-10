@@ -263,3 +263,43 @@ class LinkCategoriesToDocumentView(APIView):
             data=response_serializer.data
         )
         return res
+    
+class ListCategoriesByDocumentView(APIView):
+    permission_classes = [IsAuthenticated, IsDocumentEditor]
+
+    def get(self, request, pk: int) -> HttpResponse:
+        """
+        Retorna as categorias vinculadas ao documento.
+        
+        Args:
+            pk (int): Indice do Documento.
+        
+        Returns:
+            HttpResponse: Lista de categorias.
+        """
+        document_query = Document.objects.select_related(
+            'sector__enterprise__owner',
+            'sector__manager'
+        )
+        document = get_object_or_404(document_query, pk=pk)
+
+        print(document)
+        self.check_object_permissions(request, document)
+
+        is_owner = document.sector.enterprise.owner == request.user # type: ignore
+        is_manager = document.sector.manager == request.user # type: ignore
+        is_sector_admin = SectorUser.objects.filter(user=request.user, sector=document.sector, is_adm=True).exists() # type: ignore
+
+        if is_owner or is_manager or is_sector_admin:
+            categories = document.categories.all()
+        else:
+            categories = document.categories.filter(
+                Q(is_public=True) |
+                Q(category_sector=document.sector) # type: ignore
+            ).distinct()
+        serializer = CategoryDetailSerializer(categories, many=True)
+        
+        res: HttpResponse = Response()
+        res.status_code = 200
+        res.data = default_response(success=True, data=serializer.data)
+        return res

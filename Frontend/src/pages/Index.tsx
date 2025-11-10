@@ -514,4 +514,4 @@ const IndexPage = () => {
   );
 };
 
-export default LandingPage;
+export default IndexPage;

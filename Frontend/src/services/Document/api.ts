@@ -76,6 +76,14 @@ const documentService = {
    */
   linkCategoriesToDocument(document_id: number, payload: AddCategoriesPayload): Promise<{ data: ResponseStructure<Category[]> }> {
     return api.post(`/documento/categoria/vincular-categorias/${document_id}/`, payload);
+  },
+
+  /**
+   * Retorna a pesquisa por Categorias.
+   * @param document_id - ID do documento. 
+   */
+  listDiponibleCategories(document_id: number): Promise<{ data: ResponseStructure<Category[]> }> {
+    return api.get(`/documento/categoria/visualizar/disponiveis/${document_id}/`);
   }
 };
 

@@ -236,7 +236,7 @@ class DocumentAddCategoriesSerializer(serializers.Serializer):
         
         return data
 
-class ListCategoriesByDocumentId(serializers.Serializer):
+class ListCategoriesByDocumentId(serializers.ModelSerializer):
 
     class Meta:
         model = Category

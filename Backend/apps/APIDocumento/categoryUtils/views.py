@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404
 from apps.APIDocumento.categoryUtils.permissions import IsCategoryEditor, IsCategoryVisible, IsDocumentEditor
 from apps.APIDocumento.permissions import IsLinkedToDocument
 from apps.core.utils import default_response
-from apps.APIDocumento.categoryUtils.serializers import CategoryDetailSerializer, CategoryListSerializer, CreateCategorySerializer, DeleteCategorySerializer, DocumentAddCategoriesSerializer, UpdateCategorySerializer
+from apps.APIDocumento.categoryUtils.serializers import CategoryDetailSerializer, CategoryListSerializer, CreateCategorySerializer, DeleteCategorySerializer, DocumentAddCategoriesSerializer, ListCategoriesByDocumentId, UpdateCategorySerializer
 from apps.APIDocumento.models import Classification, Classification_Privacity, Classification_Status, Document, Category
 from typing import Type
 from rest_framework.views import APIView, Response
@@ -283,7 +283,6 @@ class ListCategoriesByDocumentView(APIView):
         )
         document = get_object_or_404(document_query, pk=pk)
 
-        print(document)
         self.check_object_permissions(request, document)
 
         is_owner = document.sector.enterprise.owner == request.user # type: ignore
@@ -297,7 +296,9 @@ class ListCategoriesByDocumentView(APIView):
                 Q(is_public=True) |
                 Q(category_sector=document.sector) # type: ignore
             ).distinct()
-        serializer = CategoryDetailSerializer(categories, many=True)
+        
+        print(categories)
+        serializer = ListCategoriesByDocumentId(categories, many=True)
         
         res: HttpResponse = Response()
         res.status_code = 200

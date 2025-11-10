@@ -171,8 +171,9 @@ export interface Classification {
   classification_id: number;
   is_reviewed: boolean;
   classification_status: ClassificationStatus | null;
-  reviewer_username: string | null; 
-  reviewer_id: number | null;   
+  reviewer: {
+    [key: string]: any | null;
+  } | null;
   privacity: ClassificationPrivacity | null;
 }
 

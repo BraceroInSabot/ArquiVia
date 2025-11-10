@@ -14,15 +14,16 @@ class ClassificationPrivacitySerializer(serializers.ModelSerializer):
     class Meta:
         model = Classification_Privacity
         fields = ['privacity']
+        
+class ReviewerSerializer(ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['user_id', 'name', 'username']
+        
 
 class RetrieveClassificationSerializer(ModelSerializer):
-    
-    reviewer = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(),
-        source='reviewer.id',
-        required=False,
-        allow_null=True 
-    )
+
+    reviewer = ReviewerSerializer(read_only=True)
     
     classification_status = ClassificationStatusSerializer(read_only=True)
     

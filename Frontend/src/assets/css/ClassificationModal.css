@@ -32,3 +32,35 @@
   border-radius: 4px;
   text-align: center;
 }
+
+/* ... (seus estilos existentes para .form-item, .modal-save-btn, etc) ... */
+
+/* Novo container para o campo de revisor (nome + botão) */
+.reviewer-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Estilo do nome (que já existia) */
+.info-value {
+  color: #555;
+  font-style: italic;
+}
+
+/* Novo botão "Tornar-se Revisor" */
+.take-review-btn {
+  background: none;
+  border: 1px solid #007bff;
+  color: #007bff;
+  padding: 3px 8px;
+  font-size: 0.8rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.take-review-btn:hover {
+  background-color: #007bff;
+  color: white;
+}

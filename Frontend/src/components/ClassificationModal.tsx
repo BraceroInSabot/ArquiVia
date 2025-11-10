@@ -1,15 +1,14 @@
-import React, { useState, useEffect, useMemo, ChangeEvent } from 'react';
+import React, { useState, useEffect, useMemo, type ChangeEvent } from 'react';
 import { createPortal } from 'react-dom';
 import documentService from '../services/Document/api';
 import type { 
   Classification, 
   UpdateClassificationPayload 
 } from '../services/core-api';
-// 1. Importa o hook de autenticação
 import { useAuth } from '../contexts/AuthContext'; 
 import '../assets/css/ClassificationModal.css';
 
-// --- Valores Estáticos (Conforme sua definição) ---
+// --- Mapeamento Estático (IDs DEVE BATER COM O BANCO) ---
 const STATUS_OPTIONS = [
   { id: 1, name: "Concluído" },
   { id: 2, name: "Em andamento" },
@@ -35,9 +34,9 @@ interface FormData {
   reviewer: number | null; // Armazena o ID do revisor
 }
 
-// Modal de Confirmação (aninhado)
-const ConfirmCloseModal: React.FC<{ onConfirm: () => void, onCancel: () => void }> = ({ onConfirm, onCancel }) => {
-  return createPortal(
+// Modal de Confirmação (aninhado - sem mudanças)
+const ConfirmCloseModal: React.FC<{ onConfirm: () => void, onCancel: () => void }> = ({ onConfirm, onCancel }) => (
+  createPortal(
     <div className="modal-overlay confirm-overlay">
       <div className="modal-content confirm-modal">
         <h4>Sair sem Salvar?</h4>
@@ -49,15 +48,18 @@ const ConfirmCloseModal: React.FC<{ onConfirm: () => void, onCancel: () => void 
       </div>
     </div>,
     document.body
-  );
-};
+  )
+);
 
 export default function ClassificationModal({ documentId, onClose }: ClassificationModalProps) {
-  // 2. Pega o usuário logado (com a estrutura correta)
   const { user } = useAuth(); 
 
   const [originalData, setOriginalData] = useState<FormData | null>(null);
   const [formData, setFormData] = useState<FormData | null>(null);
+  
+  // --- NOVO ESTADO ---
+  // Armazena o NOME do revisor (para exibição)
+  const [reviewerName, setReviewerName] = useState<string>("Nenhum");
   
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -68,7 +70,7 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
     return JSON.stringify(originalData) !== JSON.stringify(formData);
   }, [originalData, formData]);
 
-  // --- BUSCA DE DADOS ---
+  // --- BUSCA DE DADOS (ATUALIZADO) ---
   useEffect(() => {
     const fetchData = async () => {
       if (!documentId) return;
@@ -78,7 +80,6 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
         const response = await documentService.getClassification(documentId);
         const classificationData = response.data.data;
 
-        // Mapeia Nomes (do GET) para IDs (do formulário)
         const statusId = STATUS_OPTIONS.find(
           opt => opt.name === classificationData.classification_status?.status
         )?.id || null;
@@ -86,17 +87,17 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
         const privacityId = PRIVACITY_OPTIONS.find(
           opt => opt.name === classificationData.privacity?.privacity
         )?.id || null;
-
+        
         const initialFormData: FormData = {
           is_reviewed: classificationData.is_reviewed,
           classification_status: statusId,
           privacity: privacityId,
-          // 3. Usa o 'reviewer_id' vindo da API
-          reviewer: classificationData.reviewer_id || null, 
+          reviewer: classificationData.reviewer?.user_id || null, 
         };
 
         setOriginalData(initialFormData);
         setFormData(initialFormData);
+        setReviewerName(classificationData.reviewer?.name || "Nenhum");
 
       } catch (err: any) {
         console.error("Erro ao buscar dados do modal:", err);
@@ -109,9 +110,8 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
     fetchData();
   }, [documentId]);
   
-  // --- LÓGICA DE SALVAR (CORRIGIDA) ---
+  // --- LÓGICA DE SALVAR (ATUALIZADA) ---
   const handleSave = async () => {
-    // 4. CORREÇÃO: Verifica se 'user' e 'user.data' existem
     if (!formData || !isDirty || !user || !user.data) {
        if (!user || !user.data) {
           setError("Você não está logado. Impossível salvar.");
@@ -122,21 +122,13 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
     setIsSaving(true);
     setError(null);
     try {
+      // O payload é exatamente o que está no 'formData'
       const payload: UpdateClassificationPayload = {
         is_reviewed: formData.is_reviewed,
         classification_status: formData.classification_status,
         privacity: formData.privacity,
+        reviewer: formData.reviewer // Este ID foi atualizado pelo 'handleTakeReview'
       };
-
-      // 5. CORREÇÃO: Lógica do Revisor usa 'user.data.user_id'
-      if (formData.is_reviewed && formData.reviewer !== user.data.user_id) {
-         // O usuário logado marcou 'Revisado'
-        payload.reviewer = user.data.user_id; 
-      }
-      if (!formData.is_reviewed && originalData?.is_reviewed) {
-        // O usuário desmarcou 'Revisado'
-        payload.reviewer = null; 
-      }
       
       const response = await documentService.updateClassification(documentId, payload);
       
@@ -149,11 +141,13 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
         is_reviewed: updatedData.is_reviewed,
         classification_status: statusId,
         privacity: privacityId,
-        reviewer: updatedData.reviewer_id || null, 
+        reviewer: updatedData.reviewer?.user_id || null, // Pega o ID da resposta
       };
       
-      setOriginalData(newFormData); // Define o novo "original"
-      setFormData(newFormData);     // Define o formulário
+      setOriginalData(newFormData);
+      setFormData(newFormData);
+      // Atualiza o nome de exibição
+      setReviewerName(updatedData.reviewer?.name || "Nenhum");
       
     } catch (err: any) {
       console.error("Erro ao salvar:", err);
@@ -173,7 +167,7 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
     }
   };
 
-  // --- HANDLERS DO FORMULÁRIO ---
+  // --- HANDLERS DO FORMULÁRIO (ATUALIZADO) ---
   const handleFormChange = (e: ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
     const { name, value } = e.target;
 
@@ -182,23 +176,56 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
 
       if (name === 'is_reviewed') {
         const { checked } = e.target as HTMLInputElement;
-        return { ...prev, is_reviewed: checked };
+        
+        // Se o usuário desmarcar "Revisado", o revisor é limpo
+        if (!checked) {
+          setReviewerName("Nenhum"); // Limpa o nome de exibição
+          return { ...prev, is_reviewed: false, reviewer: null };
+        }
+        // Se o usuário marcar "Revisado"
+        return { 
+          ...prev, 
+          is_reviewed: true,
+          // Se não houver revisor, define o usuário atual como revisor
+          reviewer: prev.reviewer || user?.data.user_id || null 
+        };
       }
 
+      // Para <select> de status e privacidade
       const processedValue = (value === "null" || value === "") ? null : Number(value);
-      
       return { ...prev, [name]: processedValue };
     });
   };
 
-  // --- RENDERIZAÇÃO ---
+  // --- NOVA FUNÇÃO ---
+  // Chamada pelo novo botão "Tornar-se Revisor"
+  const handleTakeReview = () => {
+    if (!user || !user.data) return;
+    
+    setFormData(prev => ({
+      ...prev,
+      // Ensure all properties of FormData are present, even if unchanged
+      is_reviewed: true,
+      classification_status: prev?.classification_status || null,
+      privacity: prev?.privacity || null,
+      reviewer: user.data.user_id 
+    }));
+    
+    // Atualiza o nome de exibição imediatamente
+    setReviewerName(user.data.name);
+  };
+
+  // --- RENDERIZAÇÃO (ATUALIZADO) ---
   const renderContent = () => {
-    if (isLoading) {
+    if (isLoading || !formData) { // Combinado
       return <p>Carregando classificação...</p>;
     }
     if (error) {
       return <p className="classification-error">{error}</p>;
     }
+
+    // Verifica se o usuário logado é o revisor atual
+    const isCurrentUserTheReviewer = formData.reviewer !== null && formData.reviewer === user?.data.user_id;
 
     return (
       <form className="classification-form" onSubmit={(e) => e.preventDefault()}>
@@ -243,13 +270,28 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
           </select>
         </div>
 
-        {/* Campo de Revisor (agora é automático/oculto) */}
+        {/* --- CAMPO DE REVISOR (ATUALIZADO) --- */}
         <div className="form-item">
           <label>Revisor</label>
-          {/* Mostra o nome do revisor (se houver), mas não é editável */}
-          <span className="info-value">
-            {originalData?.reviewer || (formData?.is_reviewed ? user?.data.name : "Nenhum")}
-          </span>
+          <div className="reviewer-field">
+            {/* Mostra o nome do revisor (do estado 'reviewerName') */}
+            <span className="info-value">
+              {/* Se o form está revisado, mostra o nome, senão "Nenhum" */}
+              {formData.is_reviewed ? reviewerName : "Nenhum"}
+            </span>
+            
+            {/* O botão só aparece se estiver 'Revisado' E 
+                o revisor atual NÃO for o usuário logado */}
+            {formData.is_reviewed && !isCurrentUserTheReviewer && (
+              <button 
+                type="button" 
+                className="take-review-btn" 
+                onClick={handleTakeReview}
+              >
+                Tornar-se Revisor
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="modal-footer">

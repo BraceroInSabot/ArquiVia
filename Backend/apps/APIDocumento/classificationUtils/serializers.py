@@ -17,10 +17,11 @@ class ClassificationPrivacitySerializer(serializers.ModelSerializer):
 
 class RetrieveClassificationSerializer(ModelSerializer):
     
-    reviewer = serializers.CharField(
-        source='reviewer.name',
-        read_only=True,
-        allow_null=True # Adicionado para permitir que o revisor seja nulo
+    reviewer = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        source='reviewer.id',
+        required=False,
+        allow_null=True 
     )
     
     classification_status = ClassificationStatusSerializer(read_only=True)
@@ -49,15 +50,17 @@ class UpdateClassificationSerializer(ModelSerializer):
         required=False,
         allow_null=True
     )
-    reviewer_id = serializers.IntegerField(source='reviewer.id', read_only=True, allow_null=True)
-    reviewer_username = serializers.CharField(source='reviewer.username', read_only=True, allow_null=True)
+    reviewer = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        required=False,
+        allow_null=True
+    )
     
     class Meta:
         model = Classification
         fields = [
             'is_reviewed',
             'classification_status',
-            'reviewer_id',
-            'reviewer_username',
+            'reviewer',
             'privacity',
         ]

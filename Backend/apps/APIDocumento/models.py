@@ -81,7 +81,7 @@ class Classification(models.Model):
         null=True)
 
     def __str__(self):
-        return f"Revisado por {self.is_reviewed}" 
+        return f"Revisado por {self.reviewer}" 
     
     class Meta:
         db_table = 'Classification'

@@ -38,7 +38,7 @@ class RetrieveClassificationView(APIView):
             'privacity'
         ), document=document)
         
-
+        print(classification)
         serializer = RetrieveClassificationSerializer(classification)
         
         res: HttpResponse = Response()

@@ -18,8 +18,8 @@ const STATUS_OPTIONS = [
 ];
 
 const PRIVACITY_OPTIONS = [
-  { id: 1, name: "Público" },
-  { id: 2, name: "Privado" }
+  { id: 1, name: "Privado" },
+  { id: 2, name: "Público" }
 ];
 
 interface ClassificationModalProps {
@@ -149,7 +149,6 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
         is_reviewed: updatedData.is_reviewed,
         classification_status: statusId,
         privacity: privacityId,
-        // 6. Atualiza o 'reviewer' com o ID que a API retornou
         reviewer: updatedData.reviewer_id || null, 
       };
       

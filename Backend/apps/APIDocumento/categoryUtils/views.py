@@ -246,11 +246,17 @@ class LinkCategoriesToDocumentView(APIView):
         
         categories_to_add = serializer.validated_data['categories'] # type: ignore
         
-        if categories_to_add:
-            document.categories.add(*categories_to_add)
-            message = "Categorias vinculadas com sucesso."
-        else:
-            message = "Nenhuma categoria nova para adicionar."
+        try: 
+            document.categories.clear() # Remove all existing categories
+
+            if categories_to_add:
+                document.categories.add(*categories_to_add)
+                message = "Categorias vinculadas com sucesso."
+            else:
+                message = "Nenhuma categoria nova para adicionar."
+        except Exception as e:
+            message = f"Erro ao vincular categorias: {str(e)}"
+
         
         all_doc_categories = document.categories.all()
         response_serializer = CategoryDetailSerializer(all_doc_categories, many=True)
@@ -303,4 +309,71 @@ class ListCategoriesByDocumentView(APIView):
         res: HttpResponse = Response()
         res.status_code = 200
         res.data = default_response(success=True, data=serializer.data)
+        return res
+    
+class ListAvailableCategoriesView(APIView):
+    """
+    Lista as categorias disponíveis para serem vinculadas a um
+    documento específico.
+    
+    - O ID do Documento é passado na URL (pk).
+    - Opcionalmente filtra por um termo de busca (?search=...).
+    - Exclui categorias que já estão vinculadas ao documento.
+    """
+    permission_classes = [IsAuthenticated, IsDocumentEditor]
+
+    def get(self, request, pk: int) -> HttpResponse:
+        """
+        Manipula a requisição GET.
+        
+        Args:
+            request (Request): A requisição.
+            pk (int): A chave primária do Documento (vinda da URL).
+
+        Returns:
+            HttpResponse: A lista de categorias disponíveis.
+        """
+        doc_queryset = Document.objects.select_related(
+            'sector__enterprise__owner',
+            'sector__manager'
+        ).prefetch_related(
+            'categories' 
+        )
+        
+        document = get_object_or_404(doc_queryset, pk=pk)
+        
+        self.check_object_permissions(request, document)
+
+        search_term = request.query_params.get('search', None)
+        
+        doc_enterprise = document.sector.enterprise # type: ignore
+
+        available_categories = Category.objects.filter(
+            category_enterprise=doc_enterprise
+        )
+
+        if search_term:
+            available_categories = available_categories.filter(
+                Q(category__icontains=search_term) |
+                Q(description__icontains=search_term)
+            )
+
+        linked_category_ids = [cat.pk for cat in document.categories.all()]
+        
+        if linked_category_ids:
+            available_categories = available_categories.exclude(
+                pk__in=linked_category_ids
+            )
+            
+        final_queryset = available_categories.order_by('category')[:20] 
+
+        response_serializer = CategoryDetailSerializer(final_queryset, many=True)
+
+        res: HttpResponse = Response()
+        res.status_code = 200
+        res.data = default_response(
+            success=True,
+            message="Categorias disponíveis encontradas.",
+            data=response_serializer.data
+        )
         return res

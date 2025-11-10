@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import (
-    CreateCategoryView, 
+    CreateCategoryView,
+    ListAvailableCategoriesView, 
     RetrieveCategoryView, 
     ListCategoryView, 
     UpdateCategoryView, 
@@ -16,4 +17,5 @@ category_urlpatterns = [
     path('categoria/excluir/<int:pk>/', DeleteCategoryView.as_view(), name='excluir-categoria'),
     path('categoria/vincular-categorias/<int:pk>/', LinkCategoriesToDocumentView.as_view(), name='vincular-categorias-documento'),
     path('categoria/visualizar/vinculos/<int:pk>/', ListCategoriesByDocumentView.as_view(), name='listar-vinculos-categoria'),
+    path('categoria/visualizar/disponiveis/<int:pk>/', ListAvailableCategoriesView.as_view(), name='listar-disponiveis-categoria'),
 ]

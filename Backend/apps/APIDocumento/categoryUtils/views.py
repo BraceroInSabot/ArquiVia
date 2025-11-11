@@ -170,13 +170,7 @@ class UpdateCategoryView(APIView):
         return res
     
 class DeleteCategoryView(APIView):
-    """
-    Exclui uma Categoria.
-    O ID da Categoria deve ser passado na URL.
-    A permissão é verificada pela classe IsCategoryEditor.
-    A exclusão é barrada se a categoria estiver em uso.
-    """
-    permission_classes = [IsAuthenticated, IsCategoryEditor]
+    permission_classes = [IsAuthenticated, IsCategoryADM]
 
     def delete(self, request, pk: int) -> HttpResponse:
         """
@@ -184,18 +178,18 @@ class DeleteCategoryView(APIView):
 
         Args:
             request (Request): O objeto da requisição do usuário.
-            pk (int): A chave primária da Categoria, vinda da URL.
+            pk (int): A chave primária do Setor, vinda da URL.
 
         Returns:
             HttpResponse: Uma resposta (200) indicando sucesso na exclusão.
         """
-        queryset = Category.objects.select_related(
-            'category_enterprise__owner',
-            'category_sector__manager'
-        )
-        category = get_object_or_404(queryset, pk=pk)
+        sector_id = request.data.get('sector_id')
+        
+        sector_query = get_object_or_404(Sector, pk=sector_id)
 
-        self.check_object_permissions(request, category)
+        self.check_object_permissions(request, sector_query)
+
+        category = get_object_or_404(Category, pk=pk)
 
         delete_serializer = DeleteCategorySerializer(
             instance=category,

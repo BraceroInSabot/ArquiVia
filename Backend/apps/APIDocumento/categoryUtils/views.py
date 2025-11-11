@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
-from apps.APIDocumento.categoryUtils.permissions import CanListCategories, IsCategoryEditor, IsCategoryVisible, IsDocumentEditor
+from apps.APIDocumento.categoryUtils.permissions import IsCategoryADM, IsCategoryEditor, IsCategoryVisible, IsDocumentEditor
 from apps.APIDocumento.permissions import IsLinkedToDocument
 from apps.core.utils import default_response
 from apps.APIDocumento.categoryUtils.serializers import CategoryDetailSerializer, CategoryListSerializer, CreateCategorySerializer, DeleteCategorySerializer, DocumentAddCategoriesSerializer, ListCategoriesByDocumentId, UpdateCategorySerializer
@@ -16,9 +16,22 @@ from django.db.models import Q
 User = get_user_model()
 
 class CreateCategoryView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsCategoryADM]
 
-    def post(self, request):
+    def post(self, request, pk: int):
+        """
+        Cria uma categoria para o Setor (pk)
+
+        Args:
+            request (Request): O objeto da requisição do usuário.
+            pk (int): A chave primária da Categoria, vinda da URL.
+
+        Returns:
+            HttpResponse: Uma resposta contendo os detalhes da categoria.
+        """
+        sector_query = get_object_or_404(Sector, pk=pk)
+        
+        self.check_object_permissions(request, sector_query)
         
         serializer = CreateCategorySerializer(
             data=request.data, 
@@ -79,7 +92,7 @@ class ListCategoryView(APIView):
     2. A Categoria pertencer a uma Empresa à qual o usuário está vinculado
        (seja como dono, gerente de setor ou membro de setor).
     """
-    permission_classes = [IsAuthenticated, CanListCategories]
+    permission_classes = [IsAuthenticated, IsCategoryADM]
 
     def get(self, request, pk: int) -> HttpResponse:
         """

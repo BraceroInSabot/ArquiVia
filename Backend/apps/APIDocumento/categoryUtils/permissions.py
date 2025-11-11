@@ -30,7 +30,7 @@ class IsCategoryVisible(BasePermission):
         
         return is_linked
     
-class CanListCategories(BasePermission):
+class IsCategoryADM(BasePermission):
     """
     Concede permissão para apenas:
     1. Donos

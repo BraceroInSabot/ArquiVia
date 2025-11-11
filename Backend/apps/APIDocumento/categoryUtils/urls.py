@@ -10,7 +10,7 @@ from .views import (
     ListCategoriesByDocumentView)
 
 category_urlpatterns = [
-    path('categoria/criar/', CreateCategoryView.as_view(), name='criar-categoria'),
+    path('categoria/criar/<int:pk>/', CreateCategoryView.as_view(), name='criar-categoria'),
     path('categoria/consultar/<int:pk>/', RetrieveCategoryView.as_view(), name='consultar-categoria'),
     path('categoria/visualizar/<int:pk>/', ListCategoryView.as_view(), name='listar-categorias'),
     path('categoria/alterar/<int:pk>/', UpdateCategoryView.as_view(), name='alterar-categoria'),

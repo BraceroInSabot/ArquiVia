@@ -13,17 +13,16 @@ const SectorCategories: React.FC<SectorCategoriesProps> = ({ sectorId }) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
-  // Estado para o modal
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  // Transformei em useCallback para poder chamar novamente no 'onSuccess'
+  // Estado para feedback visual durante exclusão (opcional, mas bom UX)
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
   const fetchCategories = useCallback(async () => {
     if (!sectorId) return;
     setIsLoading(true);
     setError(null);
     try {
-      // Ajuste se sua função estiver em outro serviço
       const response = await documentService.listCategoriesBySector(sectorId);
       setCategories(response.data.data || []);
     } catch (err: any) {
@@ -39,11 +38,28 @@ const SectorCategories: React.FC<SectorCategoriesProps> = ({ sectorId }) => {
     fetchCategories();
   }, [fetchCategories]);
 
-  if (isLoading && !categories.length) { // Mostra loading só se não tiver dados
+  // --- NOVA FUNÇÃO: Excluir Categoria ---
+  const handleDelete = async (categoryId: number) => {
+    if (!window.confirm("Tem certeza que deseja excluir esta categoria?")) return;
+
+    setDeletingId(categoryId); // Ativa loading no item
+    try {
+      const response = await documentService.deleteCategory(categoryId, sectorId);
+      // Remove da lista localmente (mais rápido que recarregar tudo)
+      
+      setCategories(prev => prev.filter(cat => cat.category_id !== categoryId));
+    } catch (err: any) {
+      const errMsg = err.response?.data?.data?.non_field_errors?.[0] || "Falha ao excluir categoria.";
+      alert(errMsg);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  if (isLoading && !categories.length) {
     return <p>Carregando categorias...</p>;
   }
 
-  // (Se der erro no carregamento inicial)
   if (error && !categories.length) {
     return <p className="category-error">{error}</p>;
   }
@@ -51,11 +67,10 @@ const SectorCategories: React.FC<SectorCategoriesProps> = ({ sectorId }) => {
   return (
     <div className="sector-categories-container">
       
-      {/* --- HEADER COM BOTÃO DE CRIAR --- */}
       <div className="sector-categories-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <h3>Categorias do Setor</h3>
         <button 
-          className="modal-save-btn" // Reutilizando classe de botão azul
+          className="modal-save-btn" 
           onClick={() => setIsCreateModalOpen(true)}
           style={{ fontSize: '0.9rem', padding: '8px 16px' }}
         >
@@ -78,18 +93,28 @@ const SectorCategories: React.FC<SectorCategoriesProps> = ({ sectorId }) => {
               <p className="category-description">
                 {category.description || "Esta categoria não possui descrição."}
               </p>
+              
+              {/* --- NOVO BOTÃO: Excluir --- */}
+              <div className="category-item-footer" style={{ marginTop: '10px', textAlign: 'right' }}>
+                <button 
+                  className="delete-category-btn"
+                  onClick={() => handleDelete(category.category_id)}
+                  disabled={deletingId === category.category_id}
+                >
+                  {deletingId === category.category_id ? "Excluindo..." : "Excluir"}
+                </button>
+              </div>
+
             </li>
           ))}
         </ul>
       )}
 
-      {/* --- MODAL DE CRIAÇÃO --- */}
       {isCreateModalOpen && (
         <CreateCategoryModal
           sectorId={sectorId}
           onClose={() => setIsCreateModalOpen(false)}
           onSuccess={() => {
-            // Recarrega a lista após criar com sucesso
             fetchCategories(); 
           }}
         />

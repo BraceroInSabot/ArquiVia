@@ -103,7 +103,19 @@ const documentService = {
    */
   createCategory(sector_id: number, payload: CreateCategoryPayload): Promise<{ data: ResponseStructure<{ category_id: number }> }> {
     return api.post(`/documento/categoria/criar/${sector_id}/`, payload);
-  }
+  },
+
+  /**
+   * Exclui uma categoria.
+   * @param categoryId O ID da categoria a ser excluída (pk).
+   * @param sectorId O ID do setor (necessário para permissão).
+   */
+  deleteCategory(categoryId: number, sectorId: number): Promise<{ data: ResponseStructure<null> }> {
+    // DELETE request com body
+    return api.delete(`/documento/categoria/excluir/${categoryId}/`, { 
+      data: { sector_id: sectorId } 
+    });
+  },
 };
 
 export default documentService;

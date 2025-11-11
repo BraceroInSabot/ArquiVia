@@ -77,3 +77,27 @@
   border-radius: 4px;
   text-align: center;
 }
+
+/* ... (seus estilos anteriores) ... */
+
+.delete-category-btn {
+  background: none;
+  border: 1px solid #dc3545;
+  color: #dc3545;
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.delete-category-btn:hover {
+  background-color: #dc3545;
+  color: white;
+}
+
+.delete-category-btn:disabled {
+  border-color: #ccc;
+  color: #ccc;
+  cursor: not-allowed;
+}

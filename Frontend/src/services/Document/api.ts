@@ -1,5 +1,5 @@
 import api from '../core-api';
-import type { Classification, CreateDocument, Document, DocumentList, ResponseStructure, UpdateDocumentPayload, UpdateClassificationPayload, Category, AddCategoriesPayload} from '../core-api';
+import type { Classification, CreateDocument, Document, DocumentList, ResponseStructure, UpdateDocumentPayload, UpdateClassificationPayload, Category, AddCategoriesPayload, CreateCategoryPayload} from '../core-api';
 
 const documentService = {
     /**
@@ -94,6 +94,15 @@ const documentService = {
   listCategoriesBySector(sector_id: number): Promise<{ data: ResponseStructure<Category[]> }> {
     // A URL é baseada na sua view que espera um 'pk'
     return api.get(`/documento/categoria/visualizar/${sector_id}/`); 
+  },
+
+    /**
+   * Cria uma nova categoria para o setor.
+   * @param sector_id O ID do setor (usado na URL).
+   * @param payload Os dados da nova categoria.
+   */
+  createCategory(sector_id: number, payload: CreateCategoryPayload): Promise<{ data: ResponseStructure<{ category_id: number }> }> {
+    return api.post(`/documento/categoria/criar/${sector_id}/`, payload);
   }
 };
 

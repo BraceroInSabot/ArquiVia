@@ -192,6 +192,13 @@ export interface Category {
   is_public: boolean;
 }
 
+export interface CreateCategoryPayload {
+  category: string;
+  description?: string;
+  is_public?: boolean;
+  category_sector: number;
+}
+
 export interface AddCategoriesPayload {
   categories_id: number[];
 }

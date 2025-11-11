@@ -1,6 +1,6 @@
 from rest_framework.permissions import BasePermission
 from django.db.models import Q
-from apps.APISetor.models import SectorUser
+from apps.APISetor.models import Sector, SectorUser
 from apps.APIEmpresa.models import Enterprise
 from apps.APIDocumento.models import Category, Document
 
@@ -29,6 +29,27 @@ class IsCategoryVisible(BasePermission):
         ).exists()
         
         return is_linked
+    
+class CanListCategories(BasePermission):
+    """
+    Concede permissão para apenas:
+    1. Donos
+    2. Gestores
+    3. Membros
+    do setor (obj) listar as categorias.
+    """
+    message = "Você não tem permissão para visualizar esta categoria."
+    
+    def has_object_permission(self, request, view, obj: Sector):
+        is_owner = obj.enterprise.owner == request.user
+        is_manager = obj.manager == request.user
+        is_adm = SectorUser.objects.filter(
+            user=request.user,
+            sector=obj,
+            is_adm=True
+        ).exists()
+        
+        return is_owner or is_manager or is_adm
     
 class IsCategoryEditor(BasePermission):
     """

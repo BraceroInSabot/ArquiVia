@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
-from apps.APIDocumento.categoryUtils.permissions import IsCategoryEditor, IsCategoryVisible, IsDocumentEditor
+from apps.APIDocumento.categoryUtils.permissions import CanListCategories, IsCategoryEditor, IsCategoryVisible, IsDocumentEditor
 from apps.APIDocumento.permissions import IsLinkedToDocument
 from apps.core.utils import default_response
 from apps.APIDocumento.categoryUtils.serializers import CategoryDetailSerializer, CategoryListSerializer, CreateCategorySerializer, DeleteCategorySerializer, DocumentAddCategoriesSerializer, ListCategoriesByDocumentId, UpdateCategorySerializer
@@ -79,30 +79,26 @@ class ListCategoryView(APIView):
     2. A Categoria pertencer a uma Empresa à qual o usuário está vinculado
        (seja como dono, gerente de setor ou membro de setor).
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, CanListCategories]
 
-    def get(self, request) -> HttpResponse:
+    def get(self, request, pk: int) -> HttpResponse:
         """
         Manipula a requisição GET para listar as categorias filtradas.
 
         Args:
+            pk (int): A chave primária da Categoria, vinda da URL.
             request (Request): O objeto da requisição do usuário.
 
         Returns:
             HttpResponse: Uma resposta contendo a lista de categorias.
         """
         request_user = request.user
+        
+        sector_query = get_object_or_404(Sector, pk=pk)
+        
+        category_query = Q(category_sector=sector_query) 
 
-        linked_enterprise_ids = Enterprise.objects.filter(
-            Q(owner=request_user) |
-            Q(sectors__manager=request_user) |
-            Q(sectors__sector_links__user=request_user)
-        ).values_list('pk', flat=True).distinct()
-
-        category_query = (
-            Q(is_public=True) |
-            Q(category_enterprise__pk__in=linked_enterprise_ids)
-        )
+        self.check_object_permissions(request, sector_query)
 
         categories_queryset = Category.objects.filter(category_query).select_related(
             'category_enterprise', 

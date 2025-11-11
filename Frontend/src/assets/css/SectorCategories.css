@@ -1,0 +1,79 @@
+/* Estilização da Tab de Categorias do Setor */
+
+.sector-categories-container {
+  padding: 1rem 0; /* Espaçamento para a tab */
+}
+
+.category-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  /* Cria colunas responsivas */
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.category-item {
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.category-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.07);
+}
+
+.category-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.category-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.category-description {
+  font-size: 0.95rem;
+  color: #666;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Badge (Distintivo) de Público/Privado */
+.category-badge {
+  font-size: 0.8rem;
+  font-weight: bold;
+  padding: 4px 10px;
+  border-radius: 12px;
+  text-transform: uppercase;
+}
+
+.category-badge.public {
+  background-color: #e6f7eb; /* Fundo verde claro */
+  color: #28a745; /* Texto verde escuro */
+}
+
+.category-badge.private {
+  background-color: #f8d7da; /* Fundo vermelho claro */
+  color: #dc3545; /* Texto vermelho escuro */
+}
+
+.category-error {
+  color: #D8000C;
+  background-color: #FFD2D2;
+  border: 1px solid #D8000C;
+  padding: 10px;
+  border-radius: 4px;
+  text-align: center;
+}

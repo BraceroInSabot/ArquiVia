@@ -184,9 +184,12 @@ export interface UpdateClassificationPayload {
   reviewer?: number | null;
 }
 
+
 export interface Category {
   category_id: number;
-  category: string;
+  category: string; 
+  description: string | null;
+  is_public: boolean;
 }
 
 export interface AddCategoriesPayload {

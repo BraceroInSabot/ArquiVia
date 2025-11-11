@@ -84,6 +84,16 @@ const documentService = {
    */
   listDiponibleCategories(document_id: number): Promise<{ data: ResponseStructure<Category[]> }> {
     return api.get(`/documento/categoria/visualizar/disponiveis/${document_id}/`);
+  },
+
+    /**
+   * Busca a lista de categorias filtradas para um setor específico.
+   * (Baseado na ListCategoryView)
+   * @param sector_id O ID (pk) do setor.
+   */
+  listCategoriesBySector(sector_id: number): Promise<{ data: ResponseStructure<Category[]> }> {
+    // A URL é baseada na sua view que espera um 'pk'
+    return api.get(`/documento/categoria/visualizar/${sector_id}/`); 
   }
 };
 

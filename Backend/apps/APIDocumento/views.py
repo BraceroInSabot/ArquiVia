@@ -367,4 +367,22 @@ class DetachFileToDocumentView(APIView):
         res.data = default_response(success=True, message="Arquivo removido com sucesso.")
         return res
     
+class ListAttachedFilesToDocumentView(APIView):
+    permission_classes = [IsAuthenticated, CanAttachDocument]
     
+    def get(self, request, pk: int):
+        """
+        Realiza a consulta de todos os arquivos anexados ao documento.
+        """
+        queryset = get_object_or_404(Document, pk=pk)
+        
+        self.check_object_permissions(request, queryset)
+        
+        attached_files = queryset.attached_files.filter(detached_at__isnull=True)
+        
+        serializer = AttachFileSerializer(attached_files, many=True)
+        
+        res: HttpResponse = Response()
+        res.status_code = 200
+        res.data = default_response(success=True, message="Arquivos recuperados com sucesso.", data=serializer.data)
+        return res

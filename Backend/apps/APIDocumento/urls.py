@@ -3,6 +3,7 @@ from django.urls import path
 from .views import ( 
     AttachFileToDocumentView,
     CreateDocumentView,
+    ListAttachedFilesToDocumentView,
     ListDocumentsView,
     RetrieveDocumentView,
     UpdateDocumentView,
@@ -26,4 +27,5 @@ urlpatterns = [
     
     path("<int:pk>/anexar-arquivo/", AttachFileToDocumentView.as_view(), name='anexar-arquivo'),
     path("<int:pk>/desanexar-arquivo/", DetachFileToDocumentView.as_view(), name='desanexar-arquivo'),
+    path("<int:pk>/arquivos-anexados/", ListAttachedFilesToDocumentView.as_view(), name='listar-arquivos-anexados')
 ] + classification_urlpatterns + category_urlpatterns

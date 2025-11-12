@@ -1,8 +1,9 @@
+from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView, Response
 from django.contrib.auth import get_user_model
 from apps.APISetor.models import Sector, SectorUser
-from apps.APIDocumento.models import Document
+from apps.APIDocumento.models import Attached_Files_Document, Document
 from rest_framework.permissions import IsAuthenticated
 from .serializers import AttachFileSerializer, DocumentCreateSerializer, DocumentDetailSerializer, DocumentListSerializer, DocumentUpdateSerializer
 from rest_framework.parsers import JSONParser
@@ -344,4 +345,26 @@ class AttachFileToDocumentView(APIView):
             data=serializer.data
         )
         return res
+    
+class DetachFileToDocumentView(APIView):
+    permission_classes = [IsAuthenticated, CanAttachDocument]
+    
+    def patch(self, request, pk: int):
+        """
+        Remove o vinculo do arquivo feito o upload com o documento.
+        """
+        queryset = get_object_or_404(Attached_Files_Document, pk=pk)
+        document_attached = queryset.document_id
+        
+        self.check_object_permissions(request, document_attached)
+        
+        queryset.detached_at = timezone.now()
+        
+        queryset.save()
+        
+        res: HttpResponse = Response()
+        res.status_code = 200
+        res.data = default_response(success=True, message="Arquivo removido com sucesso.")
+        return res
+    
     

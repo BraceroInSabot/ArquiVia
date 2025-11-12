@@ -1,5 +1,5 @@
 import api from '../core-api';
-import type { Classification, CreateDocument, Document, DocumentList, ResponseStructure, UpdateDocumentPayload, UpdateClassificationPayload} from '../core-api';
+import type { Classification, CreateDocument, Document, DocumentList, ResponseStructure, UpdateDocumentPayload, UpdateClassificationPayload, Category, AddCategoriesPayload, CreateCategoryPayload, UpdateCategoryPayload} from '../core-api';
 
 const documentService = {
     /**
@@ -58,6 +58,72 @@ const documentService = {
    */
   updateClassification(document_id: number, payload: UpdateClassificationPayload): Promise<{ data: ResponseStructure<Classification> }> {
     return api.patch(`/documento/classificacao/alterar/${document_id}/`, payload);
+  },
+
+  /**
+   * Retorna as categorias vinculadas ao documento.
+   * @param document_id - O ID (pk) do documento.
+   */
+  listCategoriesByDocument(document_id: number): Promise<{ data: ResponseStructure<Category[]> }> {
+    return api.get(`/documento/categoria/visualizar/vinculos/${document_id}/`);
+  },
+  
+  /**
+   * Vincula a lista de categorias para o documento.
+   * @param document_id - Documento a ser vinculado.
+   * @param payload - Lista de categorias.
+   * @returns 
+   */
+  linkCategoriesToDocument(document_id: number, payload: AddCategoriesPayload): Promise<{ data: ResponseStructure<Category[]> }> {
+    return api.post(`/documento/categoria/vincular-categorias/${document_id}/`, payload);
+  },
+
+  /**
+   * Retorna a pesquisa por Categorias.
+   * @param document_id - ID do documento. 
+   */
+  listDiponibleCategories(document_id: number): Promise<{ data: ResponseStructure<Category[]> }> {
+    return api.get(`/documento/categoria/visualizar/disponiveis/${document_id}/`);
+  },
+
+    /**
+   * Busca a lista de categorias filtradas para um setor específico.
+   * (Baseado na ListCategoryView)
+   * @param sector_id O ID (pk) do setor.
+   */
+  listCategoriesBySector(sector_id: number): Promise<{ data: ResponseStructure<Category[]> }> {
+    // A URL é baseada na sua view que espera um 'pk'
+    return api.get(`/documento/categoria/visualizar/${sector_id}/`); 
+  },
+
+    /**
+   * Cria uma nova categoria para o setor.
+   * @param sector_id O ID do setor (usado na URL).
+   * @param payload Os dados da nova categoria.
+   */
+  createCategory(sector_id: number, payload: CreateCategoryPayload): Promise<{ data: ResponseStructure<{ category_id: number }> }> {
+    return api.post(`/documento/categoria/criar/${sector_id}/`, payload);
+  },
+
+  /**
+   * Exclui uma categoria.
+   * @param categoryId O ID da categoria a ser excluída (pk).
+   * @param sectorId O ID do setor (necessário para permissão).
+   */
+  deleteCategory(categoryId: number, sectorId: number): Promise<{ data: ResponseStructure<null> }> {
+    // DELETE request com body
+    return api.delete(`/documento/categoria/excluir/${categoryId}/`, { 
+      data: { sector_id: sectorId } 
+    });
+  },
+
+  /**
+   * Atualiza parcialmente uma categoria.
+   * @param categoryId O ID da categoria.
+   * @param payload Os dados a serem atualizados (incluindo sector_id).
+   */
+  updateCategory(categoryId: number, payload: UpdateCategoryPayload): Promise<{ data: ResponseStructure<Category> }> {
+    return api.patch(`/documento/categoria/alterar/${categoryId}/`, payload);
   },
 };
 

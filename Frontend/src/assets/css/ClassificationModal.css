@@ -64,3 +64,143 @@
   background-color: #007bff;
   color: white;
 }
+
+/* ... (Seus estilos existentes para .form-item, .modal-save-btn, etc.) ... */
+
+/* --- Divisor entre Classificação e Categorias --- */
+.modal-divider {
+  border: none;
+  border-top: 1px solid #eee;
+  margin: 1.5rem 0;
+}
+
+/* --- Estilos do Gerenciador de Categorias --- */
+.category-manager {
+  width: 100%;
+}
+
+.section-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #333;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 8px;
+}
+
+.category-empty-text {
+  font-style: italic;
+  color: #888;
+  text-align: center;
+  margin: 1rem 0;
+}
+
+.category-pill-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.category-pill {
+  background-color: #e9ecef;
+  color: #495057;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+}
+
+/* ... (Seus estilos existentes) ... */
+
+/* --- Divisor entre Classificação e Categorias --- */
+.modal-divider {
+  border: none;
+  border-top: 1px solid #eee;
+  margin: 1.5rem 0;
+}
+
+/* --- Estilos do Gerenciador de Categorias --- */
+.category-manager {
+  width: 100%;
+}
+
+.section-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #333;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 8px;
+}
+
+.category-search-container {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.category-search-input {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box; /* Importante */
+}
+
+/* Placeholder para o input desabilitado */
+.category-search-input:disabled {
+  background-color: #f9f9f9;
+  cursor: not-allowed;
+}
+
+/* Container das "Pills" (categorias vinculadas) */
+.category-pill-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 20px; /* Garante altura mínima se vazio */
+  padding: 5px;
+  border: 1px solid #f0f0f0;
+  border-radius: 4px;
+}
+
+.category-empty-text {
+  font-style: italic;
+  color: #888;
+  text-align: center;
+  margin: 1rem 0;
+  width: 100%;
+}
+
+.category-pill {
+  background-color: #e9ecef;
+  color: #495057;
+  padding: 6px 10px;
+  border-radius: 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+}
+
+.remove-pill-btn {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  color: #888;
+  cursor: pointer;
+  margin-left: 4px;
+  padding: 0 4px;
+  line-height: 1;
+}
+.remove-pill-btn:hover {
+  color: #333;
+}
+.search-result-item {
+  text-decoration: none;
+  list-style: none;
+}

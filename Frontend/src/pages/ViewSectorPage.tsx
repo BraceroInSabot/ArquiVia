@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import sectorService from '../services/Sector/api';
 import type { Sector } from '../services/core-api';
 import SectorUsers from '../components/SectorUsers';  
+import SectorCategories from '../components/SectorCategories';
 
 const SectorMetrics = ({ sectorId }: { sectorId: number }) => {
   return (
@@ -22,7 +23,7 @@ const SectorLogs = ({ sectorId }: { sectorId: number }) => {
   );
 };
 
-type TabName = 'users' | 'metrics' | 'logs';
+type TabName = 'users' | 'metrics' | 'logs' | 'categories';
 
 const ViewSectorPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -121,6 +122,9 @@ const ViewSectorPage = () => {
         <button style={getActiveTabStyle('users')} onClick={() => setActiveTab('users')}>
           Usuários
         </button>
+        <button style={getActiveTabStyle('categories')} onClick={() => setActiveTab('categories')}>
+          Categorias
+        </button>
         <button style={getActiveTabStyle('metrics')} onClick={() => setActiveTab('metrics')}>
           Métricas
         </button>
@@ -131,6 +135,7 @@ const ViewSectorPage = () => {
 
       <div style={{ padding: '20px 0' }}>
         {activeTab === 'users' && sector.sector_id && <SectorUsers sectorId={sector.sector_id} />}
+        {activeTab === 'categories' && <SectorCategories sectorId={sector.sector_id} />}
         {activeTab === 'metrics' && <SectorMetrics sectorId={sector.sector_id} />}
         {activeTab === 'logs' && <SectorLogs sectorId={sector.sector_id} />}
       </div>

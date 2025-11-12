@@ -52,6 +52,11 @@ class Attached_Files_Document(models.Model):
     file = models.FileField(upload_to=rename_file_for_s3, db_column='file_attached_file')
     attached_at = models.DateTimeField(auto_now_add=True, db_column='date_attached_at_attached_file')
     detached_at = models.DateTimeField(null=True, blank=True, db_column='date_detached_at_attached_file')
+    
+    class Meta:
+        db_table = 'Attached_Files_Document'
+        verbose_name = 'Attached File'
+        verbose_name_plural = 'Attached Files'
         
 class Classification_Status(models.Model):
     status_choices = [

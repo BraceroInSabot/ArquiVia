@@ -280,26 +280,32 @@ class RequisicaoRedefinicaoSenhaView(APIView):
             return res
     
 
-# class ValidarTokenRedefinicaoValidoView(APIView):
-#     permission_classes = [AllowAny]
+class ValidarTokenRedefinicaoValidoView(APIView):
+    permission_classes = [AllowAny]
     
-#     def get(self, request, token):
-#         """Verificação de validade do Token gerado
+    def get(self, request, token):
+        """Verificação de validade do Token gerado
 
-#         Args:
-#             token (str): token gerado pelo usuário
+        Args:
+            token (str): token gerado pelo usuário
 
-#         Returns:
-#             HTTP 200: Token válido
-#             HTTP 400: Token inválido ou expirado 
-#         """
+        Returns:
+            HTTP 200: Token válido
+            HTTP 400: Token inválido ou expirado 
+        """
 
-#         reset_token = PasswordResetToken.objects.filter(token=token).first()
+        reset_token = get_object_or_404(PasswordResetToken, token=token)
 
-#         if not reset_token or not reset_token.is_token_valid():
-#             return Response({"Alerta": "Token inválido ou expirado"}, status=status.HTTP_400_BAD_REQUEST)
+        if not reset_token or not reset_token.is_token_valid():
+            res: HttpResponse = Response()
+            res.status_code = 400
+            res.data = default_response(success=False, message="Token inválido ou expirado.")
+            return res
         
-#         return Response({"Alerta": "Token válido"}, status=status.HTTP_200_OK)
+        res: HttpResponse = Response()
+        res.status_code = 200
+        res.data = default_response(success=True, message="Token válido.")
+        return res
     
 # class RedefinirSenhaView(APIView):
 #     permission_classes = [AllowAny]

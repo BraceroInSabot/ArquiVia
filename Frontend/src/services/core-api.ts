@@ -199,6 +199,13 @@ export interface CreateCategoryPayload {
   category_sector: number;
 }
 
+export interface UpdateCategoryPayload {
+  sector_id: number; 
+  category?: string;
+  description?: string;
+  is_public?: boolean;
+}
+
 export interface AddCategoriesPayload {
   categories_id: number[];
 }

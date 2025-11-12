@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import documentService from '../services/Document/api';
 import type { Category } from '../services/core-api';
-import CreateCategoryModal from '../components/CreateCategoryModal'; // <-- Importe o Modal
+import CreateCategoryModal from '../components/CreateCategoryModal';
+// 1. Importe o modal de edição
+import EditCategoryModal from '../components/EditCategoryModal'; 
 
 import '../assets/css/SectorCategories.css'; 
 
@@ -13,9 +15,12 @@ const SectorCategories: React.FC<SectorCategoriesProps> = ({ sectorId }) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  
+  // 2. Estado para controlar a edição (armazena a categoria selecionada ou null)
+  const [categoryToEdit, setCategoryToEdit] = useState<Category | null>(null);
 
-  // Estado para feedback visual durante exclusão (opcional, mas bom UX)
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const fetchCategories = useCallback(async () => {
@@ -38,15 +43,12 @@ const SectorCategories: React.FC<SectorCategoriesProps> = ({ sectorId }) => {
     fetchCategories();
   }, [fetchCategories]);
 
-  // --- NOVA FUNÇÃO: Excluir Categoria ---
   const handleDelete = async (categoryId: number) => {
     if (!window.confirm("Tem certeza que deseja excluir esta categoria?")) return;
 
-    setDeletingId(categoryId); // Ativa loading no item
+    setDeletingId(categoryId); 
     try {
-      const response = await documentService.deleteCategory(categoryId, sectorId);
-      // Remove da lista localmente (mais rápido que recarregar tudo)
-      
+      await documentService.deleteCategory(categoryId, sectorId);
       setCategories(prev => prev.filter(cat => cat.category_id !== categoryId));
     } catch (err: any) {
       const errMsg = err.response?.data?.data?.non_field_errors?.[0] || "Falha ao excluir categoria.";
@@ -94,14 +96,22 @@ const SectorCategories: React.FC<SectorCategoriesProps> = ({ sectorId }) => {
                 {category.description || "Esta categoria não possui descrição."}
               </p>
               
-              {/* --- NOVO BOTÃO: Excluir --- */}
-              <div className="category-item-footer" style={{ marginTop: '10px', textAlign: 'right' }}>
+              {/* Rodapé com botões de Ação */}
+              <div className="category-item-footer" style={{ marginTop: '10px', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                {/* 3. Botão Editar */}
+                <button 
+                  className="edit-category-btn" // (Adicionaremos este estilo)
+                  onClick={() => setCategoryToEdit(category)} // Abre o modal com os dados
+                >
+                  Editar
+                </button>
+
                 <button 
                   className="delete-category-btn"
                   onClick={() => handleDelete(category.category_id)}
                   disabled={deletingId === category.category_id}
                 >
-                  {deletingId === category.category_id ? "Excluindo..." : "Excluir"}
+                  {deletingId === category.category_id ? "..." : "Excluir"}
                 </button>
               </div>
 
@@ -110,12 +120,25 @@ const SectorCategories: React.FC<SectorCategoriesProps> = ({ sectorId }) => {
         </ul>
       )}
 
+      {/* Modal de Criação (existente) */}
       {isCreateModalOpen && (
         <CreateCategoryModal
           sectorId={sectorId}
           onClose={() => setIsCreateModalOpen(false)}
           onSuccess={() => {
             fetchCategories(); 
+          }}
+        />
+      )}
+
+      {/* 4. Modal de Edição (Novo) */}
+      {categoryToEdit && (
+        <EditCategoryModal
+          sectorId={sectorId}
+          category={categoryToEdit}
+          onClose={() => setCategoryToEdit(null)} // Fecha limpando o estado
+          onSuccess={() => {
+            fetchCategories(); // Recarrega a lista
           }}
         />
       )}

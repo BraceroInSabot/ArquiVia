@@ -1,5 +1,5 @@
 import api from '../core-api';
-import type { Classification, CreateDocument, Document, DocumentList, ResponseStructure, UpdateDocumentPayload, UpdateClassificationPayload, Category, AddCategoriesPayload, CreateCategoryPayload} from '../core-api';
+import type { Classification, CreateDocument, Document, DocumentList, ResponseStructure, UpdateDocumentPayload, UpdateClassificationPayload, Category, AddCategoriesPayload, CreateCategoryPayload, UpdateCategoryPayload} from '../core-api';
 
 const documentService = {
     /**
@@ -115,6 +115,15 @@ const documentService = {
     return api.delete(`/documento/categoria/excluir/${categoryId}/`, { 
       data: { sector_id: sectorId } 
     });
+  },
+
+  /**
+   * Atualiza parcialmente uma categoria.
+   * @param categoryId O ID da categoria.
+   * @param payload Os dados a serem atualizados (incluindo sector_id).
+   */
+  updateCategory(categoryId: number, payload: UpdateCategoryPayload): Promise<{ data: ResponseStructure<Category> }> {
+    return api.patch(`/documento/categoria/alterar/${categoryId}/`, payload);
   },
 };
 

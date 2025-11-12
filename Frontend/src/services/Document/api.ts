@@ -132,6 +132,14 @@ const documentService = {
   listAttachedFiles(document_id: number): Promise<{ data: ResponseStructure<AttachedFile[]> }> {
     return api.get(`/documento/${document_id}/arquivos-anexados/`);
   },
+
+  /**
+   * Anexa um arquivo ao documento.
+   * Nota: O payload deve ser um objeto FormData.
+   */
+  attachFile(document_id: number, formData: FormData): Promise<{ data: ResponseStructure<any> }> {
+    return api.post(`/documento/${document_id}/anexar-arquivo/`, formData);
+  },
 };
 
 export default documentService;

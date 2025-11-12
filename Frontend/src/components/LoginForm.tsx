@@ -35,6 +35,10 @@ const LoginForm = ({ login, navigate }: LoginFormProps) => {
         }
     };
 
+    const goToResetPasswordPage = () => {
+        navigate('/solicitar-redefinicao-senha');
+    };
+
     return (
         <form onSubmit={handleLogin}>
           <div>
@@ -66,6 +70,8 @@ const LoginForm = ({ login, navigate }: LoginFormProps) => {
 
             {error && <p style={{ color: 'red' }}>{error}</p>}
           </div>
+
+          <a onClick={goToResetPasswordPage}>Esqueci a minha senha.</a>
         </form>
     )
 }

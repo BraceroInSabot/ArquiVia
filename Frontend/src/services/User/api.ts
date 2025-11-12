@@ -1,4 +1,4 @@
-import type { LoginCredentials, UserDetails } from '../core-api';
+import type { LoginCredentials, RequestPasswordReset, ResponseStructure, UserDetails } from '../core-api';
 import api from '../core-api'
 
 const userService = {
@@ -30,6 +30,13 @@ const userService = {
    */
   getUserDetails(username: string): Promise<{ data: UserDetails }> {
     return api.get(`/usuario/consultar/${username}/`);
+  },
+
+  /**
+   * Solicita um email para redefinição de senha.
+   */
+  requestPasswordReset(email: RequestPasswordReset): Promise<{ data: ResponseStructure<null> }>{
+    return api.post('/usuario/esqueci-senha/', email);
   },
 };
 

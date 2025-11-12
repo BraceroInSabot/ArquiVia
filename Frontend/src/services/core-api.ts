@@ -226,6 +226,10 @@ export interface DocumentHistory {
   content: any;
 }
 
+export interface RequestPasswordReset {
+  email: string;
+}
+
 const api = axios.create({
   baseURL: URL,
   withCredentials: true,

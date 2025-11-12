@@ -261,7 +261,7 @@ class RequisicaoRedefinicaoSenhaView(APIView):
         Returns:
             Response (200 || 401): Resposta da requisição
         """
-        email = request.data.get('user_email')
+        email = request.data.get('email')
         
         user_object = get_object_or_404(User, email=email)
         

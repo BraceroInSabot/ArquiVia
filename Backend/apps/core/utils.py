@@ -1,4 +1,7 @@
-from typing import Dict, List, Union
+import os
+from typing import Dict, List, Union, Any
+from django.utils.text import slugify
+from django.utils import timezone
 
 def default_response(success: bool, 
                      message: str = "",
@@ -32,3 +35,25 @@ def default_response(success: bool,
         "sucesso": success,
         "mensagem": message
     }
+
+
+def rename_file_for_s3(instance: Any, filename: str):
+    """
+    Renomeia o arquivo para um formato padrão sendo ele: nome ( ou titulo ) do objeto + Data atual incluindo segundos.
+    
+    Args:
+        filename (str): Nome do arquivo com a extensão (.pdf, .png, etc).
+        instance (Any): Qualquer que seja o tipo de instância.
+    """
+    ext = filename.split('.')[-1]
+    
+    if instance.title:
+        filename_base = slugify(instance.title)
+    else:
+        filename_base = "arquivo_sem_titulo"
+
+    current_time = timezone.now().strftime('%Y-%m-%d_%H-%M-%S')
+
+    new_filename = f"{filename_base}_{current_time}.{ext}"
+    
+    return os.path.join('attached_documents/', new_filename)

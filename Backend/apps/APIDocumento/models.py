@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 from apps.core.utils import rename_file_for_s3
+from simple_history.models import HistoricalRecords
 
 User = get_user_model()
 
@@ -29,6 +30,8 @@ class Document(models.Model):
         db_column='FK_classification_document')
     created_at = models.DateTimeField(auto_now_add=True, db_column='date_created_at_document')
     is_active = models.BooleanField(default=False, db_column='is_active_document')
+    
+    history = HistoricalRecords(table_name='Document_Record')
 
     def __str__(self):
         return self.title 

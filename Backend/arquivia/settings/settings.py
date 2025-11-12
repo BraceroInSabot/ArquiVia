@@ -8,6 +8,7 @@ INSTALLED_APPS =  [
     "rest_framework_simplejwt",
     "rest_framework",
     "corsheaders",
+    'simple_history',
 ] + [
     "apps.core",
     "apps.APIUser",
@@ -21,7 +22,7 @@ INSTALLED_APPS =  [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "django.contrib.postgres"
+    "django.contrib.postgres",
 ]
 
 REST_FRAMEWORK = {
@@ -41,6 +42,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    'simple_history.middleware.HistoryRequestMiddleware',
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ] 

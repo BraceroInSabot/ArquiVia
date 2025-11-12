@@ -3,6 +3,7 @@ from apps.APIEmpresa.models import Enterprise
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.indexes import GinIndex
 from django.db import models
+from apps.core.utils import rename_file_for_s3
 
 User = get_user_model()
 
@@ -39,6 +40,18 @@ class Document(models.Model):
         indexes = [
             GinIndex(fields=['content'], name='document_content_gin_idx'),
         ]
+        
+class Attached_Files_Document(models.Model):
+    attached_file_id = models.AutoField(primary_key=True, db_column='PK_attached_file')
+    document_id = models.ForeignKey(
+        Document, 
+        on_delete=models.CASCADE, 
+        db_column='FK_document_attached_file', 
+        related_name='attached_files')
+    title = models.CharField(max_length=100, db_column='title_attached_file')
+    file = models.FileField(upload_to=rename_file_for_s3, db_column='file_attached_file')
+    attached_at = models.DateTimeField(auto_now_add=True, db_column='date_attached_at_attached_file')
+    detached_at = models.DateTimeField(null=True, blank=True, db_column='date_detached_at_attached_file')
         
 class Classification_Status(models.Model):
     status_choices = [

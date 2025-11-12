@@ -8,7 +8,7 @@ from .views import (
     LogoutTokenView, 
     RegisterTokenView, 
     RetrieveUserView,
-    # RequisicaoRedefinicaoSenhaView,
+    RequisicaoRedefinicaoSenhaView,
     # ValidarTokenRedefinicaoValidoView,
     # RedefinirSenhaView 
 )
@@ -24,7 +24,7 @@ urlpatterns = [
     path("consultar/<str:username>/", RetrieveUserView.as_view(), name="consultar-usuario")    
 ]+ [
     # Password Reset
-    # path("esqueci-senha", RequisicaoRedefinicaoSenhaView.as_view()),
+    path("esqueci-senha/", RequisicaoRedefinicaoSenhaView.as_view(), name="esqueci-senha"),
     # path("validar-token-senha/<str:token>", ValidarTokenRedefinicaoValidoView.as_view()),
     # path("redefinir-senha/<str:token>", RedefinirSenhaView.as_view()),
 ]

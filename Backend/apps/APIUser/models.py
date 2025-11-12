@@ -81,10 +81,10 @@ class AbsUser(AbstractUser, PermissionsMixin):
     
 
 class PasswordResetToken(models.Model):
-    reset_id = models.AutoField(primary_key=True, db_column='codigo_redefinicao')
-    user_pk = models.ForeignKey(AbsUser, on_delete=models.CASCADE, db_column='FK_codigo_user_redefinicao')
-    token = models.CharField(max_length=48, unique=True, default=uuid.uuid4, db_column='token_redefinicao') # type: ignore
-    created_at = models.DateTimeField(auto_now_add=True, db_column='data_criacao_redefinicao')
+    reset_id = models.AutoField(primary_key=True, db_column='PK_password_reset')
+    user = models.ForeignKey(AbsUser, on_delete=models.CASCADE, db_column='FK_user_password_reset')
+    token = models.CharField(max_length=48, unique=True, default=uuid.uuid4, db_column='token_password_reset') # type: ignore
+    created_at = models.DateTimeField(auto_now_add=True, db_column='created_at_password_reset')
 
     def is_token_valid(self):
         """Verifica se o token ainda é válido.
@@ -92,13 +92,13 @@ class PasswordResetToken(models.Model):
         Returns:
             bool: se estiver dentro do prazo, deve retornar True. Caso contrário, false.
         """
-        return ( now() - self.created_at <= timedelta(minutes=15) )
+        return ( now() - self.created_at <= timedelta(hours=24) )
     
     class Meta:
-        db_table = "ResetToken"
+        db_table = "Password_Reset"
 
         verbose_name = "Redefinir"
         verbose_name_plural = "Redefinir Senhas"
 
     def __str__(self):
-        return (f"{self.user_pk} / {self.token}")
+        return (f"{self.user} / {self.token}")

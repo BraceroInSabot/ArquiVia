@@ -9,7 +9,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from apps.APIEmpresa.models import Enterprise
 from .serializer import RegistroUsuarioSerializer, UserDetailSerializer
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
@@ -220,73 +220,65 @@ class RetrieveUserView(APIView):
 # RESET DE SENHA (LEGADO)
 # TODO: REMOVER OU ATUALIZAR
 
-# class RequisicaoRedefinicaoSenhaView(APIView):
-#     permission_classes = [AllowAny]
+class RequisicaoRedefinicaoSenhaView(APIView):
+    permission_classes = [AllowAny]
 
-#     def enviar_email_recuperacao_senha(self, destinatario, usuario, url=Lax, token="ERRO AO GERAR O TOKEN, ENTRE EM CONTATO COM O PROVEDOR."):
-#         try:
-#             assunto = "Esqueci minha senha - AnnotaPS"
-#             remetente = settings.EMAIL_HOST_USER
+    def enviar_email_recuperacao_senha(self, destinatario, usuario, url, token="ERRO AO GERAR O TOKEN, ENTRE EM CONTATO COM O PROVEDOR."):
+        try:
+            assunto = "Esqueci minha senha - ArquiVia"
+            remetente = settings.EMAIL_HOST_USER
             
-#             # Renderiza o template com os dados
-#             html_content = render_to_string([
-#                 "email_esqueci_senha.html"
-#                 ], 
-#                 {
-#                 "nome": usuario.nome,
-#                 "url": str(url),  # Substitua pela URL de redefinição real
-#                 "token": token
-#                 },
-#             )
-#             text_content = strip_tags(html_content)  # Remove HTML para fallback
+            html_content = render_to_string([
+                "email_esqueci_senha.html"
+                ], 
+                {
+                "nome": usuario.name,
+                "url": str(url),
+                "token": token
+                },
+            )
+            text_content = strip_tags(html_content)
             
-#             email = EmailMultiAlternatives(
-#                 subject=assunto,
-#                 body=text_content,  # Conteúdo sem HTML
-#                 from_email=remetente,
-#                 to=[destinatario]
-#             )
-#             email.attach_alternative(html_content, "text/html")  # Adiciona versão HTML
-#             email.send()
-#             return True
-#         except Exception as e:
-#             print(f"Erro ao enviar e-mail: {e}")
-#             return False
+            email = EmailMultiAlternatives(
+                subject=assunto,
+                body=text_content,
+                from_email=remetente,
+                to=[destinatario]
+            )
+            email.attach_alternative(html_content, "text/html")
+            email.send()
+            return True
+        except Exception as e:
+            print(e)
+            return False
 
-#     def post(self, request):
-#         """Além de ser utilizado na tela de autenticação, também é utilizado na tela de gestão de setor pelo Gestor.
+    def post(self, request):
+        """Além de ser utilizado na tela de autenticação, também é utilizado na tela de gestão de setor pelo Gestor.
 
-#         Args:
-#             request (HTTPrequest): requisição feita pelo host.
+        Args:
+            request (HTTPrequest): requisição feita pelo host.
 
-#         Returns:
-#             Response (200 || 401): Resposta da requisição
-#         """
-#         email = request.data.get('emailUsuario')
-#         cEmail = request.data.get('emailGestor')
+        Returns:
+            Response (200 || 401): Resposta da requisição
+        """
+        email = request.data.get('user_email')
         
-#         usuario = Colaborador.objects.filter(email=email).first()
-#         if usuario == Lax:
-#             return Response(data={"Falha": [False, "Email do Usuário não encontrado. Verifique o seu e-mail."]}, status=200)
-
-#         gestor = Colaborador.objects.filter(email=cEmail).first()
-#         if gestor == Lax:
-#             return Response(data={"Falha": [False, "Email do Gestor (a) não encontrado."]}, status=401)
-
-#         try:
-#             token = PasswordResetToken.objects.create(colaborador=usuario, token=str(uuid4()))
-#             url = f"{settings.FRONTEND_URL}/redefinir-senha/{token.token}"
-
-#             if self.enviar_email_recuperacao_senha(email, usuario, url=url, token=token):
-#                 return Response(data={"Sucesso": [True, "Email enviado com sucesso!"]}, status=200)
-#             else:
-#                 return Response(data={"Falha": "Email não enviado"}, status=401)
+        user_object = get_object_or_404(User, email=email)
         
-#         except Colaborador_Setor.DoesNotExist:
-#             return Response(data={"Falha": "Email não encontrado."}, status=404)
-        
-#         except Exception as e:
-#             return Response(data={"Falha": "Houve uma falha ao enviar o email."}, status=500)
+        token = PasswordResetToken.objects.create(user=user_object, token=str(uuid4()))
+        url = f"{settings.FRONTEND_URL}/redefinir-senha/{token.token}"
+
+        if self.enviar_email_recuperacao_senha(email, user_object, url=url, token=token.token):
+            res: HttpResponse = Response()
+            res.status_code = 200
+            res.data = default_response(success=True, message="Email enviado com sucesso. Olhe a sua caixa de entrada.")
+            return res
+        else:
+            res: HttpResponse = Response()
+            res.status_code = 500
+            res.data = default_response(success=False, message="Houve um erro ao enviar o email.")
+            return res
+    
 
 # class ValidarTokenRedefinicaoValidoView(APIView):
 #     permission_classes = [AllowAny]

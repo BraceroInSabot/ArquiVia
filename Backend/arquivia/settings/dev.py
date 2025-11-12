@@ -2,6 +2,7 @@ from .settings import *
 from dotenv import load_dotenv
 import os
 from datetime import timedelta
+import dj_database_url
 
 load_dotenv(".env")
 
@@ -15,11 +16,21 @@ ALLOWED_HOSTS += [
 ]
 
 
+DB_USER = os.getenv('POSTGRES_USER')
+DB_PASSWORD = os.getenv('POSTGRES_PASSWORD')
+DB_NAME = os.getenv('POSTGRES_DB')
+
+DB_HOST = 'localhost'
+DB_PORT = '5432'
+
+DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.parse(
+        DATABASE_URL,
+        conn_max_age=600, 
+        conn_health_checks=True
+    )
 }
 
 

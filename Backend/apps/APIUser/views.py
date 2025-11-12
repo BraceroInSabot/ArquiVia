@@ -307,23 +307,31 @@ class ValidarTokenRedefinicaoValidoView(APIView):
         res.data = default_response(success=True, message="Token válido.")
         return res
     
-# class RedefinirSenhaView(APIView):
-#     permission_classes = [AllowAny]
+class RedefinirSenhaView(APIView):
+    permission_classes = [AllowAny]
 
-#     def post(self, request, *args, **kwargs):
-#         token = request.data.get("token")
-#         nova_senha = request.data.get("password")
+    def post(self, request, token: str):
+        new_password = request.data.get("password")
 
-#         token_validacao = PasswordResetToken.objects.filter(token=token).first()
-#         if not token_validacao or not token_validacao.is_token_valid():
-#             print(token_validacao, token_validacao.is_token_valid())
-#             return Response({"message": "Token inválido ou expirado."}, status=status.HTTP_400_BAD_REQUEST)
+        token_validation = get_object_or_404(PasswordResetToken, token=token)
         
-#         try:
-#             usuario = token_validacao.colaborador
-#             usuario.password = make_password(nova_senha)
-#             usuario.save()
+        if not token_validation or not token_validation.is_token_valid():
+            res: HttpResponse = Response()
+            res.status_code = 400
+            res.data = default_response(success=False, message="Token inválido ou expirado.")
+            return res
+        
+        try:
+            user = token_validation.user
+            user.password = make_password(new_password)
+            user.save()
 
-#             return Response({"Alerta": "Senha redefinida!"})
-#         except:
-#             return Response({"Alerta": "Não foi possível salvar a nova senha."})
+            res: HttpResponse = Response()
+            res.status_code = 200
+            res.data = default_response(success=True, message="Senha redefinida com sucesso.")
+            return res
+        except:
+            res: HttpResponse = Response()
+            res.status_code = 500
+            res.data = default_response(success=False, message="Houve um erro ao redefinir a senha.")
+            return res

@@ -1,70 +1,66 @@
 import { useState, type JSX } from 'react';
+import { useParams } from 'react-router-dom'; // 1. Importe useParams
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { $generateHtmlFromNodes } from '@lexical/html';
-import jsPDF from 'jspdf'; // A biblioteca jspdf
-//@ts-ignore
 import { type EditorState } from 'lexical';
-import HistoryViewModal from './HistoryViewModal'; // Importa o novo modal
 
-// --- 1. Importe TODOS os ícones ---
-import PDFIcon from '../assets/icons/pdf-export.svg?url';
+import HistoryViewModal from './HistoryViewModal';
+import AttachedFilesModal from '../components/AttachedFilesModal'; // 2. Importe o novo Modal
+
+// 3. Importe os ícones (Substitua PDFIcon por PaperclipIcon)
+// Certifique-se de ter um ícone 'paperclip.svg' ou similar
+import PaperclipIcon from '../assets/icons/paperclip.svg?url'; 
 import HistoryIcon from '../assets/icons/history.svg?url';
 import EyeIcon from '../assets/icons/eye.svg?url';
 import RestoreIcon from '../assets/icons/restore.svg?url';
-import SaveIcon from '../assets/icons/save.svg?url'; // <-- Ícone de salvar
+import SaveIcon from '../assets/icons/save.svg?url';
 
 import '../assets/css/EditorTheme.css'
 
-// Define a "forma" de um item do histórico
 interface HistoryEntry {
-  state: string; // O EditorState serializado como string JSON
-  timestamp: Date; // O objeto Date de quando foi salvo
+  state: string; 
+  timestamp: Date; 
 }
 
-// --- 2. Atualize a interface de props ---
 interface ActionsPluginProps {
   history: HistoryEntry[];
   isAutosaveActive: boolean;
   onAutosaveToggle: () => void;
   isGlowing: boolean;
-  onManualSave: () => void; // <-- Adiciona a prop de salvar
+  onManualSave: () => void;
 }
 
-// --- 3. Atualize a assinatura do componente ---
 export default function ActionsPlugin({ 
   history,
   isAutosaveActive,
   onAutosaveToggle,
   isGlowing,
-  onManualSave // <-- Recebe a prop
+  onManualSave
 }: ActionsPluginProps): JSX.Element {
+    // 4. Pegue o ID da URL
+    const { id } = useParams<{ id: string }>(); 
+    const documentId = id ? Number(id) : null;
+
     const [viewingState, setViewingState] = useState<string | null>(null);
+    // 5. Estado para o modal de arquivos
+    const [isFilesModalOpen, setIsFilesModalOpen] = useState(false);
     
     const [editor] = useLexicalComposerContext(); 
     const [isHistoryVisible, setIsHistoryVisible] = useState(false);
 
-    const handleExportToPdf = (): void => {
-        editor.getEditorState().read(() => {
-          const htmlString = $generateHtmlFromNodes(editor, null);
-          const pdf = new jsPDF('p', 'mm', 'a4');
-    
-          pdf.html(htmlString, {
-            callback: function (doc: jsPDF) {
-              doc.save('documento.pdf');
-            },
-            margin: [15, 15, 15, 15],
-            autoPaging: 'text',
-            width: 180,
-            windowWidth: 700,
-          });
-        });
+    // (A função handleExportToPdf foi removida/substituída)
+
+    const handleFilesClick = () => {
+        if (documentId) {
+            setIsFilesModalOpen(true);
+        } else {
+            alert("Salve o documento antes de visualizar anexos.");
+        }
     };
 
     const handleHistoryClick = (): void => {
         setIsHistoryVisible(!isHistoryVisible);
     };
 
-    // A lógica de restauração agora usa o 'editor' local
     const handleRestore = (stateToRestore: string): void => {
       try {
         const editorState = editor.parseEditorState(stateToRestore); 
@@ -79,7 +75,7 @@ export default function ActionsPlugin({
         <div>
             <div className="actions-container">
 
-                {/* --- 4. NOVO BOTÃO DE SALVAR MANUAL (À ESQUERDA) --- */}
+                {/* BOTÃO DE SALVAR MANUAL */}
                 <button
                     onClick={onManualSave}
                     className="toolbar-item save-btn"
@@ -89,7 +85,7 @@ export default function ActionsPlugin({
                     <img src={SaveIcon} alt="Salvar Agora" className="format" width="18" height="18" />
                 </button>
                 
-                {/* --- BOTÃO DE TOGGLE --- */}
+                {/* BOTÃO DE TOGGLE */}
                 <button
                     onClick={onAutosaveToggle}
                     className={`toolbar-item autosave-toggle ${isAutosaveActive ? 'active' : ''}`}
@@ -99,7 +95,7 @@ export default function ActionsPlugin({
                   <span className="autosave-icon">{isAutosaveActive ? 'ON' : 'OFF'}</span>
                 </button>
                 
-                {/* --- BOTÃO DE HISTÓRICO --- */}
+                {/* BOTÃO DE HISTÓRICO */}
                 <button
                     onClick={handleHistoryClick}
                     className={`toolbar-item history-btn ${isGlowing ? 'glowing' : ''}`}
@@ -108,21 +104,23 @@ export default function ActionsPlugin({
                     <img src={HistoryIcon} alt="Review History" className="format" width="18" height="18" />
                 </button>
                 
-                {/* --- BOTÃO DE PDF --- */}
+                {/* --- 6. BOTÃO DE ANEXOS (SUBSTITUI PDF) --- */}
                 <button
-                    onClick={handleExportToPdf}
-                    className="toolbar-item export-btn"
-                    aria-label="Export to PDF"
+                    onClick={handleFilesClick}
+                    className="toolbar-item export-btn" // Pode manter a classe ou criar uma 'files-btn'
+                    aria-label="Arquivos Anexados"
+                    title="Arquivos Anexados"
+                    disabled={!documentId} // Desabilita se não houver ID (criação)
                 >
-                    <img src={PDFIcon} alt="Export PDF" className="format" width="18" height="18" />
+                    <img src={PaperclipIcon} alt="Anexos" className="format" width="18" height="18" />
                 </button>
             </div>
             
-           {isHistoryVisible && (
+            {isHistoryVisible && (
                 <div className="history-panel">
                     {history.length > 0 ? (
                         <ul className="history-list">
-                         {history.map((entry: HistoryEntry, index: number) => (
+                            {history.map((entry: HistoryEntry, index: number) => (
                                 <li key={index} className="history-item">
                                     <span className="history-timestamp">
                                       {entry.timestamp.toLocaleDateString()} {entry.timestamp.toLocaleTimeString()}
@@ -131,13 +129,14 @@ export default function ActionsPlugin({
                                       <button 
                                         className="history-action-btn view-btn" 
                                         onClick={() => setViewingState(entry.state)}
-                                   >
+                                      >
                                         <img src={EyeIcon} alt="Visualizar" className="format" width="18" height="18" />
                                       </button>
                                       <button 
-                                        className="history-action-btn restore-btn" onClick={() => handleRestore(entry.state)}
+                                        className="history-action-btn restore-btn" 
+                                        onClick={() => handleRestore(entry.state)}
                                       >
-                                       <img src={RestoreIcon} alt="Voltar" className="format" width="18" height="18" />
+                                        <img src={RestoreIcon} alt="Voltar" className="format" width="18" height="18" />
                                       </button>
                                     </div>
                                 </li>
@@ -155,6 +154,14 @@ export default function ActionsPlugin({
                 editorStateString={viewingState}
                 onClose={() => setViewingState(null)}
               />
+            )}
+
+            {/* --- 7. RENDERIZAÇÃO DO MODAL DE ARQUIVOS --- */}
+            {isFilesModalOpen && documentId && (
+                <AttachedFilesModal
+                    documentId={documentId}
+                    onClose={() => setIsFilesModalOpen(false)}
+                />
             )}
         </div>
     );

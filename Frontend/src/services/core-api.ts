@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const BASE: string = "https://bracero.com.br/"
+// const BASE: string = "https://bracero.com.br/"
+const BASE: string = "http://localhost:8000/"
 const VERSION: string = "api/v2/"
 const URL: string = BASE + VERSION
 
@@ -207,6 +208,13 @@ export interface UpdateCategoryPayload {
 
 export interface AddCategoriesPayload {
   categories_id: number[];
+}
+
+export interface AttachedFile {
+  attached_file_id: number;
+  title: string;
+  file: string;
+  attached_at: string;
 }
 
 const api = axios.create({

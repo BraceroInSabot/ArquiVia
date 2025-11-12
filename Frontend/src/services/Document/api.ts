@@ -1,5 +1,5 @@
 import api from '../core-api';
-import type { Classification, CreateDocument, Document, DocumentList, ResponseStructure, UpdateDocumentPayload, UpdateClassificationPayload, Category, AddCategoriesPayload, CreateCategoryPayload, UpdateCategoryPayload} from '../core-api';
+import type { Classification, CreateDocument, Document, DocumentList, ResponseStructure, UpdateDocumentPayload, UpdateClassificationPayload, Category, AddCategoriesPayload, CreateCategoryPayload, UpdateCategoryPayload, AttachedFile} from '../core-api';
 
 const documentService = {
     /**
@@ -124,6 +124,13 @@ const documentService = {
    */
   updateCategory(categoryId: number, payload: UpdateCategoryPayload): Promise<{ data: ResponseStructure<Category> }> {
     return api.patch(`/documento/categoria/alterar/${categoryId}/`, payload);
+  },
+
+  /**
+   * Lista os arquivos anexados a um documento.
+   */
+  listAttachedFiles(document_id: number): Promise<{ data: ResponseStructure<AttachedFile[]> }> {
+    return api.get(`/documento/${document_id}/arquivos-anexados/`);
   },
 };
 

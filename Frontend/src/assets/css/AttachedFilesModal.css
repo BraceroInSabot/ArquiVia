@@ -1,0 +1,65 @@
+.attached-files-list {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.attached-file-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  background-color: #fff;
+  transition: background-color 0.2s;
+}
+
+.attached-file-item:hover {
+  background-color: #f9f9f9;
+}
+
+.file-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.file-title {
+  font-weight: 600;
+  color: #333;
+  font-size: 1rem;
+}
+
+.file-date {
+  font-size: 0.8rem;
+  color: #888;
+  margin-top: 2px;
+}
+
+.file-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.file-action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: #007bff;
+  transition: color 0.2s;
+}
+
+.file-action-btn:hover {
+  color: #0056b3;
+}
+
+.empty-files-text {
+  text-align: center;
+  color: #888;
+  font-style: italic;
+  padding: 2rem;
+}

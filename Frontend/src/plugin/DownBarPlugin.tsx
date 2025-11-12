@@ -1,28 +1,27 @@
 import { useState, type JSX } from 'react';
-import { useParams } from 'react-router-dom'; // 1. Importe useParams
+import { useParams } from 'react-router-dom';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import { $generateHtmlFromNodes } from '@lexical/html';
+import jsPDF from 'jspdf';
 import { type EditorState } from 'lexical';
 
 import HistoryViewModal from './HistoryViewModal';
-import AttachedFilesModal from '../components/AttachedFilesModal'; // 2. Importe o novo Modal
+import AttachedFilesModal from '../components/AttachedFilesModal';
+import documentService from '../services/Document/api'; // Importe o serviço
+import type { DocumentHistory } from '../services/core-api'; // Importe o tipo
 
-// 3. Importe os ícones (Substitua PDFIcon por PaperclipIcon)
-// Certifique-se de ter um ícone 'paperclip.svg' ou similar
-import PaperclipIcon from '../assets/icons/paperclip.svg?url'; 
+// Ícones
+import PDFIcon from '../assets/icons/pdf-export.svg?url';
 import HistoryIcon from '../assets/icons/history.svg?url';
 import EyeIcon from '../assets/icons/eye.svg?url';
 import RestoreIcon from '../assets/icons/restore.svg?url';
 import SaveIcon from '../assets/icons/save.svg?url';
+import PaperclipIcon from '../assets/icons/paperclip.svg?url';
 
-import '../assets/css/EditorTheme.css'
-
-interface HistoryEntry {
-  state: string; 
-  timestamp: Date; 
-}
+import '../assets/css/EditorTheme.css';
 
 interface ActionsPluginProps {
-  history: HistoryEntry[];
+  // Removemos a prop 'history' (agora vem da API)
   isAutosaveActive: boolean;
   onAutosaveToggle: () => void;
   isGlowing: boolean;
@@ -30,133 +29,218 @@ interface ActionsPluginProps {
 }
 
 export default function ActionsPlugin({ 
-  history,
   isAutosaveActive,
   onAutosaveToggle,
   isGlowing,
   onManualSave
 }: ActionsPluginProps): JSX.Element {
-    // 4. Pegue o ID da URL
     const { id } = useParams<{ id: string }>(); 
     const documentId = id ? Number(id) : null;
 
-    const [viewingState, setViewingState] = useState<string | null>(null);
-    // 5. Estado para o modal de arquivos
-    const [isFilesModalOpen, setIsFilesModalOpen] = useState(false);
-    
     const [editor] = useLexicalComposerContext(); 
+    
+    // Estados de Modais e Painéis
+    const [viewingState, setViewingState] = useState<string | null>(null);
+    const [isFilesModalOpen, setIsFilesModalOpen] = useState(false);
     const [isHistoryVisible, setIsHistoryVisible] = useState(false);
 
-    // (A função handleExportToPdf foi removida/substituída)
+    // Estado para armazenar o histórico vindo da API
+    const [apiHistory, setApiHistory] = useState<DocumentHistory[]>([]);
+    const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+
+    // --- FUNÇÕES AUXILIARES ---
+
+    const handleExportToPdf = (): void => {
+        editor.getEditorState().read(() => {
+          const htmlString = $generateHtmlFromNodes(editor, null);
+          const pdf = new jsPDF('p', 'mm', 'a4');
+          pdf.html(htmlString, {
+            callback: function (doc: jsPDF) { doc.save('documento.pdf'); },
+            margin: [15, 15, 15, 15],
+            autoPaging: 'text',
+            width: 180,
+            windowWidth: 700,
+          });
+        });
+    };
 
     const handleFilesClick = () => {
-        if (documentId) {
-            setIsFilesModalOpen(true);
-        } else {
-            alert("Salve o documento antes de visualizar anexos.");
+        if (documentId) setIsFilesModalOpen(true);
+        else alert("Salve o documento antes de visualizar anexos.");
+    };
+
+    // --- LÓGICA DE HISTÓRICO (Backend) ---
+
+    const handleHistoryClick = async () => {
+        // Alterna visibilidade
+        if (isHistoryVisible) {
+            setIsHistoryVisible(false);
+            return;
+        }
+
+        // Se for abrir, busca os dados
+        if (!documentId) {
+            alert("Salve o documento pelo menos uma vez para ver o histórico.");
+            return;
+        }
+
+        setIsHistoryVisible(true);
+        setIsLoadingHistory(true);
+        try {
+            const response = await documentService.getDocumentHistory(documentId);
+            setApiHistory(response.data.data || []);
+        } catch (error) {
+            console.error("Erro ao buscar histórico:", error);
+            alert("Falha ao carregar histórico.");
+        } finally {
+            setIsLoadingHistory(false);
         }
     };
 
-    const handleHistoryClick = (): void => {
-        setIsHistoryVisible(!isHistoryVisible);
+    const handleRevert = async (historyEntry: DocumentHistory) => {
+        if (!documentId) return;
+        
+        const confirmMsg = `Tem certeza que deseja reverter para a versão de ${new Date(historyEntry.history_date).toLocaleString()}? \nIsso substituirá o conteúdo atual.`;
+        if (!window.confirm(confirmMsg)) return;
+
+        try {
+            // 1. Chama a API de Reversão
+            const response = await documentService.revertDocument(documentId, historyEntry.history_id);
+            const restoredDoc = response.data.data;
+
+            // 2. Atualiza o Editor com o conteúdo retornado
+            const newStateString = typeof restoredDoc.content === 'string' 
+                ? restoredDoc.content 
+                : JSON.stringify(restoredDoc.content);
+
+            const editorState = editor.parseEditorState(newStateString);
+            editor.setEditorState(editorState);
+
+            // 3. Fecha o painel e avisa
+            setIsHistoryVisible(false);
+            // alert("Documento revertido com sucesso!"); // Opcional
+
+        } catch (e) {
+            console.error("Falha ao reverter documento:", e);
+            alert("Erro ao reverter versão.");
+        }
     };
 
-    const handleRestore = (stateToRestore: string): void => {
-      try {
-        const editorState = editor.parseEditorState(stateToRestore); 
-        editor.setEditorState(editorState);
-      } catch (e) {
-        console.error("Falha ao restaurar o estado.", e);
-      }
-        setIsHistoryVisible(false);
+    // Helper para abrir o modal de visualização
+    const handleViewVersion = (content: any) => {
+        // Garante que temos uma string para o modal
+        const contentString = typeof content === 'string' ? content : JSON.stringify(content);
+        setViewingState(contentString);
     };
 
     return (
         <div>
             <div className="actions-container">
-
-                {/* BOTÃO DE SALVAR MANUAL */}
+                {/* Botão Salvar */}
                 <button
                     onClick={onManualSave}
                     className="toolbar-item save-btn"
                     aria-label="Salvar Agora"
                     title="Salvar Agora"
                 >
-                    <img src={SaveIcon} alt="Salvar Agora" className="format" width="18" height="18" />
+                    <img src={SaveIcon} alt="Salvar" className="format" width="18" height="18" />
                 </button>
                 
-                {/* BOTÃO DE TOGGLE */}
+                {/* Botão Toggle Autosave */}
                 <button
                     onClick={onAutosaveToggle}
                     className={`toolbar-item autosave-toggle ${isAutosaveActive ? 'active' : ''}`}
                     aria-label="Toggle Autosave"
-                    title={isAutosaveActive ? "Auto-salvamento Ativado" : "Auto-salvamento Desativado"}
+                    title={isAutosaveActive ? "Auto-salvamento Ativado" : "Desativado"}
                 >
-                  <span className="autosave-icon">{isAutosaveActive ? 'ON' : 'OFF'}</span>
+                    <span className="autosave-icon">{isAutosaveActive ? 'ON' : 'OFF'}</span>
                 </button>
                 
-                {/* BOTÃO DE HISTÓRICO */}
+                {/* Botão Histórico */}
                 <button
                     onClick={handleHistoryClick}
                     className={`toolbar-item history-btn ${isGlowing ? 'glowing' : ''}`}
-                    aria-label="Toggle History"
+                    aria-label="Histórico"
+                    title="Ver Histórico de Alterações"
                 >
-                    <img src={HistoryIcon} alt="Review History" className="format" width="18" height="18" />
+                    <img src={HistoryIcon} alt="Histórico" className="format" width="18" height="18" />
                 </button>
                 
-                {/* --- 6. BOTÃO DE ANEXOS (SUBSTITUI PDF) --- */}
+                {/* Botão Anexos */}
                 <button
                     onClick={handleFilesClick}
-                    className="toolbar-item export-btn" // Pode manter a classe ou criar uma 'files-btn'
+                    className="toolbar-item export-btn"
                     aria-label="Arquivos Anexados"
                     title="Arquivos Anexados"
-                    disabled={!documentId} // Desabilita se não houver ID (criação)
+                    disabled={!documentId}
                 >
                     <img src={PaperclipIcon} alt="Anexos" className="format" width="18" height="18" />
                 </button>
+
+                {/* Botão PDF (Opcional, se quiser manter) */}
+                <button
+                    onClick={handleExportToPdf}
+                    className="toolbar-item export-btn"
+                    aria-label="Exportar PDF"
+                    title="Exportar PDF"
+                >
+                    <img src={PDFIcon} alt="PDF" className="format" width="18" height="18" />
+                </button>
             </div>
             
+            {/* --- PAINEL DE HISTÓRICO (BACKEND) --- */}
             {isHistoryVisible && (
                 <div className="history-panel">
-                    {history.length > 0 ? (
+                    {isLoadingHistory ? (
+                        <p style={{padding: '1rem', textAlign: 'center', color: '#666'}}>Carregando histórico...</p>
+                    ) : apiHistory.length > 0 ? (
                         <ul className="history-list">
-                            {history.map((entry: HistoryEntry, index: number) => (
-                                <li key={index} className="history-item">
-                                    <span className="history-timestamp">
-                                      {entry.timestamp.toLocaleDateString()} {entry.timestamp.toLocaleTimeString()}
-                                    </span>
+                            {apiHistory.map((entry) => (
+                                <li key={entry.history_id} className="history-item">
+                                    <div className="history-info" style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start'}}>
+                                        <span className="history-timestamp">
+                                            {new Date(entry.history_date).toLocaleDateString()} {new Date(entry.history_date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                        </span>
+                                        <span style={{fontSize: '0.75rem', color: '#555', marginTop: '2px'}}>
+                                            {entry.user_name} • {entry.action}
+                                        </span>
+                                    </div>
+                                    
                                     <div className="history-item-actions">
-                                      <button 
-                                        className="history-action-btn view-btn" 
-                                        onClick={() => setViewingState(entry.state)}
-                                      >
-                                        <img src={EyeIcon} alt="Visualizar" className="format" width="18" height="18" />
-                                      </button>
-                                      <button 
-                                        className="history-action-btn restore-btn" 
-                                        onClick={() => handleRestore(entry.state)}
-                                      >
-                                        <img src={RestoreIcon} alt="Voltar" className="format" width="18" height="18" />
-                                      </button>
+                                        <button 
+                                            className="history-action-btn view-btn" 
+                                            onClick={() => handleViewVersion(entry.content)}
+                                            title="Visualizar esta versão"
+                                        >
+                                            <img src={EyeIcon} alt="Ver" className="format" width="16" height="16" />
+                                        </button>
+                                        <button 
+                                            className="history-action-btn restore-btn" 
+                                            onClick={() => handleRevert(entry)}
+                                            title="Reverter para esta versão"
+                                        >
+                                            <img src={RestoreIcon} alt="Reverter" className="format" width="16" height="16" />
+                                        </button>
                                     </div>
                                 </li>
                             ))}
                         </ul>
                     ) : (
-                        <p>Nenhum ponto de histórico salvo ainda.</p>
+                        <p style={{padding: '1rem', textAlign: 'center', color: '#888'}}>
+                            Nenhum histórico disponível.
+                        </p>
                     )}
                 </div>
             )}
 
-            {/* --- RENDERIZAÇÃO DO MODAL DE VISUALIZAÇÃO --- */}
+            {/* Modais */}
             {viewingState && (
-              <HistoryViewModal
-                editorStateString={viewingState}
-                onClose={() => setViewingState(null)}
-              />
+                <HistoryViewModal
+                    editorStateString={viewingState}
+                    onClose={() => setViewingState(null)}
+                />
             )}
 
-            {/* --- 7. RENDERIZAÇÃO DO MODAL DE ARQUIVOS --- */}
             {isFilesModalOpen && documentId && (
                 <AttachedFilesModal
                     documentId={documentId}

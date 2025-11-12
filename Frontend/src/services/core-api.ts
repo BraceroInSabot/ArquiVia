@@ -217,6 +217,15 @@ export interface AttachedFile {
   attached_at: string;
 }
 
+export interface DocumentHistory {
+  history_id: number;
+  history_date: string;
+  user_name: string;
+  action: 'Criado' | 'Alterado' | 'Excluído';
+  title: string;
+  content: any;
+}
+
 const api = axios.create({
   baseURL: URL,
   withCredentials: true,

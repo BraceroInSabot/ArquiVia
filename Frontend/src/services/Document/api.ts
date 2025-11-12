@@ -1,5 +1,5 @@
 import api from '../core-api';
-import type { Classification, CreateDocument, Document, DocumentList, ResponseStructure, UpdateDocumentPayload, UpdateClassificationPayload, Category, AddCategoriesPayload, CreateCategoryPayload, UpdateCategoryPayload, AttachedFile} from '../core-api';
+import type { Classification, CreateDocument, Document, DocumentList, ResponseStructure, UpdateDocumentPayload, UpdateClassificationPayload, Category, AddCategoriesPayload, CreateCategoryPayload, UpdateCategoryPayload, AttachedFile, DocumentHistory} from '../core-api';
 
 const documentService = {
     /**
@@ -157,6 +157,20 @@ const documentService = {
    */
   searchDocuments(query: string): Promise<{ data: ResponseStructure<DocumentList[]> }> {
     return api.get(`/documento/buscar/?q=${encodeURIComponent(query)}`);
+  },
+
+  /**
+   * Busca o histórico de alterações do documento.
+   */
+  getDocumentHistory(document_id: number): Promise<{ data: ResponseStructure<DocumentHistory[]> }> {
+    return api.get(`/documento-auditoria/${document_id}/historico/`);
+  },
+
+  /**
+   * Reverte o documento para uma versão específica do histórico.
+   */
+  revertDocument(document_id: number, history_id: number): Promise<{ data: ResponseStructure<Document> }> {
+    return api.post(`/documento-auditoria/${document_id}/reverter/${history_id}/`, {});
   },
 };
 

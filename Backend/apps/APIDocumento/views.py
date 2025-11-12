@@ -4,12 +4,13 @@ from django.contrib.auth import get_user_model
 from apps.APISetor.models import Sector, SectorUser
 from apps.APIDocumento.models import Document
 from rest_framework.permissions import IsAuthenticated
-from .serializers import DocumentCreateSerializer, DocumentDetailSerializer, DocumentListSerializer, DocumentUpdateSerializer
+from .serializers import AttachFileSerializer, DocumentCreateSerializer, DocumentDetailSerializer, DocumentListSerializer, DocumentUpdateSerializer
 from rest_framework.parsers import JSONParser
-from apps.APIDocumento.permissions import IsLinkedToDocument
+from apps.APIDocumento.permissions import CanAttachDocument, IsLinkedToDocument
 from apps.core.utils import default_response
 from django.http import HttpResponse
 from django.db.models import Q
+from rest_framework.parsers import MultiPartParser, FormParser
 
 User = get_user_model()
 
@@ -301,3 +302,46 @@ class DeleteDocumentView(APIView):
             }
         }
         return ret
+    
+# Attaching Files
+
+class AttachFileToDocumentView(APIView):
+    """
+    View para anexar (upload) um arquivo a um Documento existente.
+    
+    URL esperada: /api/documento/<int:doc_pk>/anexar-arquivo/
+    Método: POST
+    Body (form-data):
+        - title: string
+        - file: arquivo binário
+    """
+    permission_classes = [IsAuthenticated, CanAttachDocument]
+    
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request, pk: int) -> HttpResponse:
+        """
+        Recebe o arquivo e o vincula ao documento informado na URL.
+        """
+        queryset = Document.objects.select_related(
+            'sector__enterprise__owner',
+            'sector__manager'
+        )
+        document = get_object_or_404(queryset, pk=pk)
+
+        self.check_object_permissions(request, document)
+
+        serializer = AttachFileSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        instance = serializer.save(document_id=document)
+
+        res: HttpResponse = Response()
+        res.status_code = 201
+        res.data = default_response(
+            success=True,
+            message="Arquivo anexado com sucesso.",
+            data=serializer.data
+        )
+        return res
+    

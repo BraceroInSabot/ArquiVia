@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .views import ( 
+    AttachFileToDocumentView,
     CreateDocumentView,
     ListDocumentsView,
     RetrieveDocumentView,
@@ -19,4 +20,8 @@ urlpatterns = [
     path("alterar/<int:pk>/", UpdateDocumentView.as_view(), name="alterar-documento"),
     path("ativar-desativar/<int:pk>/", ActivateOrDeactivateDocumentView.as_view(), name="ativar-ou-desativar-documento"),
     path("excluir/<int:pk>/", DeleteDocumentView.as_view(), name="excluir-documento"),
+    
+    # Attach Documents
+    
+    path("<int:pk>/anexar-arquivo/", AttachFileToDocumentView.as_view(), name='anexar-arquivo'),
 ] + classification_urlpatterns + category_urlpatterns

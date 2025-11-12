@@ -1,7 +1,6 @@
 from rest_framework import serializers
-from django.db import transaction
-
-from .models import Document, Classification, Category, Classification_Status, Classification_Privacity
+from django.db import transaction 
+from .models import Attached_Files_Document, Document, Classification, Category, Classification_Status, Classification_Privacity
 from apps.APISetor.models import Sector, SectorUser
 
 class DocumentCreateSerializer(serializers.ModelSerializer):
@@ -168,3 +167,37 @@ class DocumentUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Document
         fields = ['title', 'content']
+
+class AttachFileSerializer(serializers.ModelSerializer):
+    """
+    Serializer para upload de arquivos anexos.
+    Valida o título e o arquivo.
+    """
+    file = serializers.FileField(required=True)
+    title = serializers.CharField(max_length=100, required=True)
+
+    class Meta:
+        model = Attached_Files_Document
+        fields = [
+            'attached_file_id', 
+            'title', 
+            'file', 
+            'attached_at', 
+        ]
+        read_only_fields = ['attached_file_id', 'attached_at']
+
+    def validate_file(self, value):
+        """
+        Validação opcional de tamanho ou tipo de arquivo.
+        
+        Args:
+            value (FileField): Arquivo a ser validado.
+            
+        Raises:
+            serializers.ValidationError: Se o arquivo ultrapassar o limite.
+        """
+        limit_mb = 50
+        if value.size > limit_mb * 1024 * 1024:
+            raise serializers.ValidationError(f"O arquivo não pode exceder {limit_mb}MB.")
+        return value
+    

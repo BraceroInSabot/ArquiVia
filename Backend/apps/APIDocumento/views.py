@@ -12,6 +12,7 @@ from apps.core.utils import default_response
 from django.http import HttpResponse
 from django.db.models import Q
 from rest_framework.parsers import MultiPartParser, FormParser
+from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
 
 User = get_user_model()
 
@@ -385,4 +386,60 @@ class ListAttachedFilesToDocumentView(APIView):
         res: HttpResponse = Response()
         res.status_code = 200
         res.data = default_response(success=True, message="Arquivos recuperados com sucesso.", data=serializer.data)
+        return res
+    
+class DocumentSearchView(APIView):
+    """
+    Endpoint de Recuperação de Informação (Full-Text Search).
+    Query Param: ?q=termo_da_busca
+    """
+    permission_classes = [IsAuthenticated] # Ajuste conforme sua regra de negócio
+
+    def get(self, request):
+        request_user = request.user
+        query = request.query_params.get('q', '')
+
+        if not query:
+            res: HttpResponse = Response()
+            res.status_code = 400
+            res.data = default_response(
+                success=False, 
+                message="Termo de busca não informado."
+            )
+            return res
+
+        # Vetorização, tokenização, stemming
+        vector = (
+            SearchVector('title', weight='A', config='portuguese') + 
+            SearchVector('content', weight='B', config='portuguese')
+        )
+
+        # Busca de querys
+        search_query = SearchQuery(query, config='portuguese')
+
+        # Annotate (cria campos virtuais) e Filter
+        documents = Document.objects.annotate(
+            rank=SearchRank(vector, search_query)
+        ).filter(
+            rank__gte=0.1 # Filtra apenas o que tiver relevância mínima (ex: 0.1)
+        ).order_by('-rank') # Ordena do maior rank (mais relevante) para o menor
+        
+        query = (
+            Q(creator=request_user) |
+            Q(sector__enterprise__owner=request_user) |
+            Q(sector__manager=request_user) |
+            Q(sector__sector_links__user=request_user)
+        )
+        
+        documents_queryset = documents.filter(query)
+
+        serializer = DocumentListSerializer(documents_queryset, many=True)
+
+        res: HttpResponse = Response()
+        res.status_code = 200
+        res.data = default_response(
+            success=True,
+            message=f"Encontrados {documents_queryset.count()} documentos relevantes.",
+            data=serializer.data
+        )
         return res

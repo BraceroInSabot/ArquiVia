@@ -1,76 +1,84 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { DocumentList, DocumentFilters } from '../services/core-api';
 import documentService from '../services/Document/api';
-// 1. Importe o novo modal
-import ClassificationModal from '../components/ClassificationModal'; 
+import ClassificationModal from '../components/ClassificationModal';
 
-// (Seus ícones)
-import gearIcon from '../assets/icons/gear.svg?url'; // Use ?url
-import eyeIcon from '../assets/icons/eye.svg?url';   // Use ?url
-import "../assets/css/DocumentPage.css"; // (Seu CSS)
+// Imports de ícones e CSS
+import gearIcon from '../assets/icons/gear.svg?url';
+import eyeIcon from '../assets/icons/eye.svg?url';
+import "../assets/css/DocumentPage.css";
 
 interface DocumentListProps {
   filters: DocumentFilters;
 }
 
 const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
-  const [allDocuments, setAllDocuments] = useState<DocumentList[]>([]);
+  // Armazena os documentos exibidos (seja da busca ou da listagem geral)
+  const [documents, setDocuments] = useState<DocumentList[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Estados auxiliares
   const navigate = useNavigate();
-
-  // --- 2. CORREÇÃO DAS VARIÁVEIS DE ESTADO ---
-  // Renomeia o estado do modal para evitar colisão de nome
   const [isModalOpen, setIsModalOpen] = useState(false);
-  // Novo estado para saber *qual* documento foi clicado
   const [selectedDocId, setSelectedDocId] = useState<number | null>(null);
-  // --- FIM DA CORREÇÃO ---
+
+  const [docFound, setDocFound] = useState(String);
 
 
+  // --- EFEITO PRINCIPAL: BUSCA vs LISTAGEM ---
   useEffect(() => {
-    const fetchDocuments = async () => {
+    const loadData = async () => {
       setLoading(true);
       setError(null);
+      
       try {
-        const response = await documentService.getDocuments();
-        setAllDocuments(response.data.data || []); 
-      } catch (err) {
-        console.error("Erro ao buscar documentos:", err);
-        setError("Falha ao carregar a lista de documentos.");
+        let response;
+
+        // LÓGICA DE DECISÃO:
+        if (filters.searchTerm && filters.searchTerm.trim() !== '') {
+          // Se tem termo de busca, chama a API de Recuperação de Informação
+          console.log(`Buscando por: ${filters.searchTerm}`);
+          response = await documentService.searchDocuments(filters.searchTerm);
+          setDocFound(response.data.mensagem);
+        } else {
+          // Se não tem termo, lista todos (padrão)
+          response = await documentService.getDocuments();
+        }
+
+        setDocuments(response.data.data || []);
+        
+      } catch (err: any) {
+        console.error("Erro na listagem/busca:", err);
+        // Mensagem amigável caso a busca não retorne nada ou dê erro 400
+        const msg = err.response?.data?.message || "Falha ao carregar documentos.";
+        setError(msg);
+        setDocuments([]); // Limpa lista em caso de erro
       } finally {
         setLoading(false);
       }
     };
 
-    fetchDocuments();
-  }, []); 
+    // Adicionamos um pequeno delay (debounce) apenas se for busca, 
+    // para evitar chamar a API enquanto digita (opcional, mas recomendado)
+    const timer = setTimeout(() => {
+        loadData();
+    }, 300);
 
-  const filteredDocuments = useMemo(() => {
-    // ... (sua lógica de filtro - sem mudanças)
-    let docs = allDocuments;
-    if (filters.searchTerm) {
-      docs = docs.filter(doc => 
-        doc.title.toLowerCase().includes(filters.searchTerm!.toLowerCase())
-      );
-    }
-    return docs;
-  }, [allDocuments, filters]);
+    return () => clearTimeout(timer);
 
-  // Navega para a página de edição
+  }, [filters.searchTerm]); // Recarrega sempre que o termo mudar
+
+
+  // --- Funções de Navegação e Modal ---
   const handleEditClick = (documentId: number) => {
     navigate(`/documento/editar/${documentId}`);
   };
 
-  if (loading) {
-    return <p>Carregando documentos...</p>;
-  }
-  // ... (render de erro e 'Nenhum documento')
-
-  // --- 3. FUNÇÃO ATUALIZADA PARA ABRIR O MODAL ---
   const handleModalOpen = (documentId: number) => {
-    setSelectedDocId(documentId); // Define qual documento foi clicado
-  	setIsModalOpen(true); // Abre o modal
+    setSelectedDocId(documentId);
+    setIsModalOpen(true);
   };
 
   const handleModalClose = () => {
@@ -78,41 +86,69 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
     setSelectedDocId(null);
   };
 
+  // --- Renderização ---
+
+  if (loading) {
+    return (
+      <div style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
+        <p>Carregando...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    // Se for erro 404 ou lista vazia na busca, pode não ser um "erro" visual crítico
+    return (
+        <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+            <p style={{ color: '#888' }}>{error}</p>
+        </div>
+    );
+  }
+
+  if (documents.length === 0) {
+    return (
+        <div style={{ textAlign: 'center', marginTop: '2rem', color: '#888' }}>
+            <p>{docFound}</p>
+        </div>
+    );
+  }
+
   return (
-    <> {/* 4. Use um fragmento para incluir o modal */}
+    <>
       <ul style={{ listStyle: 'none', padding: 0 }}>
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-        {filteredDocuments.map(doc => (
+        {documents.map(doc => (
           <li 
             key={doc.document_id}
-            // (seus estilos inline)
             style={{ 
-              backgroundColor: '#fff', border: '1px solid #eee', padding: '1rem', 
-              marginBottom: '0.5rem', borderRadius: '4px', display: 'flex', 
-              justifyContent: 'space-between', alignItems: 'center',
+              backgroundColor: '#fff', 
+              border: '1px solid #eee', 
+              padding: '1rem', 
+              marginBottom: '0.5rem', 
+              borderRadius: '4px', 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
             }}
           >
             <div>
               <strong>{doc.title}</strong>
               <p style={{ margin: '0.25rem 0 0', color: '#555', fontSize: '0.9em'}}>
-                Por: {doc.creator_name} em {new Date(doc.created_at).toLocaleDateString()}
+                Por: {doc.creator_name} em {doc.created_at}
               </p>
             </div>
+            
             <div className='buttons-options'>
-              {/* 5. Altere 'handleItemClick' e use <img> */}
-              <button onClick={() => handleEditClick(doc.document_id)} title="Editar">
-                <img src={eyeIcon} alt="Editar" width="18" height="18" />
+              <button onClick={() => handleEditClick(doc.document_id)} title="Visualizar/Editar">
+                <img src={eyeIcon} alt="Visualizar" width="18" height="18" />
               </button>
-              {/* 6. Chame 'handleModalOpen' com o ID */}
               <button id="gear-button" onClick={() => handleModalOpen(doc.document_id)} title="Classificação">
                 <img src={gearIcon} alt="Classificar" width="18" height="18" />
-          	  </button>
+              </button>
             </div>
           </li>
         ))}
       </ul>
 
-      {/* 7. Renderize o modal condicionalmente */}
       {isModalOpen && selectedDocId && (
         <ClassificationModal
           documentId={selectedDocId}

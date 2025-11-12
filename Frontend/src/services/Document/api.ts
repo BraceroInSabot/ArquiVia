@@ -150,6 +150,14 @@ const documentService = {
     // Ajuste a URL se o seu urls.py for diferente (ex: /anexo/excluir/...)
     return api.patch(`/documento/${attached_file_id}/desanexar-arquivo/`, {});
   },
+
+  /**
+   * Busca documentos usando o sistema de Recuperação de Informação (Full-Text Search).
+   * @param query O termo da busca.
+   */
+  searchDocuments(query: string): Promise<{ data: ResponseStructure<DocumentList[]> }> {
+    return api.get(`/documento/buscar/?q=${encodeURIComponent(query)}`);
+  },
 };
 
 export default documentService;

@@ -9,7 +9,8 @@ from .views import (
     UpdateDocumentView,
     ActivateOrDeactivateDocumentView,
     DeleteDocumentView,
-    DetachFileToDocumentView
+    DetachFileToDocumentView,
+    DocumentSearchView
     )
 
 from .classificationUtils.urls import classification_urlpatterns
@@ -27,5 +28,9 @@ urlpatterns = [
     
     path("<int:pk>/anexar-arquivo/", AttachFileToDocumentView.as_view(), name='anexar-arquivo'),
     path("<int:pk>/desanexar-arquivo/", DetachFileToDocumentView.as_view(), name='desanexar-arquivo'),
-    path("<int:pk>/arquivos-anexados/", ListAttachedFilesToDocumentView.as_view(), name='listar-arquivos-anexados')
+    path("<int:pk>/arquivos-anexados/", ListAttachedFilesToDocumentView.as_view(), name='listar-arquivos-anexados'),
+    
+    # Information Retrieval (IR)
+    
+    path("buscar/", DocumentSearchView.as_view(), name="buscar-documentos")
 ] + classification_urlpatterns + category_urlpatterns

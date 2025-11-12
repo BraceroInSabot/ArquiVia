@@ -147,3 +147,16 @@
   from { opacity: 0; transform: translateY(-5px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* ... (estilos existentes) ... */
+
+.file-action-btn.delete-btn {
+  color: #dc3545; /* Vermelho padrão */
+  margin-left: 8px; /* Espaçamento entre os botões */
+}
+
+.file-action-btn.delete-btn:hover {
+  color: #a71d2a; /* Vermelho mais escuro */
+  background-color: #ffe6e6; /* Fundo vermelho bem claro */
+  border-radius: 4px;
+}

@@ -140,6 +140,16 @@ const documentService = {
   attachFile(document_id: number, formData: FormData): Promise<{ data: ResponseStructure<any> }> {
     return api.post(`/documento/${document_id}/anexar-arquivo/`, formData);
   },
+
+  /**
+   * Remove (desvincula) um arquivo do documento.
+   * @param attached_file_id O ID do anexo (não do documento).
+   */
+  detachFile(attached_file_id: number): Promise<{ data: ResponseStructure<null> }> {
+    // Endpoint estimado com base na sua view. 
+    // Ajuste a URL se o seu urls.py for diferente (ex: /anexo/excluir/...)
+    return api.patch(`/documento/${attached_file_id}/desanexar-arquivo/`, {});
+  },
 };
 
 export default documentService;

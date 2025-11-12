@@ -5,17 +5,27 @@ import type { AttachedFile } from '../services/core-api';
 import '../assets/css/ClassificationModal.css'; 
 import '../assets/css/AttachedFilesModal.css'; 
 
+// Constantes de validação
 const FORBIDDEN_EXTENSIONS = [
-  '.exe', '.bat', '.sh', '.cmd', '.msi', '.jar', '.ps1', '.cgi'
+  '.exe', '.bat', '.sh', '.cmd', '.msi', '.com', '.jar', '.vbs', '.ps1', '.php', '.py', '.pl', '.cgi'
 ];
-
 const MAX_FILE_SIZE_MB = 50;
 
+// --- ÍCONES SVG ---
 const DownloadIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
     <polyline points="7 10 12 15 17 10" />
     <line x1="12" y1="15" x2="12" y2="3" />
+  </svg>
+);
+
+const TrashIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <polyline points="3 6 5 6 21 6"></polyline>
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+    <line x1="10" y1="11" x2="10" y2="17"></line>
+    <line x1="14" y1="11" x2="14" y2="17"></line>
   </svg>
 );
 
@@ -29,6 +39,9 @@ export default function AttachedFilesModal({ documentId, onClose }: AttachedFile
   const [files, setFiles] = useState<AttachedFile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [listError, setListError] = useState<string | null>(null);
+  
+  // Estado para feedback visual de exclusão
+  const [deletingFileId, setDeletingFileId] = useState<number | null>(null);
 
   // Estados do Upload
   const [isUploadFormOpen, setIsUploadFormOpen] = useState(false);
@@ -58,7 +71,7 @@ export default function AttachedFilesModal({ documentId, onClose }: AttachedFile
     if (documentId) fetchFiles();
   }, [documentId]);
 
-  // --- Handlers de Download ---
+  // --- Handler de Download ---
   const handleDownload = (fileUrl: string, fileName: string) => {
     const link = document.createElement('a');
     link.href = fileUrl;
@@ -70,7 +83,26 @@ export default function AttachedFilesModal({ documentId, onClose }: AttachedFile
     document.body.removeChild(link);
   };
 
-  // --- Validação e Seleção de Arquivo ---
+  // --- NOVA FUNÇÃO: Handler de Exclusão (Desvincular) ---
+  const handleDetach = async (attachedFileId: number) => {
+    if (!window.confirm("Tem certeza que deseja remover este anexo?")) return;
+
+    setDeletingFileId(attachedFileId);
+    try {
+      await documentService.detachFile(attachedFileId);
+      
+      // Sucesso: Remove da lista localmente
+      setFiles(prevFiles => prevFiles.filter(f => f.attached_file_id !== attachedFileId));
+      
+    } catch (err: any) {
+      console.error("Erro ao remover anexo:", err);
+      alert("Não foi possível remover o anexo. Tente novamente.");
+    } finally {
+      setDeletingFileId(null);
+    }
+  };
+
+  // --- Handlers de Upload (Sem mudanças na lógica) ---
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     setUploadError(null);
@@ -80,16 +112,14 @@ export default function AttachedFilesModal({ documentId, onClose }: AttachedFile
       return;
     }
 
-    // 1. Validação de Tamanho
     const fileSizeMB = file.size / (1024 * 1024);
     if (fileSizeMB > MAX_FILE_SIZE_MB) {
       setUploadError(`O arquivo excede o limite de ${MAX_FILE_SIZE_MB}MB.`);
-      e.target.value = ''; // Limpa o input
+      e.target.value = '';
       setSelectedFile(null);
       return;
     }
 
-    // 2. Validação de Extensão Nociva
     const fileName = file.name.toLowerCase();
     const hasForbiddenExtension = FORBIDDEN_EXTENSIONS.some(ext => fileName.endsWith(ext));
     
@@ -101,13 +131,11 @@ export default function AttachedFilesModal({ documentId, onClose }: AttachedFile
     }
 
     setSelectedFile(file);
-    // Sugere um título baseado no nome do arquivo se o campo estiver vazio
     if (!uploadTitle) {
       setUploadTitle(file.name);
     }
   };
 
-  // --- Envio do Upload ---
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedFile || !uploadTitle) return;
@@ -116,19 +144,17 @@ export default function AttachedFilesModal({ documentId, onClose }: AttachedFile
     setUploadError(null);
 
     try {
-      // Cria o FormData
       const formData = new FormData();
       formData.append('title', uploadTitle);
       formData.append('file', selectedFile);
 
       await documentService.attachFile(documentId, formData);
 
-      // Sucesso: Limpa form e recarrega lista
       setUploadTitle('');
       setSelectedFile(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
-      setIsUploadFormOpen(false); // Fecha o form
-      fetchFiles(); // Recarrega a lista
+      setIsUploadFormOpen(false); 
+      fetchFiles(); 
 
     } catch (err: any) {
       console.error("Erro no upload:", err);
@@ -156,10 +182,11 @@ export default function AttachedFilesModal({ documentId, onClose }: AttachedFile
                 <div className="file-info">
                   <span className="file-title">{file.title}</span>
                   <span className="file-date">
-                    {new Date(file.attached_at).toLocaleDateString()} às {new Date(file.attached_at).toLocaleTimeString()}
+                    Anexado em: {new Date(file.attached_at).toLocaleDateString()} às {new Date(file.attached_at).toLocaleTimeString()}
                   </span>
                 </div>
                 <div className="file-actions">
+                  {/* Botão Download */}
                   <button 
                     className="file-action-btn" 
                     title="Baixar"
@@ -167,14 +194,27 @@ export default function AttachedFilesModal({ documentId, onClose }: AttachedFile
                   >
                     <DownloadIcon />
                   </button>
-                  {/* Futuro botão de excluir aqui */}
+                  
+                  {/* --- NOVO BOTÃO: Excluir --- */}
+                  <button 
+                    className="file-action-btn delete-btn" 
+                    title="Remover Anexo"
+                    onClick={() => handleDetach(file.attached_file_id)}
+                    disabled={deletingFileId === file.attached_file_id}
+                  >
+                    {deletingFileId === file.attached_file_id ? (
+                      <span style={{fontSize: '0.8rem'}}>...</span>
+                    ) : (
+                      <TrashIcon />
+                    )}
+                  </button>
                 </div>
               </li>
             ))}
           </ul>
         )}
 
-        {/* Seção de Upload */}
+        {/* Seção de Upload (Sem mudanças) */}
         <div className="upload-section">
           {!isUploadFormOpen ? (
             <button 

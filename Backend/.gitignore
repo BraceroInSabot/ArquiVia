@@ -12,3 +12,4 @@ __init__.py
 *.bat
 migrations
 *.sqlite3
+dataset_teste_ir

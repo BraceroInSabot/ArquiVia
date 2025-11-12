@@ -214,11 +214,6 @@ class RetrieveUserView(APIView):
         res.status_code = 200
         res.data = default_response(success=True, data=serializer.data)
         return res
-            
-        
-
-# RESET DE SENHA (LEGADO)
-# TODO: REMOVER OU ATUALIZAR
 
 class RequisicaoRedefinicaoSenhaView(APIView):
     permission_classes = [AllowAny]

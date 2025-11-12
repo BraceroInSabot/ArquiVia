@@ -14,6 +14,7 @@ import EditSectorPage from './pages/EditSectorPage';
 import DocumentPage from './pages/DocumentPage';
 import EditDocumentPage from './pages/EditDocumentPage';
 import RequestResetPassword from './pages/RequestResetPassword';
+import ResetPassword from './pages/ResetPassword';
 
 function ArquiVia() {
   return (
@@ -24,6 +25,7 @@ function ArquiVia() {
         <Route path="/entrar" element={<LoginPage />} />
         <Route path="/registrar" element={<RegisterPage />} />
         <Route path="/solicitar-redefinicao-senha" element={<RequestResetPassword />} />
+        <Route path="/redefinir-senha/:token" element={<ResetPassword />} />
 
         {/* Tratamento de rotas privadas. Somente usuários logados podem fazer o acesso. */}
         <Route element={<ProtectedRoute />}>

@@ -38,6 +38,20 @@ const userService = {
   requestPasswordReset(email: RequestPasswordReset): Promise<{ data: ResponseStructure<null> }>{
     return api.post('/usuario/esqueci-senha/', email);
   },
+
+  /**
+   * Redefine a senha.
+   */
+  resetPasswordByToken(token: string, password: string): Promise<{ data: ResponseStructure<null> }>{
+    return api.post(`/usuario/redefinir-senha/${token}/`, password);
+  },
+
+  /**
+   * Valida se o Token ctoninua válido
+   */
+  validateToken(token: string): Promise<{ data: ResponseStructure<null> }>{
+    return api.get(`/usuario/validar-token-senha/${token}/`);
+  },
 };
 
 export default userService;

@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useMemo, type ChangeEvent } from 'react';
+import { useState, useEffect, useMemo, type ChangeEvent } from 'react';
 import { createPortal } from 'react-dom';
 import documentService from '../services/Document/api';
 import type { 
-  Classification, 
   UpdateClassificationPayload,
   Category,
   AddCategoriesPayload

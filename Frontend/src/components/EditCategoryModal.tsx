@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import documentService  from '../services/Document/api';
 import type { Category, UpdateCategoryPayload } from '../services/core-api';

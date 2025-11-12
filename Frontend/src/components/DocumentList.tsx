@@ -81,6 +81,7 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
   return (
     <> {/* 4. Use um fragmento para incluir o modal */}
       <ul style={{ listStyle: 'none', padding: 0 }}>
+        {error && <p style={{ color: 'red' }}>{error}</p>}
         {filteredDocuments.map(doc => (
           <li 
             key={doc.document_id}

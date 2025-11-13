@@ -15,6 +15,7 @@ import DocumentPage from './pages/DocumentPage';
 import EditDocumentPage from './pages/EditDocumentPage';
 import RequestResetPassword from './pages/RequestResetPassword';
 import ResetPassword from './pages/ResetPassword';
+import ProfilePage from './pages/ProfilePage';
 
 function ArquiVia() {
   return (
@@ -39,6 +40,7 @@ function ArquiVia() {
           <Route path='/setor/editar/:id' element={<EditSectorPage />} />
           <Route path='/documentos' element={<DocumentPage />} />
           <Route path='/documento/editar/:id' element={<EditDocumentPage />} />
+          <Route path='/perfil' element={<ProfilePage />} />
         </Route>
       </Routes>
     </div>

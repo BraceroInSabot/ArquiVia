@@ -14,12 +14,17 @@ const Menu = () => {
     const goToDocuments = () => {
         navigate('/documentos');
     }
+
+    const goToProfile = () => {
+        navigate('/perfil');
+    }
     
     return (
         <ul>
             <li><a onClick={goToEnterprises}>Empresas</a></li>
             <li><a onClick={goToSectors}>Setores</a></li>
             <li><a onClick={goToDocuments}>Documentos</a></li>
+            <li><a onClick={goToProfile}>Usuário / Perfil</a></li>
         </ul>
     )
 }

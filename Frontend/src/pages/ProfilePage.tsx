@@ -1,11 +1,18 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom'; // Hook para navegação
 import userService from '../services/User/api';
 import { useAuth } from '../contexts/AuthContext';
 import type { UserDetails } from '../services/core-api';
 import '../assets/css/ProfilePage.css';
 
+// Importação dos Ícones (Certifique-se de ter estes arquivos ou ajuste os nomes)
+import EditIcon from '../assets/icons/edit.svg?url'; // Você precisará deste ícone
+import LockIcon from '../assets/icons/lock.svg?url'; // Você precisará deste ícone
+import DeleteIcon from '../assets/icons/delete.svg?url'; // Você precisará deste ícone (ou delete.svg)
+
 const ProfilePage = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [profileData, setProfileData] = useState<UserDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,6 +39,17 @@ const ProfilePage = () => {
 
     fetchProfile();
   }, [user]);
+
+  // --- Handlers dos Botões ---
+  const handleEditData = () => {
+    // Exemplo: navigate('/perfil/editar');
+    console.log("Navegar para edição de dados");
+  };
+
+  const handleChangePassword = () => {
+    // Exemplo: navigate('/perfil/senha');
+    console.log("Navegar para alteração de senha");
+  };
 
   if (isLoading) {
     return (
@@ -83,15 +101,25 @@ const ProfilePage = () => {
             <p className="info-value">@{userData.username}</p>
           </div>
 
-          <div className="info-group">
+          {/* A classe 'no-border' foi movida para cá, pois é o último item de info */}
+          <div className="info-group no-border">
             <label className="info-label">E-mail</label>
             <p className="info-value">{userData.email}</p>
           </div>
 
-          <div className="info-group no-border">
-            <label className="info-label">ID do Usuário</label>
-            <p className="info-value">#{userData.user_id}</p>
+          {/* --- NOVOS BOTÕES DE AÇÃO --- */}
+          <div className="profile-actions">
+            <button className="action-btn btn-edit" onClick={handleEditData}>
+              <img src={EditIcon} alt="" width="18" height="18" />
+              Editar Dados
+            </button>
+
+            <button className="action-btn btn-password" onClick={handleChangePassword}>
+              <img src={LockIcon} alt="" width="18" height="18" />
+              Alterar Senha
+            </button>
           </div>
+
         </div>
       </div>
     </div>

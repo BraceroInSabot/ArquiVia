@@ -98,3 +98,79 @@
   color: red;
   font-weight: bold;
 }
+
+/* ... (estilos anteriores permanecem iguais) ... */
+
+/* Ajuste no info-group para remover borda do último item de texto */
+.info-group {
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 10px;
+}
+
+.info-group.no-border {
+  border-bottom: none;
+}
+
+/* ... (restante dos estilos de label, value, etc.) ... */
+
+/* --- Estilos dos Botões de Ação --- */
+
+.profile-actions {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.action-btn:active {
+  transform: scale(0.98);
+}
+
+/* Botão Editar (Azul / Primário) */
+.btn-edit {
+  background-color: #e3f2fd;
+  color: #0d47a1;
+}
+.btn-edit:hover {
+  background-color: #bbdefb;
+}
+
+/* Botão Senha (Amarelo / Neutro) */
+.btn-password {
+  background-color: #fff3e0;
+  color: #e65100;
+}
+.btn-password:hover {
+  background-color: #ffe0b2;
+}
+
+/* Botão Desativar (Vermelho / Perigo) */
+.btn-danger {
+  background-color: #ffebee;
+  color: #c62828;
+}
+.btn-danger:hover {
+  background-color: #ffcdd2;
+}
+
+/* Ajuste para os ícones dentro dos botões */
+.action-btn img {
+  opacity: 0.9;
+}

@@ -1,4 +1,6 @@
 import type { Enterprise } from '../services/core-api';
+import { Eye, Pencil, Trash2, Building2 } from 'lucide-react'; // Ícones
+import '../assets/css/EnterpriseCard.css'
 
 interface EnterpriseCardProps {
   enterprise: Enterprise;
@@ -8,69 +10,98 @@ interface EnterpriseCardProps {
   onDelete: (id: number) => void;
 }
 
-// Estilos simples para o layout
-const cardStyle: React.CSSProperties = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  border: '1px solid #ccc',
-  padding: '15px',
-  margin: '10px 0',
-  borderRadius: '8px',
-};
-
-const infoStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-};
-
-const imageStyle: React.CSSProperties = {
-  width: '50px',
-  height: '50px',
-  borderRadius: '8px', // Bordas quadradas ficam boas para logos
-  marginRight: '15px',
-  objectFit: 'cover',
-  // Cor de fundo caso a imagem falhe ou não tenha sido enviada
-  backgroundColor: '#f0f0f0', 
-};
-
 const EnterpriseCard = ({ enterprise, onView, onEdit, onToggleStatus, onDelete }: EnterpriseCardProps) => {
-  const isActive = enterprise.is_active; 
+  const isActive = enterprise.is_active;
 
   return (
-    <div style={cardStyle}>
-      {/* Lado Esquerdo: Imagem e Informações */}
-      <div style={infoStyle}>
-        {/* 1. Imagem da Empresa Adicionada */}
-        <img
-          // Use a URL da imagem vinda da API.
-          // Adicione um placeholder caso ela não exista.
-          src={enterprise.image || 'https://via.placeholder.com/50'}
-          alt={enterprise.name}
-          style={imageStyle}
-        />
-        <div>
-          <h3 style={{ margin: 0 }}>{enterprise.name}</h3>
-          {/* 2. Correção: 'enterprise.id' em vez de 'enterprise.enterprise_id' */}
-          <p style={{ margin: 0, color: '#555' }}>ID: {enterprise.enterprise_id}</p>
+    <div className="card h-100 border-0 shadow-sm" style={{ transition: 'transform 0.2s ease, box-shadow 0.2s ease' }}>
+      <div className="card-body d-flex flex-column">
+        
+        {/* Topo: Imagem e Informações Principais */}
+        <div className="d-flex align-items-center mb-3">
+          {/* Área da Imagem/Logo */}
+          <div 
+            className="flex-shrink-0 rounded overflow-hidden d-flex align-items-center justify-content-center border"
+            style={{ width: '56px', height: '56px', backgroundColor: '#f8f9fa' }}
+          >
+            {enterprise.image ? (
+              <img
+                src={enterprise.image}
+                alt={enterprise.name}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            ) : (
+              <Building2 size={24} className="text-secondary" style={{ opacity: 0.5 }} />
+            )}
+          </div>
+
+          {/* Textos */}
+          <div className="ms-3 overflow-hidden">
+            <h5 className="fw-bold text-dark mb-1 text-truncate" title={enterprise.name}>
+              {enterprise.name}
+            </h5>
+            <span className="badge bg-light text-secondary border fw-normal">
+              ID: {enterprise.enterprise_id}
+            </span>
+          </div>
         </div>
-      </div>
 
-      {/* Lado Direito: Ações */}
-      <div>
-        {/* 2. Correção: 'enterprise.id' em todos os botões */}
-        <button onClick={() => onView(enterprise.enterprise_id)} style={{ marginRight: '5px' }}>Consultar</button>
-        <button onClick={() => onEdit(enterprise.enterprise_id)} style={{ marginRight: '5px' }}>Alterar</button>
-        <button onClick={() => onDelete(enterprise.enterprise_id)} style={{ marginRight: '5px' }}>Deletar</button>
+        {/* Divisor visual */}
+        <hr className="my-3 text-muted" style={{ opacity: 0.1 }} />
 
-        <label style={{ marginLeft: '5px' }}>
-          <input
-            type="checkbox"
-            checked={isActive}
-            onChange={() => onToggleStatus(enterprise.enterprise_id, isActive)}
-          />
-          {isActive ? 'Ativa' : 'Inativa'}
-        </label>
+        {/* Rodapé: Status e Ações */}
+        <div className="d-flex justify-content-between align-items-center mt-auto">
+          
+          {/* Switch de Status */}
+          <div className="d-flex align-items-center">
+            <div className="form-check form-switch mb-0">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                role="switch"
+                id={`status-switch-${enterprise.enterprise_id}`}
+                checked={isActive}
+                onChange={() => onToggleStatus(enterprise.enterprise_id, isActive)}
+                style={{ cursor: 'pointer' }}
+              />
+              <label 
+                className={`form-check-label small fw-semibold ${isActive ? 'text-success' : 'text-muted'}`} 
+                htmlFor={`status-switch-${enterprise.enterprise_id}`}
+                style={{ cursor: 'pointer' }}
+              >
+                {isActive ? 'Ativa' : 'Inativa'}
+              </label>
+            </div>
+          </div>
+
+          {/* Grupo de Botões de Ação */}
+          <div className="d-flex gap-2">
+            <button 
+              onClick={() => onView(enterprise.enterprise_id)} 
+              className="btn btn-light btn-sm text-primary-custom"
+              title="Consultar Detalhes"
+            >
+              <Eye size={18} />
+            </button>
+            
+            <button 
+              onClick={() => onEdit(enterprise.enterprise_id)} 
+              className="btn btn-light btn-sm text-primary-custom"
+              title="Editar Empresa"
+            >
+              <Pencil size={18} />
+            </button>
+            
+            <button 
+              onClick={() => onDelete(enterprise.enterprise_id)} 
+              className="btn btn-light btn-sm text-danger"
+              title="Excluir Empresa"
+            >
+              <Trash2 size={18} />
+            </button>
+          </div>
+
+        </div>
       </div>
     </div>
   );

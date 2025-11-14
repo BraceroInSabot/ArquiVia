@@ -1,0 +1,11 @@
+/* Efeito hover nos cards de empresa */
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Ajuste para o switch do bootstrap ficar com a cor primária quando ativo */
+.form-check-input:checked {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}

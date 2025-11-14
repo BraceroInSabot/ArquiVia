@@ -1,8 +1,14 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Loader2, AlertCircle } from 'lucide-react'; // Ícones Lucide
+
+// Imports de Lógica/API
 import enterpriseService from '../services/Enterprise/api';
 import type { Enterprise } from '../services/core-api';
-import EnterpriseList from '../components/EnterpriseList'; 
-import { useNavigate } from 'react-router-dom';
+import EnterpriseList from '../components/EnterpriseList';
+
+// Import do CSS (Certifique-se de criar/salvar o arquivo CSS acima)
+import '../assets/css/EnterprisePage.css'; 
 
 const EnterprisePage = () => {
   const navigate = useNavigate();
@@ -10,12 +16,12 @@ const EnterprisePage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // --- LÓGICA DE NEGÓCIO (INTACTA) ---
   useEffect(() => {
     const fetchEnterprises = async () => {
       try {
         const response = await enterpriseService.getEnterprises();
-
-        const listaDeEmpresas = response.data.data; 
+        const listaDeEmpresas = response.data.data;
 
         if (Array.isArray(listaDeEmpresas)) {
           setEnterprises(listaDeEmpresas);
@@ -39,7 +45,7 @@ const EnterprisePage = () => {
     try {
       const response = await enterpriseService.getEnterpriseById(id);
       // @ts-ignore
-      const enterprise = response.data.data; 
+      const enterprise = response.data.data;
 
       const enterpriseData = `
         Dados da Empresa (ID: ${enterprise.enterprise_id}):
@@ -106,24 +112,61 @@ const EnterprisePage = () => {
   const goToCreateEnterprisePage = () => {
     navigate("/criar-empresa");
   }
+  // --- FIM DA LÓGICA ---
 
   return (
-    <div>
-      <h1>Gestão de Empresas</h1>
-      <button onClick={goToCreateEnterprisePage}>Criar Empresa</button>
-      
-      {isLoading && <p>Carregando empresas...</p>}
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      
-      {!isLoading && !error && (
-        <EnterpriseList
-          enterprises={enterprises}
-          onView={handleView}
-          onEdit={handleEdit}
-          onToggleStatus={handleToggleStatus}
-          onDelete={handleDelete}
-        />
-      )}
+    <div className='page-container'>
+      <div className='container py-5'>
+        
+        {/* Cabeçalho */}
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <h1 className="h3 mb-1 fw-bold text-body-custom">Gestão de Empresas</h1>
+            <p className="text-muted mb-0" style={{ fontSize: '0.95rem' }}>
+              Gerencie as organizações cadastradas no sistema
+            </p>
+          </div>
+          
+          <button 
+            onClick={goToCreateEnterprisePage} 
+            className="btn btn-primary-custom d-flex align-items-center gap-2 shadow-sm px-4 py-2"
+          >
+            <Plus size={20} strokeWidth={2.5} />
+            <span>Nova Empresa</span>
+          </button>
+        </div>
+        
+        {/* Conteúdo Principal */}
+        <div className="custom-card p-4">
+          
+          {/* Estado de Loading */}
+          {isLoading && (
+            <div className="d-flex flex-column justify-content-center align-items-center py-5 text-muted">
+              <Loader2 className="animate-spin text-primary-custom mb-3" size={48} />
+              <span>Carregando empresas...</span>
+            </div>
+          )}
+
+          {/* Estado de Erro */}
+          {error && (
+            <div className="alert alert-danger d-flex align-items-center" role="alert">
+              <AlertCircle className="me-2" size={20} />
+              <div>{error}</div>
+            </div>
+          )}
+          
+          {/* Lista de Dados */}
+          {!isLoading && !error && (
+            <EnterpriseList
+              enterprises={enterprises}
+              onView={handleView}
+              onEdit={handleEdit}
+              onToggleStatus={handleToggleStatus}
+              onDelete={handleDelete}
+            />
+          )}
+        </div>
+      </div>
     </div>
   );
 };

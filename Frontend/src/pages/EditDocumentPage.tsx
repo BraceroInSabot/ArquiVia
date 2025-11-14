@@ -97,6 +97,7 @@ const EditDocumentPage = () => {
   const [initialContent, setInitialContent] = useState<string | null>(null);
 
   // Estados do Histórico e Autosave
+  //@ts-ignore
   const [history, setHistory] = useState<HistoryEntry[]>(() => getHistoryEntries());
   const [isAutosaveActive, setIsAutosaveActive] = useState(true);
   const [isGlowing, setIsGlowing] = useState(false);

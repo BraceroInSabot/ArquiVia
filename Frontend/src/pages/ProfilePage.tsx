@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, type ChangeEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
 import userService from '../services/User/api';
 import { useAuth } from '../contexts/AuthContext';
 import type { UserDetails } from '../services/core-api';

@@ -15,7 +15,6 @@ import CameraIcon from '../assets/icons/camera.svg?url';
 
 const ProfilePage = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
   
   // Estados de Dados
   const [profileData, setProfileData] = useState<UserDetails | null>(null);

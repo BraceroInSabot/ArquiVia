@@ -279,7 +279,6 @@ const EditDocumentPage = () => {
           <VideoPlugin />
 
           <ActionsPlugin 
-            history={history}
             isAutosaveActive={isAutosaveActive}
             onAutosaveToggle={() => setIsAutosaveActive(prev => !prev)}
             isGlowing={isGlowing}

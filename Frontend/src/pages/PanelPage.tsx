@@ -1,5 +1,3 @@
-import Menu from "../components/Menu";
-import LogoutButton from "../components/LogoutButton";
 import { useAuth } from "../contexts/AuthContext";
 import HamburgerMenu from "../components/HamburgerMenu";
 

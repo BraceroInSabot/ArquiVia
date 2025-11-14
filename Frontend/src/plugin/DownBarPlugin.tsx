@@ -3,7 +3,8 @@ import { useParams } from 'react-router-dom';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $generateHtmlFromNodes } from '@lexical/html';
 import jsPDF from 'jspdf';
-import { type EditorState } from 'lexical';
+//@ts-ignore
+import { type EditorState } from 'lexical'; 
 
 import HistoryViewModal from './HistoryViewModal';
 import AttachedFilesModal from '../components/AttachedFilesModal';

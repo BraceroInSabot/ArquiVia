@@ -1,0 +1,430 @@
+/* --- VARIÁVEIS GLOBAIS --- */
+:root {
+  --primary-color: #007bff;
+  --secondary-color: #0056b3;
+  --text-color: #333;
+  --bg-color: #f8f9fa;
+  --white: #ffffff;
+}
+
+body {
+  font-family: 'Arial', sans-serif;
+  margin: 0;
+  color: var(--text-color);
+}
+
+/* --- 1. NAVBAR FIXA --- */
+.navbar-fixed {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 80px;
+  background-color: #ffffff;
+  z-index: 1000;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+}
+
+/* Container interno para alinhar logo e links */
+.navbar-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 0 15px; /* Espaçamento lateral */
+}
+
+.logo {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+/* Links Desktop */
+.nav-links-desktop {
+  display: flex;
+  gap: 25px;
+  align-items: center;
+}
+
+.nav-links-desktop a {
+  text-decoration: none;
+  color: var(--text-color);
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.nav-links-desktop a:hover {
+  color: var(--primary-color);
+}
+
+/* Botões Desktop */
+.nav-buttons-desktop {
+  display: flex;
+  gap: 10px;
+}
+
+/* Elementos Mobile (Escondidos por padrão) */
+.hamburger-btn {
+  display: none; 
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  color: #333;
+  cursor: pointer;
+}
+
+.mobile-menu {
+  display: none;
+}
+
+/* --- 2. CORPO DA PÁGINA --- */
+.landing-container {
+  max-width: 1920px;
+  margin: 80px auto 0 auto; /* Margem top compensa a navbar */
+  overflow-x: hidden;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* Botões Gerais */
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: var(--white);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  border: 2px solid var(--primary-color);
+  color: var(--primary-color);
+}
+
+.btn-outline-primary {
+  background-color: transparent;
+  border: 1px solid var(--primary-color);
+  color: var(--primary-color);
+}
+
+.btn-outline-light {
+  background-color: transparent;
+  border: 1px solid var(--white);
+  color: var(--white);
+}
+
+.btn-light {
+  background-color: var(--white);
+  color: var(--primary-color);
+}
+
+/* Hero Section */
+.hero {
+  display: flex;
+  align-items: center;
+  padding: 4rem 0;
+  gap: 2rem;
+}
+
+.hero-text {
+  flex: 1;
+}
+
+.hero-text h1 {
+  font-size: 2.8rem;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+}
+
+.hero-text p {
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 1rem;
+}
+
+.hero-image {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.hero-image-placeholder {
+  width: 100%;
+  max-width: 500px;
+  height: auto;
+  display: block;
+}
+
+/* About Section */
+.about {
+  display: flex;
+  gap: 2rem;
+  padding: 4rem 0;
+  background-color: var(--bg-color);
+}
+
+.about-left, .about-right {
+  flex: 1;
+}
+
+.about-left h2 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.about-features {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.about-right-box {
+  background-color: var(--primary-color);
+  color: var(--white);
+  padding: 2rem;
+  border-radius: 8px;
+}
+
+.about-right-box ol {
+  padding-left: 1.2rem;
+}
+
+.about-right-box li {
+  margin-bottom: 0.8rem;
+  font-size: 1.05rem;
+}
+
+/* Plans Section */
+.plans {
+  padding: 4rem 0;
+  text-align: center;
+}
+
+.plans h2 {
+  font-size: 2rem;
+  margin-bottom: 2.5rem;
+}
+
+.plans-container {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+}
+
+.plan-card {
+  flex: 1;
+  max-width: 350px;
+  padding: 2rem;
+  border-radius: 8px;
+  color: var(--white);
+  text-align: left;
+}
+
+.plan-card.basic { background-color: #0056b3; }
+.plan-card.pro { background-color: var(--primary-color); }
+.plan-card.empress { background-color: #003a75; }
+
+.plan-card h3 {
+  font-size: 1.5rem;
+  border-bottom: 2px solid var(--white);
+  padding-bottom: 0.5rem;
+}
+
+.plan-card .price {
+  font-size: 2.2rem;
+  font-weight: bold;
+  margin: 1.5rem 0;
+}
+
+/* Differentiators Section */
+.differentiators {
+  padding: 4rem 0;
+  background-color: var(--bg-color);
+}
+
+.differentiators-container {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.diff-left, .diff-right {
+  flex: 1;
+}
+
+.diff-left h2 {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.diff-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.diff-item {
+  flex-basis: calc(50% - 0.5rem);
+  background-color: var(--primary-color);
+  color: var(--white);
+  padding: 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.cta-box {
+  background-color: #003a75;
+  color: var(--white);
+  padding: 2.5rem;
+  border-radius: 8px;
+}
+
+.cta-box h3 {
+  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
+}
+
+.cta-buttons {
+  display: flex;
+  gap: 1rem;
+}
+
+/* Footer */
+.footer {
+  padding: 2.5rem 0;
+  background-color: #333;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 0.9rem;
+  margin-top: 50px;
+}
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2rem;
+}
+
+.footer-links a {
+  text-decoration: none;
+  color: white;
+  transition: color 0.3s ease;
+}
+
+.footer-links a:hover {
+  color: var(--primary-color);
+}
+
+/* --- RESPONSIVIDADE --- */
+
+/* Tablet e Mobile (menor que 992px) */
+@media (max-width: 992px) {
+  .hero, .about, .differentiators-container {
+    flex-direction: column;
+  }
+
+  .hero-text {
+    text-align: center;
+  }
+
+  .hero-buttons {
+    justify-content: center;
+  }
+
+  .hero-image {
+    display: none; /* Esconde imagem no tablet/mobile */
+  }
+  
+  .about-right {
+    display: none; /* Esconde box lateral do sobre */
+  }
+
+  .plans-container {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+/* Mobile (menor que 768px) - Menu Hamburguer */
+@media (max-width: 768px) {
+  /* Esconde menu desktop */
+  .nav-links-desktop, 
+  .nav-buttons-desktop {
+    display: none;
+  }
+
+  /* Mostra botão hamburguer */
+  .hamburger-btn {
+    display: block;
+  }
+
+  /* Estilo do Menu Mobile (Gaveta) */
+  .mobile-menu {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 80px;
+    left: 0;
+    width: 100%;
+    background-color: #ffffff;
+    border-top: 1px solid #eee;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    padding: 20px;
+    gap: 15px;
+    animation: slideDown 0.3s ease-out;
+  }
+
+  .mobile-menu a {
+    text-decoration: none;
+    color: #333;
+    font-size: 1.1rem;
+    padding: 10px 0;
+    border-bottom: 1px solid #f5f5f5;
+    text-align: center;
+  }
+
+  .mobile-menu-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  
+  .mobile-menu-buttons button {
+    width: 100%;
+  }
+
+  .diff-item {
+    flex-basis: 100%; /* Itens diferenciais ocupam linha toda */
+  }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

@@ -1,6 +1,7 @@
 import Menu from "../components/Menu";
 import LogoutButton from "../components/LogoutButton";
 import { useAuth } from "../contexts/AuthContext";
+import HamburgerMenu from "../components/HamburgerMenu";
 
 const PanelPage = () => {
   const { user } = useAuth();
@@ -8,17 +9,15 @@ const PanelPage = () => {
 
   return (
     <div>
-      {user ? (
-        <div>
-          <p>Olá, {user.data.name}!</p>
-          <img width="100" height="100" src={user.data.image} alt={user.data.name} />
+      <div className="panel-page">
+            {/* Substitui o Menu antigo por este */}
+            <HamburgerMenu />
+            
+            <div className="panel-content">
+                {/* O conteúdo do seu painel vai aqui */}
+                <h1>Bem-vindo ao Painel</h1>
+            </div>
         </div>
-      ) : (
-        <p>Por favor, faça o login.</p>
-      )}
-      <h1>Tela de empresa, somente para usuário logado.</h1>
-      <Menu />
-      <LogoutButton />
     </div>
   );
 };

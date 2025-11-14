@@ -16,6 +16,7 @@ import EditDocumentPage from './pages/EditDocumentPage';
 import RequestResetPassword from './pages/RequestResetPassword';
 import ResetPassword from './pages/ResetPassword';
 import ProfilePage from './pages/ProfilePage';
+import MainLayout from './components/MenuLayout';
 
 function ArquiVia() {
   return (
@@ -30,17 +31,19 @@ function ArquiVia() {
 
         {/* Tratamento de rotas privadas. Somente usuários logados podem fazer o acesso. */}
         <Route element={<ProtectedRoute />}>
-          <Route path="/painel" element={<PanelPage />} />
-          <Route path="/empresas" element={<EnterprisePage />} />
-          <Route path="/criar-empresa" element={<CreateEnterprisePage />} />
-          <Route path="/empresas/editar/:id" element={<EditEnterprisePage />} />
-          <Route path="/setores" element={<SectorPage />} />
-          <Route path="/setor/criar" element={<CreateSectorPage />} />
-          <Route path="/setor/:id" element={<ViewSectorPage />} />
-          <Route path='/setor/editar/:id' element={<EditSectorPage />} />
-          <Route path='/documentos' element={<DocumentPage />} />
-          <Route path='/documento/editar/:id' element={<EditDocumentPage />} />
-          <Route path='/perfil' element={<ProfilePage />} />
+          <Route element={<MainLayout />}>
+            <Route path="/painel" element={<PanelPage />} />
+            <Route path="/empresas" element={<EnterprisePage />} />
+            <Route path="/criar-empresa" element={<CreateEnterprisePage />} />
+            <Route path="/empresas/editar/:id" element={<EditEnterprisePage />} />
+            <Route path="/setores" element={<SectorPage />} />
+            <Route path="/setor/criar" element={<CreateSectorPage />} />
+            <Route path="/setor/:id" element={<ViewSectorPage />} />
+            <Route path='/setor/editar/:id' element={<EditSectorPage />} />
+            <Route path='/perfil' element={<ProfilePage />} />
+            <Route path='/documentos' element={<DocumentPage />} />
+          </Route>
+            <Route path='/documento/editar/:id' element={<EditDocumentPage />} />
         </Route>
       </Routes>
     </div>

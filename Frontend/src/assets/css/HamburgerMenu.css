@@ -1,0 +1,140 @@
+/* Container principal */
+.hamburger-container {
+    position: relative;
+    width: 100%;
+    z-index: 1000;
+}
+
+/* Barra Superior (Header) */
+.hamburger-header {
+    display: flex;
+    justify-content: space-between; /* Joga um para esquerda, outro para direita */
+    align-items: center;
+    padding: 0.8rem 1.5rem;
+    background-color: #ffffff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    height: 60px; /* Altura fixa da barra */
+}
+
+/* Ícone do Hambúrguer */
+.hamburger-icon {
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 5px;
+}
+
+.hamburger-icon .bar {
+    width: 25px;
+    height: 3px;
+    background-color: #333;
+    border-radius: 2px;
+    transition: 0.3s;
+}
+
+.hamburger-icon:hover .bar {
+    background-color: #007bff;
+}
+
+/* Perfil do Usuário (Direita) */
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+}
+
+.user-profile:hover {
+    background-color: #f5f5f5;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    text-align: right;
+}
+
+.user-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #333;
+}
+
+.user-role {
+    font-size: 0.75rem;
+    color: #888;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #eee;
+}
+
+.user-avatar-placeholder {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #007bff;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+/* Menu Lateral (Drawer) */
+.menu-drawer {
+    position: fixed;
+    top: 60px; /* Altura do header */
+    left: -280px; /* Esconde o menu fora da tela */
+    width: 250px;
+    height: 100%;
+    background-color: #ffffff;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    transition: left 0.3s ease-in-out;
+    z-index: 999;
+    overflow-y: auto;
+}
+
+.menu-drawer.open {
+    left: 0; /* Traz o menu para a tela */
+}
+
+.menu-content {
+    padding: 1rem;
+    height: 100%;
+}
+
+/* Overlay (Fundo escuro quando menu abre) */
+.menu-overlay {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 998;
+}
+
+#offcanvasNavbarLabel:link, #offcanvasNavbarLabel:visited, #offcanvasNavbarLabel:hover, #offcanvasNavbarLabel:active {
+    text-decoration: none;
+    color: blue;
+}
+
+
+/* Responsividade para celular */
+@media (max-width: 600px) {
+    .user-info {
+        display: none; /* Esconde o nome em telas muito pequenas, mostra só avatar */
+    }
+}
+

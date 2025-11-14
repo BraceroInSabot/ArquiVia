@@ -68,6 +68,16 @@ const userService = {
   changePassword(data: ChangePasswordPayload): Promise<{ data: ResponseStructure<null> }> {
     return api.post('/usuario/alterar-senha/', data); 
   },
+
+  /**
+   * Desativa a conta do usuário.
+   * Requer a senha atual para confirmação.
+   */
+  deactivateAccount(password: string): Promise<{ data: ResponseStructure<null> }> {
+    return api.delete('/usuario/desativar/', { 
+      data: { password } 
+    });
+  },
 };
 
 export default userService;

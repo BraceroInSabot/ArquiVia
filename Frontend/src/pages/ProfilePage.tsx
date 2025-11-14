@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import type { UserDetails } from '../services/core-api';
 import '../assets/css/ProfilePage.css';
 import ChangePasswordModal from '../components/ChangePasswordModal';
+import DeactivateAccountModal from '../components/DeactivateAccountModal';
 
 // Ícones
 import EditIcon from '../assets/icons/edit.svg?url';
@@ -35,6 +36,7 @@ const ProfilePage = () => {
 
   // Modal
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -130,7 +132,10 @@ const ProfilePage = () => {
   const handleChangePassword = () => {
     setIsPasswordModalOpen(true);
   };
-  const handleDeactivateAccount = () => { console.log("Desativar..."); };
+  const handleDeactivateAccount = () => {
+    // Abre o modal que pede a senha
+    setIsDeactivateModalOpen(true);
+  };
 
   // --- Renderização ---
 
@@ -252,6 +257,12 @@ const ProfilePage = () => {
       {isPasswordModalOpen && (
         <ChangePasswordModal 
           onClose={() => setIsPasswordModalOpen(false)} 
+        />
+      )}
+
+      {isDeactivateModalOpen && (
+        <DeactivateAccountModal 
+          onClose={() => setIsDeactivateModalOpen(false)} 
         />
       )}
     </div>

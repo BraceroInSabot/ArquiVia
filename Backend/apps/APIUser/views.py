@@ -266,6 +266,28 @@ class ChangePasswordView(APIView):
             message="Senha alterada com sucesso.",
         )
         return res
+    
+class DeactivateUserView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request):
+        user = request.user
+        password = request.data.get('password')
+        
+        if not user.check_password(password):
+            res: HttpResponse = Response()
+            res.status_code = 400
+            res.data = default_response(success=False, message="Senha incorreta.")
+            return res
+        
+        user.is_active = False
+        user.save()
+
+        res: HttpResponse = Response()
+        res.status_code = 200
+        res.data = default_response(success=True, message="Usuário desativado com sucesso.")
+        return res
+
 
 # Password Token
 

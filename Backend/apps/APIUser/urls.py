@@ -12,7 +12,8 @@ from .views import (
     RetrieveUserView,
     RequisicaoRedefinicaoSenhaView,
     ValidarTokenRedefinicaoValidoView,
-    RedefinirSenhaView 
+    RedefinirSenhaView,
+    DeactivateUserView
 )
 
 urlpatterns = [
@@ -26,6 +27,7 @@ urlpatterns = [
     path("consultar/<str:username>/", RetrieveUserView.as_view(), name="consultar-usuario"),
     path("editar/<str:username>/", EditUserView.as_view(), name="editar-usuario"),
     path('alterar-senha/', ChangePasswordView.as_view(), name='alterar-senha'),
+    path('desativar/', DeactivateUserView.as_view(), name='desativar-usuario')
 ]+ [
     # Password Reset
     path("esqueci-senha/", RequisicaoRedefinicaoSenhaView.as_view(), name="esqueci-senha"),

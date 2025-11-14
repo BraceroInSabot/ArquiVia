@@ -7,6 +7,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (username: string) => Promise<void>;
   logout: () => void;
+  refreshUser: () => Promise<void>; // Nova função útil para atualizar dados manualmente
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -17,60 +18,117 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // --- ALTERAÇÃO AQUI ---
-  // Este useEffect agora confia cegamente no localStorage,
-  // pois não podemos validar com o backend http://
-  useEffect(() => {
-    const validateSessionFromLocalStorage = () => {
-      const storedUserString = localStorage.getItem(USER_STORAGE_KEY);
-      
-      if (!storedUserString) {
-        // Se não há usuário no storage, não está logado.
-        setIsLoading(false);
-        return;
-      }
-      
-      try {
-        // Tenta ler o usuário do storage.
-        const storedUser: UserDetails = JSON.parse(storedUserString);
-        setUser(storedUser); // Confia cegamente no storage.
-      } catch (error) {
-        // Storage corrompido, limpa tudo.
-        setUser(null);
-        localStorage.removeItem(USER_STORAGE_KEY);
-      } finally {
-        setIsLoading(false); // Termina a "validação".
-      }
-    };
-    
-    validateSessionFromLocalStorage();
-  }, []); // Array vazio, roda só no F5
-
-  // A função 'login' (chamada pelo LoginForm) ainda funciona como antes
-  const login = async (username: string) => {
-    try {
-      const response = await userService.getUserDetails(username);
-      const userDetails = response.data;
-      
-      setUser(userDetails);
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userDetails));
-    } catch (error) {
-      console.error("Falha ao buscar detalhes do usuário após o login:", error);
-      logout();
-      throw error; 
-    }
+  // Função auxiliar para salvar e definir usuário
+  const persistUser = (userData: UserDetails) => {
+    setUser(userData);
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userData));
   };
 
+  // Função de Logout centralizada
   const logout = () => {
     setUser(null);
     localStorage.removeItem(USER_STORAGE_KEY);
     
+    // Tenta avisar o backend, mas não bloqueia o logout visual se falhar
     userService.logout().catch(err => {
-      console.error("Falha ao invalidar token no backend:", err);
+      console.warn("Falha ao invalidar token no backend (pode já estar expirado):", err);
     });
+    
+    // Opcional: Redirecionar para /entrar aqui se não estiver usando ProtectedRoute
+    // window.location.href = '/entrar'; 
   };
 
-  const value = { user, isLoading, login, logout };
+  // Função para revalidar/atualizar dados do usuário (Resolve o problema da imagem S3)
+  const refreshUser = async () => {
+    // Tenta pegar o usuário do estado atual ou do storage
+    const storedUserString = localStorage.getItem(USER_STORAGE_KEY);
+    let usernameToFetch = user?.data.username;
+
+    if (!usernameToFetch && storedUserString) {
+      try {
+        const storedUser = JSON.parse(storedUserString);
+        usernameToFetch = storedUser.data.username;
+      } catch (e) {
+        logout();
+        return;
+      }
+    }
+
+    if (!usernameToFetch) {
+      throw new Error("Nenhum usuário para atualizar.");
+    }
+
+    try {
+      // Chama a API para pegar dados frescos (incluindo nova URL de imagem)
+      // e validar se a sessão ainda existe
+      const response = await userService.getUserDetails(usernameToFetch);
+      
+      // Se chegou aqui, o token/sessão é válido. Atualiza tudo.
+      persistUser(response.data);
+      
+    } catch (error: any) {
+      console.error("Sessão expirada ou erro ao atualizar usuário:", error);
+      // Se der erro 401 (Não autorizado) ou 403 (Proibido), forçamos o logout
+      if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+        logout();
+      }
+      throw error;
+    }
+  };
+
+  // --- EFEITO DE INICIALIZAÇÃO (F5) ---
+  useEffect(() => {
+    const initAuth = async () => {
+      const storedUserString = localStorage.getItem(USER_STORAGE_KEY);
+
+      if (!storedUserString) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        // 1. Carrega dados "velhos" do cache primeiro para a UI não piscar vazia
+        const storedUser: UserDetails = JSON.parse(storedUserString);
+        setUser(storedUser); 
+
+        // 2. Imediatamente tenta revalidar com o backend
+        // Isso garante que a imagem do S3 seja renovada e checa se o token expirou
+        await userService.getUserDetails(storedUser.data.username)
+          .then((response) => {
+             // Sucesso: Atualiza com dados novos
+             persistUser(response.data);
+          })
+          .catch((err) => {
+             // Falha crítica de autenticação: Limpa tudo
+             console.error("Falha na revalidação de sessão:", err);
+             logout();
+          });
+
+      } catch (error) {
+        // JSON corrompido ou erro grave
+        logout();
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initAuth();
+  }, []);
+
+  const login = async (username: string) => {
+    setIsLoading(true);
+    try {
+      const response = await userService.getUserDetails(username);
+      persistUser(response.data);
+    } catch (error) {
+      console.error("Erro no login:", error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const value = { user, isLoading, login, logout, refreshUser };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

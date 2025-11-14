@@ -4,6 +4,7 @@ import userService from '../services/User/api';
 import { useAuth } from '../contexts/AuthContext';
 import type { UserDetails } from '../services/core-api';
 import '../assets/css/ProfilePage.css';
+import ChangePasswordModal from '../components/ChangePasswordModal';
 
 // Ícones
 import EditIcon from '../assets/icons/edit.svg?url';
@@ -31,6 +32,9 @@ const ProfilePage = () => {
   // Dados de Imagem
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  // Modal
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -123,7 +127,9 @@ const ProfilePage = () => {
     }
   };
 
-  const handleChangePassword = () => { console.log("Alterar senha..."); };
+  const handleChangePassword = () => {
+    setIsPasswordModalOpen(true);
+  };
   const handleDeactivateAccount = () => { console.log("Desativar..."); };
 
   // --- Renderização ---
@@ -241,6 +247,13 @@ const ProfilePage = () => {
 
         </div>
       </div>
+
+      {/* 4. Renderize o Modal Condicionalmente (fora do card, mas dentro do container ou fragment) */}
+      {isPasswordModalOpen && (
+        <ChangePasswordModal 
+          onClose={() => setIsPasswordModalOpen(false)} 
+        />
+      )}
     </div>
   );
 };

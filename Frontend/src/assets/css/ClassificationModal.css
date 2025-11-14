@@ -204,3 +204,20 @@
   text-decoration: none;
   list-style: none;
 }
+
+
+/* ... estilos existentes ... */
+
+.password-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.password-input:focus {
+  border-color: #007bff;
+  outline: none;
+}

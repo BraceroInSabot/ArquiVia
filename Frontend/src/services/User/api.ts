@@ -1,4 +1,4 @@
-import type { LoginCredentials, RequestPasswordReset, ResponseStructure, UserDetails } from '../core-api';
+import type { LoginCredentials, RequestPasswordReset, ResponseStructure, UserDetails, ChangePasswordPayload } from '../core-api';
 import api from '../core-api'
 
 const userService = {
@@ -60,6 +60,13 @@ const userService = {
    */
   updateUser(username: string, formData: FormData): Promise<{ data: ResponseStructure<UserDetails> }> {
     return api.patch(`/usuario/editar/${username}/`, formData);
+  },
+
+  /**
+   * Altera a senha do usuário logado.
+   */
+  changePassword(data: ChangePasswordPayload): Promise<{ data: ResponseStructure<null> }> {
+    return api.post('/usuario/alterar-senha/', data); 
   },
 };
 

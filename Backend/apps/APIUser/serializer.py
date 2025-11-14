@@ -4,6 +4,7 @@ from rest_framework import serializers,status
 
 # DJANGO
 from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
 
 # PROJECT
 from apps.APIUser.utils.validate_user import ValidateAuth
@@ -93,3 +94,45 @@ class UserEditSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['name', 'email', 'image']
+        
+class ChangePasswordSerializer(serializers.Serializer):
+    """
+    Serializer específico para troca de senha.
+    Exige a senha antiga para segurança e valida a força da nova senha.
+    """
+    old_password = serializers.CharField(required=True, write_only=True)
+    new_password = serializers.CharField(required=True, write_only=True)
+    c_new_password = serializers.CharField(required=True, write_only=True)
+
+    def validate_old_password(self, value: str):
+        """
+        Verifica se a senha antiga informada bate com a do usuário logado.
+        """
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Sua senha atual está incorreta.")
+        return value
+
+    def validate_new_password(self, value):
+        """
+        Usa os validadores nativos do Django (tamanho mínimo, complexidade, etc).
+        """
+        validation = ValidateAuth(password=value, c_password=self.initial_data.get('c_new_password')) # type: ignore
+        validation = validation.validate_password()
+        
+        if isinstance(validation, list) and len(validation) > 0:
+            raise serializers.ValidationError(
+                [err for err in validation]
+            )
+            
+        return value
+    
+    def validate(self, data):
+        """
+        Validação extra: Impede que a nova senha seja igual à antiga.
+        """
+        if data['old_password'] == data['new_password']:
+             raise serializers.ValidationError(
+                 {"new_password": "A nova senha deve ser diferente da atual."}
+             )
+        return data

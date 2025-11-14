@@ -8,7 +8,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from apps.APIEmpresa.models import Enterprise
-from .serializer import RegistroUsuarioSerializer, UserDetailSerializer, UserEditSerializer
+from .serializer import ChangePasswordSerializer, RegistroUsuarioSerializer, UserDetailSerializer, UserEditSerializer
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from django.conf import settings
@@ -19,6 +19,7 @@ from django.template.loaders.cached import Loader
 from uuid import uuid4
 from rest_framework import status
 from django.contrib.auth.hashers import make_password
+from django.contrib.auth import update_session_auth_hash
 
 from django.db.models import Q
 
@@ -236,6 +237,35 @@ class EditUserView(APIView):
         res.data = default_response(success=True, data=serializer.data)
         return res
 
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request) -> HttpResponse:
+        """
+        Processa a troca de senha.
+        """
+        serializer = ChangePasswordSerializer(
+            data=request.data, 
+            context={'request': request}
+        )
+        
+        serializer.is_valid(raise_exception=True)
+
+        user = request.user
+        new_password = serializer.validated_data['new_password'] # type: ignore
+        print(new_password)
+        user.set_password(new_password)
+        user.save()
+
+        update_session_auth_hash(request, user)
+
+        res: HttpResponse = Response()
+        res.status_code = 200
+        res.data = default_response(
+            success=True,
+            message="Senha alterada com sucesso.",
+        )
+        return res
 
 # Password Token
 

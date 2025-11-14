@@ -230,6 +230,12 @@ export interface RequestPasswordReset {
   email: string;
 }
 
+export interface ChangePasswordPayload {
+  old_password: string;
+  new_password: string;
+  c_new_password: string;
+}
+
 const api = axios.create({
   baseURL: URL,
   withCredentials: true,

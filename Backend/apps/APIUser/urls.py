@@ -3,6 +3,7 @@ from django.urls import path
 
 # PROJECT
 from .views import ( 
+    ChangePasswordView,
     EditUserView,
     LoginTokenObtainPairView, 
     LoginTokenRefreshPairView, 
@@ -23,7 +24,8 @@ urlpatterns = [
 ] + [
     # User CRUD
     path("consultar/<str:username>/", RetrieveUserView.as_view(), name="consultar-usuario"),
-    path("editar/<str:username>/", EditUserView.as_view(), name="editar-usuario") 
+    path("editar/<str:username>/", EditUserView.as_view(), name="editar-usuario"),
+    path('alterar-senha/', ChangePasswordView.as_view(), name='alterar-senha'),
 ]+ [
     # Password Reset
     path("esqueci-senha/", RequisicaoRedefinicaoSenhaView.as_view(), name="esqueci-senha"),

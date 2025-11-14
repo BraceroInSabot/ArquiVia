@@ -2,92 +2,144 @@ import { useState } from 'react';
 import Validate from '../utils/enterprise_validation';
 import { useNavigate } from 'react-router-dom';
 import enterpriseService from '../services/Enterprise/api';
+import { Save, AlertCircle, UploadCloud, Check } from 'lucide-react';
 
 const CreateEnterpriseForm = () => {
-    const [name, setName] = useState('');
-    // 1. Mude o estado para 'File | null'
-    const [imageFile, setImageFile] = useState<File | null>(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const navigate = useNavigate();
+  const [name, setName] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-    // 2. Adicione um handler para o input de arquivo
-    const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-      if (event.target.files && event.target.files.length > 0) {
-        setImageFile(event.target.files[0]);
-      } else {
-        setImageFile(null);
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      setImageFile(event.target.files[0]);
+    } else {
+      setImageFile(null);
+    }
+  };
+
+  const handleCreateEnterprise = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const nameValidation = Validate.name(name);
+      if (!nameValidation[0]) {
+        setError(nameValidation[1] as string);
+        setLoading(false);
+        return;
       }
-    };
+      
+      const formData = new FormData();
+      formData.append('name', name);
+      if (imageFile) {
+        formData.append('image', imageFile);
+      }
 
-    const handleCreateEnterprise = async (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        setLoading(true);
-        setError(null);
+      const api_response = await enterpriseService.createEnterprise(formData);
 
-        try {
-            const nameValidation = Validate.name(name);
-            if (!nameValidation[0]) {
-              setError(nameValidation[1] as string);
-              setLoading(false); // Pare o loading se a validação falhar
-              return;
-            }
-            
-            // 4. Crie o FormData
-            const formData = new FormData();
-            formData.append('name', name);
-            if (imageFile) {
-              formData.append('image', imageFile);
-            }
+      if (api_response) {
+        alert('Empresa criada com sucesso!');
+        setName('');
+        setImageFile(null);
+        navigate("/empresas");
+      }
 
-            // 5. Envie o formData para o serviço
-            const api_response = await enterpriseService.createEnterprise(formData);
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.detail || 'Falha ao criar a empresa.';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-            if (api_response) {
-                alert('Empresa criada com sucesso!');
-                setName('');
-                setImageFile(null); // Limpe o estado do arquivo
-                navigate("/empresas");
-            }
+  return (
+    <form onSubmit={handleCreateEnterprise}>
+      
+      {/* Erro Geral */}
+      {error && (
+        <div className="alert alert-danger d-flex align-items-center mb-4" role="alert">
+          <AlertCircle className="me-2" size={20} />
+          <div>{error}</div>
+        </div>
+      )}
 
-        } catch (err: any) {
-            const errorMessage = err.response?.data?.detail || 'Falha ao criar a empresa.';
-            setError(errorMessage);
-        } finally {
-            setLoading(false);
-        }
-    };
+      {/* Campo Nome */}
+      <div className="mb-4">
+        <label htmlFor="name" className="form-label fw-semibold text-secondary">
+          Nome da Empresa
+        </label>
+        <input
+          type="text"
+          id="name"
+          className="form-control form-control-lg"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+          placeholder="Ex: Minha Empresa S.A."
+        />
+      </div>
 
-    return (
-        <form onSubmit={handleCreateEnterprise}>
-            <div>
-                <h2>Cadastrar Nova Empresa</h2>
-                <label htmlFor="name">Nome da Empresa</label>
-                <input
-                    type="text"
-                    id="name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                />
-                <br />
-                {/* 6. Mude o input para 'file' e adicione 'accept' */}
-                <label htmlFor="image">Imagem da Empresa (JPG, PNG, SVG)</label>
-                <input
-                    type="file"
-                    id="image"
-                      accept="image/jpeg, image/png, image/svg+xml"
-                      onChange={handleImageChange}
-                />
-                <br />
-                <button type="submit" disabled={loading}>
-                    {loading ? 'Salvando...' : 'Salvar Empresa'}
-                </button>
-
-                {error && <p style={{ color: 'red' }}>{error}</p>}
+      {/* Campo Imagem (Estilizado) */}
+      <div className="mb-4">
+        <label htmlFor="image" className="form-label fw-semibold text-secondary">
+          Logo da Empresa <small className="text-muted fw-normal">(Opcional)</small>
+        </label>
+        
+        <div className="position-relative">
+          <input
+            type="file"
+            id="image"
+            className="form-control"
+            accept="image/jpeg, image/png, image/svg+xml"
+            onChange={handleImageChange}
+            style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'pointer' }}
+          />
+          
+          {/* Visual Customizado do Input File */}
+          <div className={`d-flex align-items-center justify-content-center p-4 border rounded-3 bg-light ${imageFile ? 'border-success' : 'border-dashed'}`}>
+            <div className="text-center">
+              {imageFile ? (
+                <>
+                  <Check className="text-success mb-2" size={32} />
+                  <p className="mb-0 fw-medium text-success">{imageFile.name}</p>
+                  <small className="text-muted">Clique para trocar</small>
+                </>
+              ) : (
+                <>
+                  <UploadCloud className="text-secondary mb-2" size={32} />
+                  <p className="mb-0 fw-medium text-dark">Clique ou arraste para fazer upload</p>
+                  <small className="text-muted">JPG, PNG ou SVG</small>
+                </>
+              )}
             </div>
-        </form>
-    )
+          </div>
+        </div>
+      </div>
+
+      {/* Botão de Salvar */}
+      <button 
+        type="submit" 
+        className="btn btn-primary-custom w-100 py-2 d-flex align-items-center justify-content-center gap-2"
+        disabled={loading}
+      >
+        {loading ? (
+          <>
+            <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            Salvando...
+          </>
+        ) : (
+          <>
+            <Save size={20} />
+            Salvar Empresa
+          </>
+        )}
+      </button>
+
+    </form>
+  );
 }
 
 export default CreateEnterpriseForm;

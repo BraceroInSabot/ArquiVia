@@ -85,3 +85,11 @@ class UserDetailSerializer(serializers.ModelSerializer):
         # Defina os campos que você quer que sejam visíveis na API
         fields = ['user_id', 'username', 'name', 'email', 'image']
         read_only_fields = ['user_id', 'username', 'name', 'email', 'image']
+        
+class UserEditSerializer(serializers.ModelSerializer):
+    """
+    Serializer para editar os detalhes de um usuário.
+    """
+    class Meta:
+        model = User
+        fields = ['name', 'email', 'image']

@@ -3,6 +3,7 @@ from django.urls import path
 
 # PROJECT
 from .views import ( 
+    EditUserView,
     LoginTokenObtainPairView, 
     LoginTokenRefreshPairView, 
     LogoutTokenView, 
@@ -21,7 +22,8 @@ urlpatterns = [
     path("criar-conta/", RegisterTokenView.as_view(), name="criar-conta"),
 ] + [
     # User CRUD
-    path("consultar/<str:username>/", RetrieveUserView.as_view(), name="consultar-usuario")    
+    path("consultar/<str:username>/", RetrieveUserView.as_view(), name="consultar-usuario"),
+    path("editar/<str:username>/", EditUserView.as_view(), name="editar-usuario") 
 ]+ [
     # Password Reset
     path("esqueci-senha/", RequisicaoRedefinicaoSenhaView.as_view(), name="esqueci-senha"),

@@ -52,6 +52,15 @@ const userService = {
   validateToken(token: string): Promise<{ data: ResponseStructure<null> }>{
     return api.get(`/usuario/validar-token-senha/${token}/`);
   },
+
+  /**
+   * Realiza a edição de dados do usuário.
+   * @param username - nome de usuário atual
+   * @param formData - dados do formulário
+   */
+  updateUser(username: string, formData: FormData): Promise<{ data: ResponseStructure<UserDetails> }> {
+    return api.patch(`/usuario/editar/${username}/`, formData);
+  },
 };
 
 export default userService;

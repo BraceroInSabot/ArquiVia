@@ -8,7 +8,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from apps.APIEmpresa.models import Enterprise
-from .serializer import RegistroUsuarioSerializer, UserDetailSerializer
+from .serializer import RegistroUsuarioSerializer, UserDetailSerializer, UserEditSerializer
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from django.conf import settings
@@ -215,6 +215,30 @@ class RetrieveUserView(APIView):
         res.data = default_response(success=True, data=serializer.data)
         return res
 
+class EditUserView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, username):
+        user = get_object_or_404(User, username=username)
+        
+        serializer = UserEditSerializer(
+            instance=user, 
+            data=request.data, 
+            partial=True 
+        )
+        
+        serializer.is_valid(raise_exception=True)
+        
+        updated_user = serializer.save()
+        
+        res: HttpResponse = Response()
+        res.status_code = 200
+        res.data = default_response(success=True, data=serializer.data)
+        return res
+
+
+# Password Token
+
 class RequisicaoRedefinicaoSenhaView(APIView):
     permission_classes = [AllowAny]
 
@@ -274,7 +298,6 @@ class RequisicaoRedefinicaoSenhaView(APIView):
             res.data = default_response(success=False, message="Houve um erro ao enviar o email.")
             return res
     
-
 class ValidarTokenRedefinicaoValidoView(APIView):
     permission_classes = [AllowAny]
     

@@ -79,7 +79,7 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({
         <input
           type="text"
           placeholder="Buscar categorias para adicionar..."
-          className="category-search-input"
+          className="category-search-input form-control mb-2"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           // Habilitado (removemos 'disabled={true}')

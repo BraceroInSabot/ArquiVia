@@ -2,51 +2,50 @@ import { useState, useEffect, useRef, type ChangeEvent } from 'react';
 import userService from '../services/User/api';
 import { useAuth } from '../contexts/AuthContext';
 import type { UserDetails } from '../services/core-api';
-import '../assets/css/ProfilePage.css';
 import ChangePasswordModal from '../components/ChangePasswordModal';
 import DeactivateAccountModal from '../components/DeactivateAccountModal';
 
-// Ícones
-import EditIcon from '../assets/icons/edit.svg?url';
-import LockIcon from '../assets/icons/lock.svg?url';
-import TrashIcon from '../assets/icons/delete.svg?url';
-import CameraIcon from '../assets/icons/camera.svg?url'; 
+
+// 1. Importar ícones Lucide-React
+import { 
+  Pencil, Lock, Trash2, Camera, 
+  Loader2, AlertCircle, Save
+} from 'lucide-react';
+
+// 2. Importar o CSS customizado
+import '../assets/css/ProfilePage.css';
 
 const ProfilePage = () => {
-  const { user } = useAuth();
+  //@ts-ignore
+  const { user, logout } = useAuth();
   
-  // Estados de Dados
   const [profileData, setProfileData] = useState<UserDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Estados de Edição
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
-  // Dados do Formulário
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   
-  // Dados de Imagem
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  // Modal
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // --- 1. Busca Inicial ---
+  // --- LÓGICA (INTACTA) ---
   const fetchProfile = async () => {
     if (!user || !user.data.username) {
       setError("Usuário não identificado.");
       setIsLoading(false);
       return;
     }
-
     try {
+      // (Já estava com setIsLoading(true) no estado inicial)
       const response = await userService.getUserDetails(user.data.username);
       setProfileData(response.data);
     } catch (err) {
@@ -61,9 +60,6 @@ const ProfilePage = () => {
     fetchProfile();
   }, [user]);
 
-  // --- 2. Handlers de Imagem ---
-  
-  // Clica no input escondido quando clica na foto (apenas no modo edição)
   const handleImageClick = () => {
     if (isEditing && fileInputRef.current) {
       fileInputRef.current.click();
@@ -74,19 +70,16 @@ const ProfilePage = () => {
     const file = e.target.files?.[0];
     if (file) {
       setSelectedFile(file);
-      // Cria uma URL temporária para preview imediato
       const previewUrl = URL.createObjectURL(file);
       setImagePreview(previewUrl);
     }
   };
 
-  // --- 3. Handlers de Ação ---
-
   const handleEditData = () => {
     if (profileData) {
       setName(profileData.data.name);
       setEmail(profileData.data.email);
-      setImagePreview(null); // Reseta preview anterior
+      setImagePreview(null);
       setSelectedFile(null);
       setIsEditing(true);
     }
@@ -101,10 +94,8 @@ const ProfilePage = () => {
 
   const handleSaveData = async () => {
     if (!user || !user.data.username) return;
-
     setIsSaving(true);
     try {
-      // Cria o FormData para envio de arquivos
       const formData = new FormData();
       formData.append('name', name);
       formData.append('email', email);
@@ -115,10 +106,8 @@ const ProfilePage = () => {
 
       await userService.updateUser(user.data.username, formData);
       
-      await fetchProfile(); // Recarrega dados atualizados
+      await fetchProfile(); 
       setIsEditing(false);
-      // alert("Dados atualizados com sucesso!");
-
     } catch (err) {
       console.error("Erro ao atualizar:", err);
       alert("Erro ao atualizar dados.");
@@ -131,29 +120,47 @@ const ProfilePage = () => {
     setIsPasswordModalOpen(true);
   };
   const handleDeactivateAccount = () => {
-    // Abre o modal que pede a senha
     setIsDeactivateModalOpen(true);
   };
+  // --- FIM DA LÓGICA ---
 
-  // --- Renderização ---
 
-  if (isLoading) return <div className="profile-container"><p>Carregando...</p></div>;
-  if (error || !profileData) return <div className="profile-container"><p className="profile-error">{error}</p></div>;
+  // --- RENDERIZAÇÃO ---
+
+  if (isLoading) {
+    return (
+      <div className="profile-container d-flex justify-content-center align-items-center text-center text-muted">
+        <div>
+          <Loader2 size={40} className="animate-spin text-primary-custom" />
+          <p className="mt-2">Carregando perfil...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !profileData) {
+    return (
+      <div className="profile-container d-flex justify-content-center align-items-center">
+        <div className="alert alert-danger d-flex align-items-center">
+          <AlertCircle size={20} className="me-2" />
+          {error || "Perfil não encontrado."}
+        </div>
+      </div>
+    );
+  }
 
   const userData = profileData.data; 
-  // Define qual imagem mostrar: Preview > Imagem Atual > Placeholder
   const displayImage = imagePreview || userData.image;
 
   return (
     <div className="profile-container">
-      <div className="profile-card">
-        <div className="profile-header">
-          <h1>Meu Perfil</h1>
+      <div className="card shadow-sm border-0 rounded-3" style={{ maxWidth: '450px', width: '100%' }}>
+        <div className="card-header bg-primary-custom text-white text-center p-4">
+          <h3 className="mb-0">Meu Perfil</h3>
         </div>
 
-        <div className="profile-content">
+        <div className="card-body p-4">
           
-          {/* --- ÁREA DA IMAGEM --- */}
           <div className="profile-image-wrapper">
             <div 
               className={`profile-image-container ${isEditing ? 'editable' : ''}`}
@@ -168,15 +175,13 @@ const ProfilePage = () => {
                 </div>
               )}
 
-              {/* Overlay de Edição (Ícone de Câmera) */}
               {isEditing && (
                 <div className="image-edit-overlay">
-                  <img src={CameraIcon} alt="Alterar Foto" width="24" height="24" />
+                  <Camera size={24} color="white" />
                 </div>
               )}
             </div>
             
-            {/* Input Oculto */}
             <input 
               type="file" 
               ref={fileInputRef} 
@@ -186,72 +191,88 @@ const ProfilePage = () => {
             />
           </div>
 
-          {/* --- CAMPO NOME --- */}
-          <div className="info-group">
-            <label className="info-label">Nome Completo</label>
-            {isEditing ? (
-              <input 
-                type="text" 
-                className="profile-input"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            ) : (
-              <p className="info-value">{userData.name}</p>
-            )}
+          {/* Form de Edição ou Visualização */}
+          <div className="mt-3">
+            <div className="mb-3">
+              <label className="form-label text-muted small text-uppercase fw-semibold">Nome Completo</label>
+              {isEditing ? (
+                <input 
+                  type="text" 
+                  className="profile-input form-control form-control-lg"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              ) : (
+                <p className="info-value">{userData.name}</p>
+              )}
+            </div>
+
+            <div className="mb-3">
+              <label className="form-label text-muted small text-uppercase fw-semibold">Usuário (Login)</label>
+              <p className="info-value text-muted">@{userData.username}</p>
+            </div>
+
+            <div className="mb-4">
+              <label className="form-label text-muted small text-uppercase fw-semibold">E-mail</label>
+              {isEditing ? (
+                <input 
+                  type="email" 
+                  className="profile-input form-control form-control-lg"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              ) : (
+                <p className="info-value">{userData.email}</p>
+              )}
+            </div>
           </div>
 
-          {/* --- CAMPO USUARIO --- */}
-          <div className="info-group">
-            <label className="info-label">Usuário</label>
-            <p className="info-value" style={{ color: '#777' }}>@{userData.username}</p>
-          </div>
 
-          {/* --- CAMPO EMAIL --- */}
-          <div className="info-group no-border">
-            <label className="info-label">E-mail</label>
+          {/* Botões de Ação */}
+          <div className="profile-actions pt-4 border-top">
             {isEditing ? (
-              <input 
-                type="email" 
-                className="profile-input"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            ) : (
-              <p className="info-value">{userData.email}</p>
-            )}
-          </div>
-
-          {/* --- AÇÕES --- */}
-          <div className="profile-actions">
-            {isEditing ? (
-              <div className="edit-actions-row">
-                <button className="action-btn btn-cancel" onClick={handleCancelEdit} disabled={isSaving}>
-                  Cancelar
-                </button>
-                <button className="action-btn btn-save" onClick={handleSaveData} disabled={isSaving}>
+              // Modo Edição
+              <div className="d-grid gap-2">
+                <button 
+                  className="btn btn-success d-flex align-items-center justify-content-center gap-2" 
+                  onClick={handleSaveData} 
+                  disabled={isSaving}
+                >
+                  {isSaving ? (
+                    <Loader2 size={18} className="animate-spin" />
+                  ) : (
+                    <Save size={18} />
+                  )}
                   {isSaving ? "Salvando..." : "Salvar Alterações"}
+                </button>
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={handleCancelEdit} 
+                  disabled={isSaving}
+                >
+                  Cancelar
                 </button>
               </div>
             ) : (
-              <>
-                <button className="action-btn btn-edit" onClick={handleEditData}>
-                  <img src={EditIcon} alt="" width="18" height="18" /> Editar Dados
+              // Modo Visualização
+              <div className="d-grid gap-2">
+                <button className="btn btn-outline-primary d-flex align-items-center justify-content-center gap-2" onClick={handleEditData}>
+                  <Pencil size={16} /> Editar Dados
                 </button>
-                <button className="action-btn btn-password" onClick={handleChangePassword}>
-                  <img src={LockIcon} alt="" width="18" height="18" /> Alterar Senha
+                <button className="btn btn-outline-secondary d-flex align-items-center justify-content-center gap-2" onClick={handleChangePassword}>
+                  <Lock size={16} /> Alterar Senha
                 </button>
-                <button className="action-btn btn-danger" onClick={handleDeactivateAccount}>
-                  <img src={TrashIcon} alt="" width="18" height="18" /> Desativar Conta
+                <button className="btn btn-outline-danger d-flex align-items-center justify-content-center gap-2" onClick={handleDeactivateAccount}>
+                  <Trash2 size={16} /> Desativar Conta
                 </button>
-              </>
+              </div>
             )}
           </div>
 
         </div>
       </div>
 
-      {/* 4. Renderize o Modal Condicionalmente (fora do card, mas dentro do container ou fragment) */}
+      {/* Modais */}
       {isPasswordModalOpen && (
         <ChangePasswordModal 
           onClose={() => setIsPasswordModalOpen(false)} 

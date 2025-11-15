@@ -1,20 +1,13 @@
 import { useState, useEffect, useMemo, type ChangeEvent } from 'react';
 import { createPortal } from 'react-dom';
+import { X, Save, Loader2, AlertCircle, Settings } from 'lucide-react'; // Ícones
+
 import documentService from '../services/Document/api';
-import type { 
-  UpdateClassificationPayload,
-  Category,
-  AddCategoriesPayload
-} from '../services/core-api';
+import type { UpdateClassificationPayload, Category, AddCategoriesPayload } from '../services/core-api';
 import { useAuth } from '../contexts/AuthContext'; 
 import '../assets/css/ClassificationModal.css';
+import { type ClassificationFormData, STATUS_OPTIONS, PRIVACITY_OPTIONS } from '../types/classification';
 
-// Importa os componentes filhos e os tipos/constantes
-import { 
-  type ClassificationFormData, 
-  STATUS_OPTIONS, 
-  PRIVACITY_OPTIONS 
-} from '../types/classification';
 import ConfirmCloseModal from './ConfirmCloseModal';
 import ClassificationForm from './ClassificationForm';
 import CategoryManager from './CategoryManager';
@@ -27,53 +20,40 @@ interface ClassificationModalProps {
 export default function ClassificationModal({ documentId, onClose }: ClassificationModalProps) {
   const { user } = useAuth(); 
 
-  // Estados da Classificação
+  // Estados (Mantidos iguais)
   const [originalData, setOriginalData] = useState<ClassificationFormData | null>(null);
   const [formData, setFormData] = useState<ClassificationFormData | null>(null);
   const [reviewerName, setReviewerName] = useState<string>("Nenhum");
-  
-  // Estados das Categorias
   const [originalCategories, setOriginalCategories] = useState<Category[]>([]);
   const [linkedCategories, setLinkedCategories] = useState<Category[]>([]);
-  
-  // Estados de Controle do Modal
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showConfirmClose, setShowConfirmClose] = useState(false);
 
-  // 'isDirty' agora verifica tanto o formulário quanto as categorias
   const isDirty = useMemo(() => {
     const classificationDirty = JSON.stringify(originalData) !== JSON.stringify(formData);
-    
     const originalCatIds = originalCategories.map(c => c.category_id).sort().join(',');
     const currentCatIds = linkedCategories.map(c => c.category_id).sort().join(',');
     const categoriesDirty = originalCatIds !== currentCatIds;
-    
     return classificationDirty || categoriesDirty;
   }, [originalData, formData, originalCategories, linkedCategories]);
 
-  // --- LÓGICA DE BUSCA (Promise.all) ---
+  // --- Lógica de Busca (Mantida igual) ---
   useEffect(() => {
     const fetchData = async () => {
       if (!documentId) return;
       setIsLoading(true);
       setError(null);
       try {
-        // Busca Classificação E Categorias em paralelo
         const [classificationRes, categoriesRes] = await Promise.all([
           documentService.getClassification(documentId),
           documentService.listCategoriesByDocument(documentId)
         ]);
 
-        // Processa Classificação
         const classificationData = classificationRes.data.data;
-        const statusId = STATUS_OPTIONS.find(
-          opt => opt.name === classificationData.classification_status?.status
-        )?.id || null;
-        const privacityId = PRIVACITY_OPTIONS.find(
-          opt => opt.name === classificationData.privacity?.privacity
-        )?.id || null;
+        const statusId = STATUS_OPTIONS.find(opt => opt.name === classificationData.classification_status?.status)?.id || null;
+        const privacityId = PRIVACITY_OPTIONS.find(opt => opt.name === classificationData.privacity?.privacity)?.id || null;
         
         const initialFormData: ClassificationFormData = {
           is_reviewed: classificationData.is_reviewed,
@@ -81,11 +61,11 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
           privacity: privacityId,
           reviewer: classificationData.reviewer?.user_id || null, 
         };
+
         setOriginalData(initialFormData);
         setFormData(initialFormData);
         setReviewerName(classificationData.reviewer?.name || "Nenhum");
 
-        // Processa Categorias
         const categoryData = categoriesRes.data.data || [];
         setOriginalCategories(categoryData);
         setLinkedCategories(categoryData);
@@ -100,23 +80,16 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
     };
     fetchData();
   }, [documentId]);
-  
-  // --- LÓGICA DE SALVAR (Promise.all) ---
+
+  // --- Lógica de Salvar (Mantida igual) ---
   const handleSave = async () => {
-    if (!isDirty || !user || !user.data) {
-       if (!user || !user.data) {
-          setError("Você não está logado. Impossível salvar.");
-       }
-       return;
-    }
+    if (!formData || !isDirty || !user || !user.data) return;
 
     setIsSaving(true);
     setError(null);
-
     const savePromises: Promise<any>[] = [];
 
-    // 1. Verifica se a Classificação mudou
-    if (JSON.stringify(originalData) !== JSON.stringify(formData) && formData) {
+    if (JSON.stringify(originalData) !== JSON.stringify(formData)) {
       const classificationPayload: UpdateClassificationPayload = {
         is_reviewed: formData.is_reviewed,
         classification_status: formData.classification_status,
@@ -126,7 +99,6 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
       savePromises.push(documentService.updateClassification(documentId, classificationPayload));
     }
 
-    // 2. Verifica se as Categorias mudaram
     const originalCatIds = originalCategories.map(c => c.category_id).sort().join(',');
     const currentCatIds = linkedCategories.map(c => c.category_id).sort().join(',');
     
@@ -138,15 +110,9 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
     }
 
     try {
-      // Envia todas as requisições de salvamento pendentes
       const results = await Promise.all(savePromises);
-      
-      // Atualiza os estados "originais" com base nas respostas
-      // (Isso "limpa" o 'isDirty' e sincroniza o estado)
       results.forEach(response => {
         const updatedData = response.data.data;
-        
-        // Verifica se é uma resposta de Classificação (pela presença de 'is_reviewed')
         if (updatedData.is_reviewed !== undefined) {
           const statusId = STATUS_OPTIONS.find(opt => opt.name === updatedData.classification_status?.status)?.id || null;
           const privacityId = PRIVACITY_OPTIONS.find(opt => opt.name === updatedData.privacity?.privacity)?.id || null;
@@ -159,14 +125,11 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
           setOriginalData(newFormData);
           setFormData(newFormData);
           setReviewerName(updatedData.reviewer?.name || "Nenhum");
-        }
-        // Verifica se é uma resposta de Categoria (se for um array)
-        else if (Array.isArray(updatedData)) {
+        } else if (Array.isArray(updatedData)) {
           setOriginalCategories(updatedData);
           setLinkedCategories(updatedData);
         }
       });
-      
     } catch (err: any) {
       console.error("Erro ao salvar:", err);
       const errMsg = err.response?.data?.message || "Falha ao salvar. Tente novamente.";
@@ -176,7 +139,6 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
     }
   };
 
-  // --- LÓGICA DE FECHAR ---
   const handleCloseAttempt = () => {
     if (isDirty) {
       setShowConfirmClose(true);
@@ -185,7 +147,6 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
     }
   };
 
-  // --- HANDLERS DO FORMULÁRIO ---
   const handleFormChange = (e: ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
     const { name, value } = e.target;
 
@@ -194,17 +155,31 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
 
       if (name === 'is_reviewed') {
         const { checked } = e.target as HTMLInputElement;
+        
+        // CASO 1: Usuário DESMARCOU
         if (!checked) {
-          setReviewerName("Nenhum"); 
+          setReviewerName("Nenhum"); // <--- Limpa o nome visual
           return { ...prev, is_reviewed: false, reviewer: null };
         }
+
+        // CASO 2: Usuário MARCOU
+        // Se já havia um revisor antes (ex: vindo do banco), mantemos.
+        // Se não, o usuário logado assume a revisão.
+        const currentReviewerId = prev.reviewer || user?.data.user_id || null;
+        
+        // Aqui está a correção: Atualizamos o nome visualmente também
+        if (!prev.reviewer && user?.data) {
+            setReviewerName(user.data.name); // <--- Define o nome do usuário atual
+        }
+
         return { 
           ...prev, 
           is_reviewed: true,
-          reviewer: prev.reviewer || user?.data.user_id || null 
+          reviewer: currentReviewerId
         };
       }
 
+      // Lógica padrão para Selects
       const processedValue = (value === "null" || value === "") ? null : Number(value);
       return { ...prev, [name]: processedValue };
     });
@@ -212,53 +187,84 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
 
   const handleTakeReview = () => {
     if (!user || !user.data) return;
-    
     setFormData(prev => ({
-      // Preserva o estado anterior, mas atualiza o revisor
-      ...prev,
+      ...prev!,
       is_reviewed: true,
-      classification_status: prev?.classification_status || null,
-      privacity: prev?.privacity || null,
       reviewer: user.data.user_id 
     }));
-    
     setReviewerName(user.data.name);
   };
 
-  // --- RENDERIZAÇÃO ---
   const renderContent = () => {
     if (isLoading || !formData) { 
-      return <p>Carregando dados...</p>;
+      return (
+        <div className="d-flex flex-column justify-content-center align-items-center py-5 text-muted">
+            <Loader2 className="animate-spin mb-2" size={32} />
+            <span>Carregando dados...</span>
+        </div>
+      );
     }
     if (error) {
-      return <p className="classification-error">{error}</p>;
+      return (
+        <div className="alert alert-danger d-flex align-items-center" role="alert">
+            <AlertCircle className="me-2" size={20} />
+            <div>{error}</div>
+        </div>
+      );
     }
 
     const isCurrentUserTheReviewer = formData.reviewer !== null && formData.reviewer === user?.data.user_id;
 
     return (
       <>
-        {/* Componente 1: Formulário de Classificação */}
-        <ClassificationForm
-          formData={formData}
-          reviewerName={reviewerName}
-          isCurrentUserTheReviewer={isCurrentUserTheReviewer}
-         isDirty={isDirty} 
-          isSaving={isSaving}
-          onFormChange={handleFormChange}
-          onTakeReview={handleTakeReview}
-          onSave={handleSave} // O 'Salvar' agora salva TUDO
-        />
+        <div className="modal-body p-4 overflow-auto" style={{ maxHeight: '70vh' }}>
+            <ClassificationForm
+                formData={formData}
+                reviewerName={reviewerName}
+                isCurrentUserTheReviewer={isCurrentUserTheReviewer}
+                isDirty={isDirty}
+                isSaving={isSaving}
+                onFormChange={handleFormChange}
+                onTakeReview={handleTakeReview}
+                onSave={handleSave}
+            />
 
-        {/* Divisor Visual */}
-        <hr className="modal-divider" />
+            <hr className="my-4 text-muted opacity-25" />
 
-        {/* Componente 2: Gerenciador de Categorias */}
-        <CategoryManager
-          documentId={documentId}
-          linkedCategories={linkedCategories}
-          onCategoryChange={setLinkedCategories} // Passa o 'setter' para o filho
-        />
+            <CategoryManager
+                documentId={documentId}
+                linkedCategories={linkedCategories}
+                onCategoryChange={setLinkedCategories} 
+            />
+        </div>
+
+        {/* Footer Fixo com o Botão Salvar */}
+        <div className="modal-footer border-top bg-light p-3 d-flex justify-content-end gap-2">
+             <button 
+                className="btn btn-light text-secondary" 
+                onClick={handleCloseAttempt}
+                disabled={isSaving}
+             >
+                Cancelar
+             </button>
+             <button 
+                className="btn btn-primary-custom d-flex align-items-center gap-2 px-4" 
+                onClick={handleSave}
+                disabled={!isDirty || isSaving}
+             >
+                {isSaving ? (
+                    <>
+                        <Loader2 className="animate-spin" size={18} />
+                        Salvando...
+                    </>
+                ) : (
+                    <>
+                        <Save size={18} />
+                        Salvar Alterações
+                    </>
+                )}
+             </button>
+        </div>
       </>
     );
   };
@@ -266,9 +272,23 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
   return createPortal(
     <>
       <div className="modal-overlay" onClick={handleCloseAttempt}>
-        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-          <button className="modal-close-btn" onClick={handleCloseAttempt}>&times;</button>
-          <h2>Editar Documento</h2> 
+        <div 
+            className="modal-content p-0 overflow-hidden" 
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '600px' }}
+        >
+          
+          {/* Cabeçalho do Modal */}
+          <div className="d-flex justify-content-between align-items-center p-3 px-4 border-bottom">
+            <h5 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                <Settings size={20} className="text-primary-custom" />
+                Configurações do Documento
+            </h5>
+            <button className="btn btn-link text-secondary p-0" onClick={handleCloseAttempt}>
+                <X size={24} />
+            </button>
+          </div>
+
           {renderContent()}
         </div>
       </div>
@@ -282,7 +302,7 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
           }}
         />
       )}
-    </>
-    , document.body
+    </>,
+    document.body
   );
 }

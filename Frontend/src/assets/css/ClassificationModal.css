@@ -1,223 +1,143 @@
-/* Este arquivo é focado nos detalhes da classificação.
-   Ele reutiliza .modal-overlay, .modal-content, .modal-close-btn 
-   do seu CSS 'EditorTheme.css' (assumindo que eles estão lá). */
-
-.classification-details {
-  margin-top: 1.5rem;
-  font-size: 1.1rem;
-}
-
-.info-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 10px 4px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.info-label {
-  font-weight: bold;
-  color: #333;
-}
-
-.info-value {
-  color: #555;
-  font-style: italic;
-}
-
-.classification-error {
-  color: #D8000C; /* Vermelho */
-  background-color: #FFD2D2;
-  border: 1px solid #D8000C;
-  padding: 10px;
-  border-radius: 4px;
-  text-align: center;
-}
-
-/* ... (seus estilos existentes para .form-item, .modal-save-btn, etc) ... */
-
-/* Novo container para o campo de revisor (nome + botão) */
-.reviewer-field {
+/* --- Modal Base (Overlay e Container) --- */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Backdrop escuro e suave */
+  backdrop-filter: blur(2px); /* Efeito de desfoque no fundo */
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  z-index: 1050; /* Acima de tudo (Bootstrap navbar é 1030) */
+  animation: fadeIn 0.2s ease-out;
 }
 
-/* Estilo do nome (que já existia) */
+.modal-content {
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  width: 95%;
+  max-width: 600px; /* Largura padrão */
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s ease-out;
+  border: none; /* Remove borda padrão */
+}
+
+/* --- Animações --- */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Estilos Específicos do Formulário --- */
 .info-value {
-  color: #555;
-  font-style: italic;
+  font-weight: 500;
+  color: #495057;
 }
 
-/* Novo botão "Tornar-se Revisor" */
+/* Botão "Tornar-se Revisor" */
 .take-review-btn {
-  background: none;
-  border: 1px solid #007bff;
-  color: #007bff;
-  padding: 3px 8px;
   font-size: 0.8rem;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.2s, color 0.2s;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background-color: #e7f1ff;
+  color: #0d6efd;
+  border: 1px solid transparent;
+  transition: all 0.2s;
 }
 
 .take-review-btn:hover {
-  background-color: #007bff;
+  background-color: #0d6efd;
   color: white;
 }
 
-/* ... (Seus estilos existentes para .form-item, .modal-save-btn, etc.) ... */
-
-/* --- Divisor entre Classificação e Categorias --- */
-.modal-divider {
-  border: none;
-  border-top: 1px solid #eee;
-  margin: 1.5rem 0;
-}
-
-/* --- Estilos do Gerenciador de Categorias --- */
-.category-manager {
-  width: 100%;
-}
-
-.section-title {
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: #333;
-  margin-top: 0;
-  margin-bottom: 1rem;
-  border-bottom: 1px solid #f0f0f0;
-  padding-bottom: 8px;
-}
-
-.category-empty-text {
-  font-style: italic;
-  color: #888;
-  text-align: center;
-  margin: 1rem 0;
-}
-
+/* --- Estilos das Categorias (Pills) --- */
 .category-pill-container {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  min-height: 40px;
 }
 
 .category-pill {
-  background-color: #e9ecef;
+  display: inline-flex;
+  align-items: center;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
   color: #495057;
   padding: 6px 12px;
-  border-radius: 16px;
+  border-radius: 50px;
   font-size: 0.9rem;
   font-weight: 500;
-  display: flex;
-  align-items: center;
+  transition: all 0.2s;
 }
 
-/* ... (Seus estilos existentes) ... */
-
-/* --- Divisor entre Classificação e Categorias --- */
-.modal-divider {
-  border: none;
-  border-top: 1px solid #eee;
-  margin: 1.5rem 0;
-}
-
-/* --- Estilos do Gerenciador de Categorias --- */
-.category-manager {
-  width: 100%;
-}
-
-.section-title {
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: #333;
-  margin-top: 0;
-  margin-bottom: 1rem;
-  border-bottom: 1px solid #f0f0f0;
-  padding-bottom: 8px;
-}
-
-.category-search-container {
-  position: relative;
-  margin-bottom: 1rem;
-}
-
-.category-search-input {
-  width: 100%;
-  padding: 8px 12px;
-  font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  box-sizing: border-box; /* Importante */
-}
-
-/* Placeholder para o input desabilitado */
-.category-search-input:disabled {
-  background-color: #f9f9f9;
-  cursor: not-allowed;
-}
-
-/* Container das "Pills" (categorias vinculadas) */
-.category-pill-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  min-height: 20px; /* Garante altura mínima se vazio */
-  padding: 5px;
-  border: 1px solid #f0f0f0;
-  border-radius: 4px;
-}
-
-.category-empty-text {
-  font-style: italic;
-  color: #888;
-  text-align: center;
-  margin: 1rem 0;
-  width: 100%;
-}
-
-.category-pill {
+.category-pill:hover {
   background-color: #e9ecef;
-  color: #495057;
-  padding: 6px 10px;
-  border-radius: 16px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
+  border-color: #dee2e6;
 }
 
 .remove-pill-btn {
   background: none;
   border: none;
-  font-size: 1.1rem;
-  color: #888;
+  margin-left: 8px;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #adb5bd;
   cursor: pointer;
-  margin-left: 4px;
-  padding: 0 4px;
-  line-height: 1;
+  border-radius: 50%;
+  transition: color 0.2s, background-color 0.2s;
 }
+
 .remove-pill-btn:hover {
-  color: #333;
+  color: #dc3545; /* Vermelho */
+  background-color: rgba(220, 53, 69, 0.1);
 }
-.search-result-item {
-  text-decoration: none;
+
+/* Lista de Resultados da Busca */
+.search-results-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  max-height: 200px;
+  overflow-y: auto;
   list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
-
-/* ... estilos existentes ... */
-
-.password-input {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 1rem;
-  box-sizing: border-box;
+.search-result-item {
+  padding: 10px 15px;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f3f5;
+  transition: background-color 0.1s;
 }
 
-.password-input:focus {
-  border-color: #007bff;
-  outline: none;
+.search-result-item:hover {
+  background-color: #f8f9fa;
+  color: var(--primary-color);
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
 }

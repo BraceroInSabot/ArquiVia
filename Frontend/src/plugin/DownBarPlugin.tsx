@@ -6,23 +6,21 @@ import jsPDF from 'jspdf';
 //@ts-ignore
 import { type EditorState } from 'lexical'; 
 
+// Ícones Lucide (Substituindo os imports de SVG?url)
+import { 
+  Save, History, FileText, Paperclip, 
+  Eye, RotateCcw, Loader2 
+} from 'lucide-react';
+
 import HistoryViewModal from './HistoryViewModal';
 import AttachedFilesModal from '../components/AttachedFilesModal';
-import documentService from '../services/Document/api'; // Importe o serviço
-import type { DocumentHistory } from '../services/core-api'; // Importe o tipo
+import documentService from '../services/Document/api';
+import type { DocumentHistory } from '../services/core-api';
 
-// Ícones
-import PDFIcon from '../assets/icons/pdf-export.svg?url';
-import HistoryIcon from '../assets/icons/history.svg?url';
-import EyeIcon from '../assets/icons/eye.svg?url';
-import RestoreIcon from '../assets/icons/restore.svg?url';
-import SaveIcon from '../assets/icons/save.svg?url';
-import PaperclipIcon from '../assets/icons/paperclip.svg?url';
-
-import '../assets/css/EditorTheme.css';
+// Importe o NOVO CSS
+import '../assets/css/DownBarPlugin.css'; 
 
 interface ActionsPluginProps {
-  // Removemos a prop 'history' (agora vem da API)
   isAutosaveActive: boolean;
   onAutosaveToggle: () => void;
   isGlowing: boolean;
@@ -40,16 +38,11 @@ export default function ActionsPlugin({
 
     const [editor] = useLexicalComposerContext(); 
     
-    // Estados de Modais e Painéis
     const [viewingState, setViewingState] = useState<string | null>(null);
     const [isFilesModalOpen, setIsFilesModalOpen] = useState(false);
     const [isHistoryVisible, setIsHistoryVisible] = useState(false);
-
-    // Estado para armazenar o histórico vindo da API
     const [apiHistory, setApiHistory] = useState<DocumentHistory[]>([]);
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
-
-    // --- FUNÇÕES AUXILIARES ---
 
     const handleExportToPdf = (): void => {
         editor.getEditorState().read(() => {
@@ -70,16 +63,11 @@ export default function ActionsPlugin({
         else alert("Salve o documento antes de visualizar anexos.");
     };
 
-    // --- LÓGICA DE HISTÓRICO (Backend) ---
-
     const handleHistoryClick = async () => {
-        // Alterna visibilidade
         if (isHistoryVisible) {
             setIsHistoryVisible(false);
             return;
         }
-
-        // Se for abrir, busca os dados
         if (!documentId) {
             alert("Salve o documento pelo menos uma vez para ver o histórico.");
             return;
@@ -92,7 +80,6 @@ export default function ActionsPlugin({
             setApiHistory(response.data.data || []);
         } catch (error) {
             console.error("Erro ao buscar histórico:", error);
-            alert("Falha ao carregar histórico.");
         } finally {
             setIsLoadingHistory(false);
         }
@@ -100,140 +87,143 @@ export default function ActionsPlugin({
 
     const handleRevert = async (historyEntry: DocumentHistory) => {
         if (!documentId) return;
-        
         const confirmMsg = `Tem certeza que deseja reverter para a versão de ${new Date(historyEntry.history_date).toLocaleString()}? \nIsso substituirá o conteúdo atual.`;
         if (!window.confirm(confirmMsg)) return;
 
         try {
-            // 1. Chama a API de Reversão
             const response = await documentService.revertDocument(documentId, historyEntry.history_id);
             const restoredDoc = response.data.data;
-
-            // 2. Atualiza o Editor com o conteúdo retornado
             const newStateString = typeof restoredDoc.content === 'string' 
                 ? restoredDoc.content 
                 : JSON.stringify(restoredDoc.content);
 
             const editorState = editor.parseEditorState(newStateString);
             editor.setEditorState(editorState);
-
-            // 3. Fecha o painel e avisa
             setIsHistoryVisible(false);
-            // alert("Documento revertido com sucesso!"); // Opcional
-
         } catch (e) {
             console.error("Falha ao reverter documento:", e);
             alert("Erro ao reverter versão.");
         }
     };
 
-    // Helper para abrir o modal de visualização
     const handleViewVersion = (content: any) => {
-        // Garante que temos uma string para o modal
         const contentString = typeof content === 'string' ? content : JSON.stringify(content);
         setViewingState(contentString);
     };
 
     return (
-        <div>
-            <div className="actions-container">
-                {/* Botão Salvar */}
-                <button
-                    onClick={onManualSave}
-                    className="toolbar-item save-btn"
-                    aria-label="Salvar Agora"
-                    title="Salvar Agora"
-                >
-                    <img src={SaveIcon} alt="Salvar" className="format" width="18" height="18" />
-                </button>
-                
-                {/* Botão Toggle Autosave */}
-                <button
-                    onClick={onAutosaveToggle}
-                    className={`toolbar-item autosave-toggle ${isAutosaveActive ? 'active' : ''}`}
-                    aria-label="Toggle Autosave"
-                    title={isAutosaveActive ? "Auto-salvamento Ativado" : "Desativado"}
-                >
-                    <span className="autosave-icon">{isAutosaveActive ? 'ON' : 'OFF'}</span>
-                </button>
-                
-                {/* Botão Histórico */}
-                <button
-                    onClick={handleHistoryClick}
-                    className={`toolbar-item history-btn ${isGlowing ? 'glowing' : ''}`}
-                    aria-label="Histórico"
-                    title="Ver Histórico de Alterações"
-                >
-                    <img src={HistoryIcon} alt="Histórico" className="format" width="18" height="18" />
-                </button>
-                
-                {/* Botão Anexos */}
-                <button
-                    onClick={handleFilesClick}
-                    className="toolbar-item export-btn"
-                    aria-label="Arquivos Anexados"
-                    title="Arquivos Anexados"
-                    disabled={!documentId}
-                >
-                    <img src={PaperclipIcon} alt="Anexos" className="format" width="18" height="18" />
-                </button>
-
-                {/* Botão PDF (Opcional, se quiser manter) */}
-                <button
-                    onClick={handleExportToPdf}
-                    className="toolbar-item export-btn"
-                    aria-label="Exportar PDF"
-                    title="Exportar PDF"
-                >
-                    <img src={PDFIcon} alt="PDF" className="format" width="18" height="18" />
-                </button>
-            </div>
+        <div className="actions-plugin-container">
             
-            {/* --- PAINEL DE HISTÓRICO (BACKEND) --- */}
+            {/* --- PAINEL DE HISTÓRICO (Popover) --- */}
             {isHistoryVisible && (
-                <div className="history-panel">
-                    {isLoadingHistory ? (
-                        <p style={{padding: '1rem', textAlign: 'center', color: '#666'}}>Carregando histórico...</p>
-                    ) : apiHistory.length > 0 ? (
-                        <ul className="history-list">
-                            {apiHistory.map((entry) => (
-                                <li key={entry.history_id} className="history-item">
-                                    <div className="history-info" style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start'}}>
-                                        <span className="history-timestamp">
-                                            {new Date(entry.history_date).toLocaleDateString()} {new Date(entry.history_date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                                        </span>
-                                        <span style={{fontSize: '0.75rem', color: '#555', marginTop: '2px'}}>
-                                            {entry.user_name} • {entry.action}
-                                        </span>
-                                    </div>
-                                    
-                                    <div className="history-item-actions">
-                                        <button 
-                                            className="history-action-btn view-btn" 
-                                            onClick={() => handleViewVersion(entry.content)}
-                                            title="Visualizar esta versão"
-                                        >
-                                            <img src={EyeIcon} alt="Ver" className="format" width="16" height="16" />
-                                        </button>
-                                        <button 
-                                            className="history-action-btn restore-btn" 
-                                            onClick={() => handleRevert(entry)}
-                                            title="Reverter para esta versão"
-                                        >
-                                            <img src={RestoreIcon} alt="Reverter" className="format" width="16" height="16" />
-                                        </button>
-                                    </div>
-                                </li>
-                            ))}
-                        </ul>
-                    ) : (
-                        <p style={{padding: '1rem', textAlign: 'center', color: '#888'}}>
-                            Nenhum histórico disponível.
-                        </p>
-                    )}
+                <div className="history-popover">
+                    <div className="history-header">
+                        <h6>Histórico de Versões</h6>
+                        <button className="btn-close-history" onClick={() => setIsHistoryVisible(false)}>&times;</button>
+                    </div>
+
+                    <div className="history-content">
+                        {isLoadingHistory ? (
+                            <div className="d-flex justify-content-center align-items-center p-3 text-muted">
+                                <Loader2 className="animate-spin me-2" size={20} />
+                                <small>Carregando...</small>
+                            </div>
+                        ) : apiHistory.length > 0 ? (
+                            <ul className="history-list">
+                                {apiHistory.map((entry) => (
+                                    <li key={entry.history_id} className="history-item">
+                                        <div className="history-info">
+                                            <span className="history-timestamp">
+                                                {new Date(entry.history_date).toLocaleDateString()} 
+                                                <small className="ms-1 text-muted">
+                                                    {new Date(entry.history_date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                                </small>
+                                            </span>
+                                            <span className="history-meta">
+                                                {entry.user_name} • {entry.action}
+                                            </span>
+                                        </div>
+                                        
+                                        <div className="history-item-actions">
+                                            <button 
+                                                className="btn-icon view" 
+                                                onClick={() => handleViewVersion(entry.content)}
+                                                title="Visualizar esta versão"
+                                            >
+                                                <Eye size={16} />
+                                            </button>
+                                            <button 
+                                                className="btn-icon revert" 
+                                                onClick={() => handleRevert(entry)}
+                                                title="Reverter para esta versão"
+                                            >
+                                                <RotateCcw size={16} />
+                                            </button>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p className="text-center text-muted p-3 m-0 small">Nenhum histórico disponível.</p>
+                        )}
+                    </div>
                 </div>
             )}
 
+            {/* --- BARRA DE AÇÕES (Toolbar) --- */}
+            <div className="actions-toolbar">
+
+                {/* Grupo 1: Salvar e Autosave */}
+                <div className="action-group">
+                    <button
+                        onClick={onManualSave}
+                        className="action-btn primary"
+                        title="Salvar Agora"
+                    >
+                        <Save size={18} />
+                        <span className="d-none d-sm-block text-sm">Salvar</span>
+                    </button>
+                    
+                    <button
+                        onClick={onAutosaveToggle}
+                        className={`action-toggle ${isAutosaveActive ? 'active' : ''}`}
+                        title={isAutosaveActive ? "Auto-salvamento Ativado" : "Auto-salvamento Desativado"}
+                    >
+                        <span>{isAutosaveActive ? 'Auto ON' : 'Auto OFF'}</span>
+                    </button>
+                </div>
+
+                <div className="vr"></div>
+
+                {/* Grupo 2: Ferramentas */}
+                <div className="action-group">
+                    <button
+                        onClick={handleHistoryClick}
+                        className={`action-btn ${isGlowing ? 'glowing' : ''} ${isHistoryVisible ? 'active' : ''}`}
+                        title="Histórico de Versões"
+                    >
+                        <History size={20} />
+                    </button>
+                    
+                    <button
+                        onClick={handleFilesClick}
+                        className="action-btn"
+                        title="Arquivos Anexados"
+                        disabled={!documentId}
+                    >
+                        <Paperclip size={20} />
+                    </button>
+
+                    <button
+                        onClick={handleExportToPdf}
+                        className="action-btn"
+                        title="Exportar para PDF"
+                    >
+                        <FileText size={20} />
+                    </button>
+                </div>
+            </div>
+            
             {/* Modais */}
             {viewingState && (
                 <HistoryViewModal

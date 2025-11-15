@@ -1,0 +1,131 @@
+/* Layout Geral */
+.editor-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #f3f4f6; /* Fundo cinza claro para contraste com o papel */
+  overflow: hidden; /* Impede scroll na página inteira */
+}
+
+.editor-loading-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: #f8f9fa;
+}
+
+/*Header Superior */
+.editor-header {
+  background-color: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  z-index: 10;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0 1.5rem;
+  gap: 1rem;
+}
+
+/* Botão Voltar */
+.btn-back {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-back:hover {
+  background-color: #f3f4f6;
+  color: #1f2937;
+}
+
+/* Input de Título */
+.title-container {
+  flex-grow: 1;
+}
+
+.document-title-input {
+  width: 100%;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  border: 1px solid transparent;
+  padding: 4px 12px;
+  border-radius: 6px;
+  background-color: transparent;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.document-title-input:hover {
+  background-color: #f9fafb;
+  border-color: #e5e7eb;
+}
+
+.document-title-input:focus {
+  background-color: #ffffff;
+  border-color: #3b82f6; /* Azul primário */
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+/* Badge de Status */
+.save-status {
+  min-width: 100px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.status-badge.saved {
+  color: #059669;
+  background-color: #d1fae5;
+}
+
+.status-badge.saving {
+  color: #6b7280;
+  background-color: #f3f4f6;
+}
+
+.status-badge.unsaved {
+  color: #d97706;
+  background-color: #fef3c7;
+}
+
+/* Área Principal (Scrollável) */
+.editor-main {
+  flex-grow: 1;
+  overflow-y: auto; /* Scroll acontece aqui */
+  padding: 2rem;
+  display: flex;
+  justify-content: center;
+}
+
+.editor-paper-wrapper {
+  width: 100%;
+  max-width: 900px; /* Largura do papel */
+  /* O CSS do .editor-container e filhos (editor-input) deve estar no EditorTheme.css */
+}

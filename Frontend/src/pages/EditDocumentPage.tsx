@@ -12,6 +12,7 @@ import type { EditorState } from 'lexical';
 import { $getRoot, $isParagraphNode } from 'lexical';
 //@ts-ignore
 import Prism from 'prismjs';
+import { useNavigate } from 'react-router-dom';
 
 // Imports de Serviços e Tipos
 import documentService from '../services/Document/api';
@@ -42,8 +43,13 @@ import ImagePlugin from '../plugin/ImagePlugin';
 import FormattingToolbarPlugin from '../plugin/ToolBarPlugin';
 import ActionsPlugin from '../plugin/DownBarPlugin';
 
+// Ícones Lucide
+import { ArrowLeft, Loader2, CheckCircle2 } from 'lucide-react';
+
+
 // Import do CSS
 import '../assets/css/EditorTheme.css';
+import '../assets/css/EditDocumentPage.css';
 
 // Configuração Base do Editor
 const baseInitialConfig = {
@@ -95,6 +101,9 @@ const EditDocumentPage = () => {
   const [title, setTitle] = useState(''); 
   const [isLoading, setIsLoading] = useState(true); 
   const [initialContent, setInitialContent] = useState<string | null>(null);
+  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
+  const navigate = useNavigate();
+
 
   // Estados do Histórico e Autosave
   //@ts-ignore
@@ -151,10 +160,12 @@ const EditDocumentPage = () => {
     setTimeout(() => {
       setIsGlowing(false);
     }, 1500);
+    setSaveStatus('saved');
   };
 
   // --- 1. 'saveSnapshot' (Auto-save) ATUALIZADO ---
   const saveSnapshot = useCallback(async (currentState: string) => {
+    setSaveStatus('saving');
     addHistoryEntry(currentState);
     setHistory(getHistoryEntries()); 
     triggerGlow(); 
@@ -170,6 +181,7 @@ const EditDocumentPage = () => {
         console.log(`Snapshot de CONTEÚDO salvo no backend para doc ${id}`);
       } catch (error) {
         console.error("Falha ao salvar snapshot no backend:", error);
+        setSaveStatus('unsaved');
       }
     }
   }, [id]); // Depende apenas do 'id'
@@ -177,6 +189,7 @@ const EditDocumentPage = () => {
   const handleOnChange = (editorState: EditorState) => {
     const editorStateJSON = JSON.stringify(editorState.toJSON());
     editorStateRef.current = editorStateJSON;
+    setSaveStatus('unsaved');
 
     if (!autosaveActiveRef.current) {
       return;
@@ -238,32 +251,61 @@ const EditDocumentPage = () => {
   }
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <center>
-        <input 
-          type="text" 
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          onBlur={() => {
-            // --- 3. 'onBlur' ATUALIZADO ---
-            // Salva APENAS o 'title' no backend (PATCH)
-            if (id) {
-              console.log("Salvando título...");
-              // Envia APENAS o 'title'
-              documentService.updateDocument(Number(id), { title: title });
-            }
-          }}
-          placeholder="Título do Documento"
-          style={{ fontSize: '1.5rem', fontWeight: 'bold', border: 'none', textAlign: 'center', width: '100%', marginBottom: '1rem', outline: 'none' }}
-        />
-      </center>
+    <div className='p-0 mt-100'>
+      <header className="editor-header">
+        <div className="header-content container-fluid">
+            
+            {/* Botão Voltar */}
+            <button 
+                onClick={() => navigate('/documentos')} 
+                className="btn-back"
+                title="Voltar para Meus Documentos"
+            >
+                <ArrowLeft size={24} />
+            </button>
+            
+            {/* Input de Título */}
+            <div className="title-container">
+                <input 
+                  type="text" 
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  onBlur={() => {
+                    if (id) {
+                      // Salva apenas o título ao sair do campo
+                      documentService.updateDocument(Number(id), { title: title });
+                    }
+                  }}
+                  placeholder="Título do Documento"
+                  className="document-title-input"
+                />
+            </div>
+
+            {/* Status de Salvamento */}
+            <div className="save-status">
+                {saveStatus === 'saving' && (
+                    <span className="status-badge saving">
+                        <Loader2 size={14} className="animate-spin"/> Salvando...
+                    </span>
+                )}
+                {saveStatus === 'saved' && (
+                    <span className="status-badge saved">
+                        <CheckCircle2 size={14} /> Salvo
+                    </span>
+                )}
+                {saveStatus === 'unsaved' && (
+                    <span className="status-badge unsaved">Não salvo</span>
+                )}
+            </div>
+        </div>
+      </header>
       
       <LexicalComposer initialConfig={baseInitialConfig}>
         <div className="editor-container">
           
           <FormattingToolbarPlugin />
           
-          <div className="editor-inner-content">
+          <div className="editor-inner-content container-fluid">
             <RichTextPlugin
               contentEditable={<ContentEditable className="editor-input" />}
               placeholder={<div className="editor-placeholder">Comece a escrever...</div>}

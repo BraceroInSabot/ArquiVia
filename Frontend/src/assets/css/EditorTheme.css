@@ -5,6 +5,7 @@
 .editor-container {
   margin: 20px auto;
   border-radius: 2px;
+  margin-bottom: 100px;
   max-width: 1000px;
   color: #000;
   position: relative;
@@ -24,6 +25,8 @@
   tab-size: 1;
   outline: 0;
   padding: 0px 10px;
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
 .editor-placeholder {
@@ -31,7 +34,7 @@
   overflow: hidden;
   position: absolute;
   text-overflow: ellipsis;
-  /* Ajuste: movido para baixo para não ficar atrás da toolbar */
+  /* Ajuste: movido para baixo para não ficar atrás da toolbar */ 
   top: 55px; 
   left: 10px;
   font-size: 15px;
@@ -79,6 +82,7 @@
   background: #fff;
   padding: 4px;
   border-bottom: 1px solid #ccc; /* Alterado de volta para border-bottom */
+  z-index: 100;
 }
 
 /* Adicione estas novas regras para o container de ações */

@@ -155,8 +155,8 @@ const ProfilePage = () => {
   return (
     <div className="profile-container">
       <div className="card shadow-sm border-0 rounded-3" style={{ maxWidth: '450px', width: '100%' }}>
-        <div className="card-header bg-primary-custom text-white text-center p-4">
-          <h3 className="mb-0">Meu Perfil</h3>
+        <div className="card-header bg-primary text-white text-center p-4">
+          <h3 className="mb-0">.</h3>
         </div>
 
         <div className="card-body p-4">

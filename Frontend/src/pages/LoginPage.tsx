@@ -14,11 +14,15 @@ const LoginPage = () => {
     }
   }, [user, navigate]);
 
+  const goToIndex = () => {
+    navigate("/");
+  }
+
   return (
     <div className="login-page-container">
       <div className="login-content">
         <div className="login-header mb-4 text-center">
-          <h1 className="logo-text text-primary-custom fw-bold">ArquiVia</h1>
+          <h1 className="logo-text text-primary-custom fw-bold" onClick={goToIndex}>ArquiVia</h1>
           <p className="text-muted">Bem-vindo de volta! Acesse sua conta.</p>
         </div>
         

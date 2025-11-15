@@ -1,7 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import IndexPage from './pages/Index';
 import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/Register';
+import RegisterPage from './pages/RegisterPage';
 import PanelPage from './pages/PanelPage';
 import ProtectedRoute from './utils/protected_route';
 import EnterprisePage from './pages/EnterprisePage';
@@ -13,8 +13,8 @@ import ViewSectorPage from './pages/ViewSectorPage';
 import EditSectorPage from './pages/EditSectorPage';
 import DocumentPage from './pages/DocumentPage';
 import EditDocumentPage from './pages/EditDocumentPage';
-import RequestResetPassword from './pages/RequestResetPassword';
-import ResetPassword from './pages/ResetPassword';
+import RequestResetPassword from './pages/RequestResetPasswordPage';
+import ResetPassword from './pages/ResetPasswordPage';
 import ProfilePage from './pages/ProfilePage';
 import MainLayout from './components/MenuLayout';
 

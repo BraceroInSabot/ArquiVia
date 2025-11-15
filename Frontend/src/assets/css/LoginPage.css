@@ -1,0 +1,90 @@
+/* Fundo da Página */
+.login-page-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-color, #f8f9fa);
+  /* Opcional: Um gradiente sutil ou imagem de fundo */
+  background-image: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.login-content {
+  width: 100%;
+  max-width: 400px;
+  padding: 20px;
+}
+
+.logo-text {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Card de Login */
+.login-card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,0.05);
+  overflow: hidden;
+}
+
+/* Ajustes nos Inputs para parecerem mais modernos */
+.input-group-text {
+  background-color: #f8f9fa !important; /* Fundo cinza claro */
+  border-color: #ced4da;
+}
+
+.form-control.bg-light {
+  background-color: #f8f9fa !important;
+  border-color: #ced4da;
+}
+
+.form-control:focus {
+  background-color: #ffffff !important;
+  border-color: var(--primary-color, #007bff);
+  box-shadow: none; /* Remove o glow padrão do bootstrap */
+}
+
+/* Quando o input foca, a borda do ícone também deve mudar (opcional, requer JS ou CSS mais complexo com :focus-within) */
+.input-group:focus-within .input-group-text {
+  border-color: var(--primary-color, #007bff);
+  color: var(--primary-color, #007bff) !important;
+  background-color: #ffffff !important;
+}
+.input-group:focus-within .form-control {
+  border-left: none; /* Mantém visual unificado */
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.cursor-pointer:hover {
+  text-decoration: underline;
+}
+
+/* Adicione estas classes ao seu LoginPage.css */
+
+.border-dashed {
+  border: 2px dashed #ced4da !important;
+  transition: border-color 0.2s;
+}
+
+.image-upload-box {
+  min-height: 80px;
+  background-color: #f8f9fa;
+  cursor: pointer;
+}
+
+.image-upload-box:hover {
+  border-color: var(--primary-color, #007bff) !important;
+  background-color: #fdfdfd;
+}
+
+.image-preview-circle {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid #dee2e6;
+}

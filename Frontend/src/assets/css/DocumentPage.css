@@ -1,0 +1,36 @@
+/* ... (outros estilos existentes) ... */
+
+/* Botão Flutuante (FAB) */
+.fab-button {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 1000; /* Acima do conteúdo, abaixo de modais (1050) */
+  
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  
+  padding: 12px 24px;
+  border-radius: 50px; /* Formato de pílula */
+  
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s;
+}
+
+.fab-button:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 123, 255, 0.5);
+}
+
+.fab-button:active {
+  transform: translateY(-1px);
+}
+
+.fab-button:disabled {
+  background-color: #6c757d; /* Cinza Bootstrap */
+  border-color: #6c757d;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}

@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { Search } from 'lucide-react'; // Ícone
 import type { DocumentFilters } from '../services/core-api';
-import '../assets/css/DocumentPage.css'; // Assumindo que o CSS está aqui
+
+// Reutiliza CSS global se necessário, mas focaremos em classes utilitárias
+import '../assets/css/EnterprisePage.css'; 
 
 interface DocumentFiltersProps {
   defaultFilters: DocumentFilters;
@@ -24,42 +27,38 @@ const DocumentFiltersComponent: React.FC<DocumentFiltersProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Envia apenas o termo de busca. 
-    // Mantemos a estrutura do objeto DocumentFilters para compatibilidade.
     onFilterChange({ searchTerm: searchTerm });
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '10px', marginBottom: '1.5rem' }}>
-      <input
-        type="text"
-        name="q"
-        placeholder="Pesquisar nos documentos..."
-        value={searchTerm}
-        onChange={handleChange}
-        style={{
-          flex: 1,
-          padding: '10px',
-          borderRadius: '4px',
-          border: '1px solid #ccc',
-          fontSize: '1rem'
-        }}
-      />
-      
-      <button 
-        type="submit"
-        style={{
-          padding: '10px 20px',
-          backgroundColor: '#007bff',
-          color: 'white',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: 'pointer',
-          fontWeight: 'bold'
-        }}
-      >
-        Buscar
-      </button>
+    <form onSubmit={handleSubmit} className="w-100">
+      <div className="d-flex gap-2">
+        
+        {/* Grupo do Input com Ícone */}
+        <div className="position-relative flex-grow-1">
+          <div className="position-absolute top-50 start-0 translate-middle-y ps-3 text-muted pointer-events-none">
+            <Search size={20} />
+          </div>
+          <input
+            type="text"
+            name="q"
+            className="form-control ps-5 py-2" // ps-5 dá espaço para o ícone
+            placeholder="Pesquisar por título ou conteúdo..."
+            value={searchTerm}
+            onChange={handleChange}
+            autoComplete="off"
+          />
+        </div>
+        
+        {/* Botão de Buscar */}
+        <button 
+          type="submit"
+          className="btn btn-primary-custom px-4 fw-semibold"
+        >
+          Buscar
+        </button>
+
+      </div>
     </form>
   );
 };

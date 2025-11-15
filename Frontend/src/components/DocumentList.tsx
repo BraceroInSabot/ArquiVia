@@ -1,49 +1,45 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Eye, Settings, User, Calendar, SearchX, Loader2, AlertCircle } from 'lucide-react'; // Ícones
+
 import type { DocumentList, DocumentFilters } from '../services/core-api';
 import documentService from '../services/Document/api';
 import ClassificationModal from '../components/ClassificationModal';
 
-// Imports de ícones e CSS
-import gearIcon from '../assets/icons/gear.svg?url';
-import eyeIcon from '../assets/icons/eye.svg?url';
-import "../assets/css/DocumentPage.css";
+import "../assets/css/EnterprisePage.css"; // Reutiliza CSS global
 
 interface DocumentListProps {
   filters: DocumentFilters;
 }
 
 const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
-  // Armazena os documentos exibidos (seja da busca ou da listagem geral)
   const [documents, setDocuments] = useState<DocumentList[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Estados auxiliares
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDocId, setSelectedDocId] = useState<number | null>(null);
 
-  const [docFound, setDocFound] = useState(String);
+  // Estado para armazenar a mensagem de busca do backend
+  const [searchMessage, setSearchMessage] = useState<string>('');
 
 
-  // --- EFEITO PRINCIPAL: BUSCA vs LISTAGEM ---
+  // --- EFEITO PRINCIPAL: BUSCA vs LISTAGEM (INTACTO) ---
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
       setError(null);
+      setSearchMessage(''); // Limpa mensagem anterior
       
       try {
         let response;
 
-        // LÓGICA DE DECISÃO:
         if (filters.searchTerm && filters.searchTerm.trim() !== '') {
-          // Se tem termo de busca, chama a API de Recuperação de Informação
           console.log(`Buscando por: ${filters.searchTerm}`);
           response = await documentService.searchDocuments(filters.searchTerm);
-          setDocFound(response.data.mensagem);
+          setSearchMessage(response.data.mensagem || ''); // Usa 'message' (padrão da sua response structure)
         } else {
-          // Se não tem termo, lista todos (padrão)
           response = await documentService.getDocuments();
         }
 
@@ -51,24 +47,21 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
         
       } catch (err: any) {
         console.error("Erro na listagem/busca:", err);
-        // Mensagem amigável caso a busca não retorne nada ou dê erro 400
         const msg = err.response?.data?.message || "Falha ao carregar documentos.";
         setError(msg);
-        setDocuments([]); // Limpa lista em caso de erro
+        setDocuments([]);
       } finally {
         setLoading(false);
       }
     };
 
-    // Adicionamos um pequeno delay (debounce) apenas se for busca, 
-    // para evitar chamar a API enquanto digita (opcional, mas recomendado)
     const timer = setTimeout(() => {
         loadData();
     }, 300);
 
     return () => clearTimeout(timer);
 
-  }, [filters.searchTerm]); // Recarrega sempre que o termo mudar
+  }, [filters.searchTerm]);
 
 
   // --- Funções de Navegação e Modal ---
@@ -90,64 +83,91 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
-        <p>Carregando...</p>
-      </div>
+        <div className="d-flex justify-content-center align-items-center py-5 text-muted">
+            <Loader2 className="animate-spin me-2" size={24} />
+            <span>Carregando documentos...</span>
+        </div>
     );
   }
 
   if (error) {
-    // Se for erro 404 ou lista vazia na busca, pode não ser um "erro" visual crítico
     return (
-        <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-            <p style={{ color: '#888' }}>{error}</p>
+        <div className="alert alert-danger d-flex align-items-center mt-3 mx-auto" style={{ maxWidth: '600px' }} role="alert">
+            <AlertCircle className="me-2" size={20} />
+            <div>{error}</div>
         </div>
     );
   }
 
   if (documents.length === 0) {
     return (
-        <div style={{ textAlign: 'center', marginTop: '2rem', color: '#888' }}>
-            <p>{docFound}</p>
+        <div className="text-center text-muted py-5 bg-light rounded border border-dashed mt-3">
+            <SearchX size={48} className="opacity-25 mb-3" />
+            {/* Exibe a mensagem vinda do backend (ex: "Nenhum documento encontrado para 'xyz'") */}
+            <p className="mb-0 fw-medium">{searchMessage || "Nenhum documento encontrado."}</p>
+            {filters.searchTerm && <small>Tente outro termo de busca.</small>}
         </div>
     );
   }
 
   return (
     <>
-      <ul style={{ listStyle: 'none', padding: 0 }}>
+      {/* Exibe a mensagem de sucesso da busca, se houver */}
+      {searchMessage && filters.searchTerm && (
+          <p className="text-muted small mb-3 fst-italic">
+              {searchMessage}
+          </p>
+      )}
+
+      {/* Grid de Documentos */}
+      <div className="row g-3">
         {documents.map(doc => (
-          <li 
-            key={doc.document_id}
-            style={{ 
-              backgroundColor: '#fff', 
-              border: '1px solid #eee', 
-              padding: '1rem', 
-              marginBottom: '0.5rem', 
-              borderRadius: '4px', 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center',
-            }}
-          >
-            <div>
-              <strong>{doc.title}</strong>
-              <p style={{ margin: '0.25rem 0 0', color: '#555', fontSize: '0.9em'}}>
-                Por: {doc.creator_name} em {doc.created_at}
-              </p>
+          <div key={doc.document_id} className="col-12 col-md-6 col-xl-4">
+            <div className="card h-100 border shadow-sm hover-effect">
+                <div className="card-body d-flex flex-column">
+                    
+                    {/* Título */}
+                    <h6 className="fw-bold text-dark mb-2 text-truncate" title={doc.title}>
+                        {doc.title || "Sem Título"}
+                    </h6>
+                    
+                    {/* Metadados */}
+                    <div className="text-muted small mb-3 flex-grow-1">
+                        <div className="d-flex align-items-center gap-2 mb-1">
+                            <User size={14} />
+                            <span className="text-truncate">{doc.creator_name}</span>
+                        </div>
+                        <div className="d-flex align-items-center gap-2">
+                            <Calendar size={14} />
+                            <span>{doc.created_at}</span>
+                        </div>
+                    </div>
+
+                    {/* Ações */}
+                    <div className="d-flex justify-content-end gap-2 border-top pt-2 mt-auto">
+                        <button 
+                            onClick={() => handleEditClick(doc.document_id)} 
+                            className="btn btn-light btn-sm text-primary"
+                            title="Visualizar / Editar Conteúdo"
+                        >
+                            <Eye size={16} />
+                            <span className="d-none d-lg-inline ms-1">Abrir</span>
+                        </button>
+                        
+                        <button 
+                            onClick={() => handleModalOpen(doc.document_id)} 
+                            className="btn btn-light btn-sm text-secondary"
+                            title="Configurações e Classificação"
+                        >
+                            <Settings size={16} />
+                        </button>
+                    </div>
+
+                </div>
             </div>
-            
-            <div className='buttons-options'>
-              <button onClick={() => handleEditClick(doc.document_id)} title="Visualizar/Editar">
-                <img src={eyeIcon} alt="Visualizar" width="18" height="18" />
-              </button>
-              <button id="gear-button" onClick={() => handleModalOpen(doc.document_id)} title="Classificação">
-                <img src={gearIcon} alt="Classificar" width="18" height="18" />
-              </button>
-            </div>
-          </li>
+          </div>
         ))}
-      </ul>
+      </div>
 
       {isModalOpen && selectedDocId && (
         <ClassificationModal

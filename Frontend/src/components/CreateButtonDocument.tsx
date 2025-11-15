@@ -1,34 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Plus, Loader2 } from 'lucide-react'; // Ícones
+
 import documentService from '../services/Document/api'; 
 import type { CreateDocument } from '../services/core-api';
 import SectorSelectionModal from './SectorSelectionModal';
 
-const fabStyle: React.CSSProperties = {
-  position: 'fixed',
-  bottom: '2rem',
-  right: '2rem',
-  backgroundColor: '#007bff',
-  color: 'white',
-  border: 'none',
-  borderRadius: '3%',
-  fontSize: '20px',
-  boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-  cursor: 'pointer',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  zIndex: 1000,
-  // Adiciona um efeito de transição e muda o cursor se estiver desabilitado
-  transition: 'background-color 0.2s ease',
-  opacity: 1,
-};
-
-const fabDisabledStyle: React.CSSProperties = {
-  ...fabStyle,
-  backgroundColor: '#999',
-  cursor: 'not-allowed',
-};
+// Import do CSS
+import '../assets/css/DocumentPage.css';
+import '../assets/css/EnterprisePage.css'; // Para btn-primary-custom
 
 const defaultEmptyContent = {
   "root": {
@@ -70,35 +50,44 @@ const CreateDocumentButton: React.FC = () => {
         categories: []
       };
 
-  	  const response = await documentService.createDocument(payload);
+      const response = await documentService.createDocument(payload);
       
-      console.log(response.data.data)
-  	  const newDocumentId = response.data.data.document_id; 
+      const newDocumentId = response.data.data.document_id; 
 
       if (!newDocumentId) {
         throw new Error("A API não retornou um ID para o novo documento.");
       }
 
-  	  navigate(`/documento/editar/${newDocumentId}`); // momentaneo
+      navigate(`/documento/editar/${newDocumentId}`); 
 
-  	} catch (error) {
-  	  console.error('Erro ao criar documento:', error);
+    } catch (error) {
+      console.error('Erro ao criar documento:', error);
       alert("Houve um erro ao tentar criar o documento. Tente novamente.");
-  	} finally {
+    } finally {
       setIsLoading(false);
     }
   };
 
   return (
     <> 
-  	  <button 
-    	  style={isLoading ? fabDisabledStyle : fabStyle} 
-    	  onClick={handleClick}
-    	  title="Criar Novo Documento"
+      <button 
+        className="btn btn-primary-custom fab-button"
+        onClick={handleClick}
+        title="Criar Novo Documento"
         disabled={isLoading} 
-  	  >
-    	  {isLoading ? 'Criando...' : 'Criar Novo Documento'}
-  	  </button>
+      >
+        {isLoading ? (
+            <>
+                <Loader2 className="animate-spin" size={24} />
+                <span className="fw-bold">Criando...</span>
+            </>
+        ) : (
+            <>
+                <Plus size={24} strokeWidth={3} />
+                <span className="fw-bold">Novo Documento</span>
+            </>
+        )}
+      </button>
 
       {isModalOpen && (
         <SectorSelectionModal

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Trash2, Shield, UserCheck, UserMinus, UserPlus, Loader2, AlertCircle } from 'lucide-react'; // Ícones
 import sectorService from '../services/Sector/api';
 import { useAuth } from '../contexts/AuthContext';
 import type { promoteUserToAdministratorPayload, SectorUser } from '../services/core-api';
@@ -18,9 +19,9 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
-  
   const { user: loggedInUser, isLoading: isAuthLoading } = useAuth(); 
 
+  // --- LÓGICA (MANTIDA INTACTA) ---
   useEffect(() => {
     if (!loggedInUser && !isAuthLoading) {
       setError("Não foi possível identificar o usuário logado.");
@@ -51,7 +52,6 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
         setUsers(sectorUsers);
         
         //@ts-ignore
-        console.log("Usuário logado ID:", loggedInUser.data);
         const userRoleInThisSector = sectorUsers.find(
           //@ts-ignore
           (user) => user.user_id === loggedInUser.data.user_id
@@ -59,13 +59,9 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
 
         if (userRoleInThisSector) {
           const role = userRoleInThisSector.toLowerCase();
-          if (role === 'proprietário') {
-            setIsOwner(true);
-          } else if (role === 'gestor') {
-            setIsManager(true);
-          } else if (role === 'administrador') {
-            setIsAdmin(true);
-          }
+          if (role === 'proprietário') setIsOwner(true);
+          else if (role === 'gestor') setIsManager(true);
+          else if (role === 'administrador') setIsAdmin(true);
         }
       } catch (err) {
         console.error("Falha ao buscar dados dos usuários:", err);
@@ -81,32 +77,23 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
     setUsers(currentUsers => [...currentUsers, newUser]);
   };
 
-  if (isLoading || isAuthLoading) {
-    return <p>Carregando usuários...</p>;
-  }
-
-  if (error) {
-    return <p style={{ color: 'red' }}>{error}</p>;
-  }
-
   const handleUserRemove = async (sectorUserLinkId: number) => {
-    console.log("Removendo usuário com link ID:", users);
     if (window.confirm("Tem certeza que deseja remover este usuário?")) {
       try {
         await sectorService.removeUserFromSector(sectorUserLinkId);
         alert("Usuário removido com sucesso.");
+        window.location.reload();
       } catch (err) {
         console.error("Falha ao remover usuário do setor:", err);
         alert("Não foi possível remover o usuário do setor.");
       }
-      window.location.reload();
     }
   };
 
   const handlePromoteUserToManager = async (userEmail: string) => {
     try {
       //@ts-ignore
-      const response = await sectorService.promoteUserToManager(sectorId, { new_manager_email: userEmail });
+      await sectorService.promoteUserToManager(sectorId, { new_manager_email: userEmail });
       alert("Usuário promovido a gerente com sucesso.");
       window.location.reload();
     } catch (err) {
@@ -118,22 +105,63 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
   const handlePromoteUserToAdministrator = async ({ sectorUserLinkId, makeAdmin }: promoteUserToAdministratorPayload) => {
     try {
       //@ts-ignore
-      const response = await sectorService.promoteUserToAdministrator({sectorUserLinkId, makeAdmin});
+      await sectorService.promoteUserToAdministrator({sectorUserLinkId, makeAdmin});
       alert(`Usuário ${makeAdmin ? 'promovido' : 'rebaixado'} com sucesso.`);
+      window.location.reload();
     } catch (err) {
       console.error("Falha ao alterar cargo de administrador:", err);
       alert("Não foi possível alterar o cargo do usuário.");
     }
-    window.location.reload();
   };
 
+  // Helper para cor do badge
+  const getRoleBadgeClass = (role: string) => {
+    const lowerRole = role.toLowerCase();
+    if (lowerRole === 'proprietário') return 'bg-warning text-dark';
+    if (lowerRole === 'gestor') return 'bg-primary text-white';
+    if (lowerRole === 'administrador') return 'bg-info text-white';
+    return 'bg-secondary text-white';
+  };
+  // --- FIM DA LÓGICA ---
+
+
+  // --- RENDERIZAÇÃO ---
+
+  if (isLoading || isAuthLoading) {
+    return (
+        <div className="d-flex justify-content-center align-items-center py-4 text-muted">
+            <Loader2 className="animate-spin me-2" size={24} />
+            <span>Carregando usuários...</span>
+        </div>
+    );
+  }
+
+  if (error) {
+    return (
+        <div className="alert alert-danger d-flex align-items-center" role="alert">
+            <AlertCircle className="me-2" size={20} />
+            <div>{error}</div>
+        </div>
+    );
+  }
+
+  const hasPermission = isOwner || isManager || isAdmin;
+
   return (
-    <div>
-      {(isOwner || isManager || isAdmin) ? (
-        <button onClick={() => setIsModalOpen(true)} style={{ marginBottom: '15px' }}>
-          Adicionar Usuário ao Setor
-        </button>
-      ) : null}
+    <div className="mt-4">
+      {/* Cabeçalho da Seção */}
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h5 className="fw-bold text-secondary mb-0">Membros do Setor</h5>
+        {hasPermission && (
+          <button 
+            onClick={() => setIsModalOpen(true)} 
+            className="btn btn-primary-custom btn-sm d-flex align-items-center gap-2"
+          >
+            <UserPlus size={18} />
+            <span className="d-none d-sm-inline">Adicionar Usuário</span>
+          </button>
+        )}
+      </div>
 
       <AddSectorUserModal
         isOpen={isModalOpen}
@@ -142,63 +170,95 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
         onUserAdded={handleUserAdded}
       />
 
-      {users.length === 0 && !(isOwner || isManager || isAdmin) ? (
-        <p>Nenhum usuário encontrado neste setor.</p>
+      {users.length === 0 && !hasPermission ? (
+        <div className="text-center text-muted py-4 bg-light rounded">
+            <p className="mb-0">Nenhum usuário encontrado neste setor.</p>
+        </div>
       ) : (
-        <div>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid black', textAlign: 'left' }}>
-                <th style={{ padding: '8px' }}>Usuário</th>
-                <th style={{ padding: '8px', minWidth: '200px' }}>Email</th>
-                <th style={{ padding: '8px' }}>Função</th>
-                {(isOwner || isManager || isAdmin) ? (<th style={{ padding: '8px' }}>Ações</th>) : null}
+        <div className="table-responsive border rounded bg-white shadow-sm">
+          <table className="table table-hover align-middle mb-0">
+            <thead className="bg-light">
+              <tr>
+                <th className="ps-3 text-secondary text-uppercase small fw-bold">Usuário</th>
+                <th className="text-secondary text-uppercase small fw-bold">Email</th>
+                <th className="text-secondary text-uppercase small fw-bold">Função</th>
+                {hasPermission && <th className="text-end pe-3 text-secondary text-uppercase small fw-bold">Ações</th>}
               </tr>
             </thead>
             <tbody>
               {users.map((user) => {
                 const targetRole = user.role.toLowerCase();
                 //@ts-ignore
-                const canNotRemoveSelf = user.user_id === loggedInUser.data.user_id;
+                const isSelf = user.user_id === loggedInUser.data.user_id;
                 const isTargetOwner = targetRole === 'proprietário';
-                const canOwnerRemove = isOwner; 
-                const canManagerRemove = isManager && (targetRole === 'administrador' || targetRole === 'membro');
-                const canAdminRemove = isAdmin && (targetRole === 'membro');
-                const showRemoveButton = 
-                  !canNotRemoveSelf && 
-                  !isTargetOwner && 
-                  (canOwnerRemove || canManagerRemove || canAdminRemove);
+                
+                // Lógica de permissão para remover
+                const canRemove = !isSelf && !isTargetOwner && (
+                    isOwner || 
+                    (isManager && (targetRole === 'administrador' || targetRole === 'membro')) || 
+                    (isAdmin && targetRole === 'membro')
+                );
 
                 return (
-                  <tr key={user.user_id} style={{ borderBottom: '1px solid #ccc' }}>
-                    <td style={{ padding: '8px' }}>{user.user_name}</td>
-                    <td style={{ padding: '8px' }}>{user.user_email}</td>
-                    <td style={{ padding: '8px' }}>{user.role}</td>
+                  <tr key={user.user_id}>
+                    <td className="ps-3 fw-medium">
+                        {user.user_name} {isSelf && <span className="text-muted small fst-italic ms-1">(Você)</span>}
+                    </td>
+                    <td className="text-muted">{user.user_email}</td>
+                    <td>
+                        <span className={`badge ${getRoleBadgeClass(user.role)} fw-normal px-2 py-1`}>
+                            {user.role}
+                        </span>
+                    </td>
                     
-                    {(isOwner || isManager || isAdmin) && (
-                      <td style={{ padding: '8px' }}>
-                        {/* @ts-ignore */}
-                        {user.user_id === loggedInUser.data.user_id ? (
-                          <em>(Você)</em>
-                        ) : null}
-                        
-                        {showRemoveButton && (
-                          <button onClick={() => handleUserRemove(user.sector_user_id)}>Remover</button>
-                        )}
-                        
-                        {isOwner && (targetRole === 'membro' || targetRole === 'administrador') ? (
-                          <button onClick={() => handlePromoteUserToManager(user.user_email)}>Promover para Gerente</button>
-                        ): null}
-                        
-                        {(isOwner || isManager) && targetRole === 'membro' ? (
-                          <button onClick={() => handlePromoteUserToAdministrator({sectorUserLinkId: user.sector_user_id, makeAdmin: true})}>
-                            Promover para Administrador
-                          </button>
-                        ) : (isOwner || isManager) && targetRole === 'administrador' ? (
-                          <button onClick={() => handlePromoteUserToAdministrator({sectorUserLinkId: user.sector_user_id, makeAdmin: false})}>
-                            Rebaixar de Administrador
-                          </button>
-                        ): null}
+                    {hasPermission && (
+                      <td className="text-end pe-3">
+                        <div className="d-flex justify-content-end gap-1">
+                            
+                            {/* Botão Remover */}
+                            {canRemove && (
+                              <button 
+                                onClick={() => handleUserRemove(user.sector_user_id)}
+                                className="btn btn-light btn-sm text-danger"
+                                title="Remover Usuário"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            )}
+                            
+                            {/* Botão Promover a Gerente */}
+                            {isOwner && (targetRole === 'membro' || targetRole === 'administrador') && (
+                              <button 
+                                onClick={() => handlePromoteUserToManager(user.user_email)}
+                                className="btn btn-light btn-sm text-primary"
+                                title="Promover para Gerente"
+                              >
+                                <Shield size={16} />
+                              </button>
+                            )}
+                            
+                            {/* Botão Promover/Rebaixar Admin */}
+                            {(isOwner || isManager) && targetRole === 'membro' && (
+                              <button 
+                                onClick={() => handlePromoteUserToAdministrator({sectorUserLinkId: user.sector_user_id, makeAdmin: true})}
+                                className="btn btn-light btn-sm text-info"
+                                title="Promover para Administrador"
+                              >
+                                <UserCheck size={16} />
+                              </button>
+                            )}
+
+                            {(isOwner || isManager) && targetRole === 'administrador' && (
+                              <button 
+                                onClick={() => handlePromoteUserToAdministrator({sectorUserLinkId: user.sector_user_id, makeAdmin: false})}
+                                className="btn btn-light btn-sm text-secondary"
+                                title="Rebaixar de Administrador"
+                              >
+                                <UserMinus size={16} />
+                              </button>
+                            )}
+
+                        </div>
                       </td>
                     )}
                   </tr>

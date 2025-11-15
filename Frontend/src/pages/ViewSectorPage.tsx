@@ -1,27 +1,33 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { 
+  ArrowLeft, Pencil, Loader2, AlertCircle, 
+  Users, FolderTree, BarChart2, History, Layers
+} from 'lucide-react'; // Ícones
+
 import sectorService from '../services/Sector/api';
 import type { Sector } from '../services/core-api';
 import SectorUsers from '../components/SectorUsers';  
-import SectorCategories from '../components/SectorCategories';
+import SectorCategories from '../components/SectorCategories'; // Ajuste o caminho se necessário
 
-const SectorMetrics = ({ sectorId }: { sectorId: number }) => {
-  return (
-    <div>
-      <h3>Componente de Métricas</h3>
-      <p>Aqui serão exibidos os gráficos e métricas do setor {sectorId}.</p>
-    </div>
-  );
-};
+import '../assets/css/EnterprisePage.css'; // Reutiliza estilos base
 
-const SectorLogs = ({ sectorId }: { sectorId: number }) => {
-  return (
-    <div>
-      <h3>Componente de Registros</h3>
-      <p>Aqui será exibido o log de atividades do setor {sectorId}.</p>
-    </div>
-  );
-};
+// Componentes Placeholder (Poderiam ser extraídos depois)
+const SectorMetrics = ({ sectorId }: { sectorId: number }) => (
+  <div className="p-4 text-center bg-light rounded border border-dashed">
+    <BarChart2 size={48} className="text-secondary opacity-25 mb-3" />
+    <h5 className="text-muted">Métricas do Setor</h5>
+    <p className="text-muted small">Gráficos e estatísticas do setor {sectorId} aparecerão aqui.</p>
+  </div>
+);
+
+const SectorLogs = ({ sectorId }: { sectorId: number }) => (
+  <div className="p-4 text-center bg-light rounded border border-dashed">
+    <History size={48} className="text-secondary opacity-25 mb-3" />
+    <h5 className="text-muted">Logs de Atividade</h5>
+    <p className="text-muted small">O histórico de ações do setor {sectorId} aparecerá aqui.</p>
+  </div>
+);
 
 type TabName = 'users' | 'metrics' | 'logs' | 'categories';
 
@@ -32,9 +38,9 @@ const ViewSectorPage = () => {
   const [sector, setSector] = useState<Sector>({} as Sector);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   const [activeTab, setActiveTab] = useState<TabName>('users');
 
+  // --- LÓGICA (INTACTA) ---
   useEffect(() => {
     if (!id) {
       setError('ID do setor não fornecido.');
@@ -55,89 +61,161 @@ const ViewSectorPage = () => {
     fetchSectorData();
   }, [id]);
 
-
-  const tabStyle: React.CSSProperties = {
-    padding: '10px 15px',
-    border: 'none',
-    background: 'none',
-    cursor: 'pointer',
-    fontSize: '16px',
-    marginRight: '10px',
-  };
-
-  const getActiveTabStyle = (tabName: TabName): React.CSSProperties => {
-    if (activeTab === tabName) {
-      return {
-        ...tabStyle,
-        fontWeight: 'bold',
-        borderBottom: '3px solid blue', 
-      };
-    }
-    return tabStyle;
-  };
-
-
-  if (isLoading) {
-    return <p>Carregando dados do setor...</p>;
-  }
-
-  if (error) {
-    return <p style={{ color: 'red' }}>{error}</p>;
-  }
-
   const goToEditSectorPage = () => {
     navigate(`/setor/editar/${sector.sector_id}`);
   };
+  // --- FIM DA LÓGICA ---
 
 
+  if (isLoading) {
+    return (
+        <div className="page-container d-flex justify-content-center align-items-center">
+            <div className="text-center text-muted">
+                <Loader2 className="animate-spin text-primary-custom mb-3" size={48} />
+                <p>Carregando setor...</p>
+            </div>
+        </div>
+    );
+  }
+
+  if (error) {
+    return (
+        <div className="page-container container py-5">
+            <div className="alert alert-danger d-flex align-items-center" role="alert">
+                <AlertCircle className="me-2" size={20} />
+                <div>{error}</div>
+            </div>
+            <button className="btn btn-secondary mt-3" onClick={() => navigate(-1)}>Voltar</button>
+        </div>
+    );
+  }
 
   return (
-    <div style={{ padding: '20px' }}>
-      <div style={{ border: '1px solid #ccc', padding: '16px', borderRadius: '8px', marginBottom: '40px' }}>
-        <h2 style={{ marginTop: 0 }}>{sector.name}</h2>
+    <div className="page-container">
+      <div className="container py-5">
         
-        <img 
-          src={sector.image || 'https://via.placeholder.com/100'} 
-          alt={sector.name} 
-          style={{ width: '100px', height: '100px', objectFit: 'cover', float: 'right' }} 
-        />
-        
-        <p><strong>ID do Setor:</strong> {sector.sector_id}</p> 
-        <p><strong>Empresa:</strong> {sector.enterprise_name}</p>
-        <p><strong>Gerente:</strong> {sector.manager_name}</p>
-        <p><strong>Data de Criação:</strong> {sector.creation_date}</p>
-        <p><strong>Status:</strong> {sector.is_active ? 'Ativo' : 'Inativo'}</p>
-        
-        <div>
-          <button onClick={() => {navigate(-1)}}>
-            Voltar
-          </button>
-          <button onClick={goToEditSectorPage}>
-            Editar Setor
-          </button>
+        {/* Cabeçalho de Navegação */}
+        <div className="d-flex align-items-center mb-4">
+            <button 
+                onClick={() => navigate(-1)} 
+                className="btn btn-light btn-sm me-3 text-secondary"
+                title="Voltar"
+            >
+                <ArrowLeft size={20} />
+            </button>
+            <div>
+                <h1 className="h3 mb-1 fw-bold text-body-custom">Detalhes do Setor: {sector.name}</h1>
+                <span className="badge bg-light text-secondary border">ID: {sector.sector_id}</span>
+            </div>
+            
+            {/* Botão Editar (Alinhado à direita) */}
+            <div className="ms-auto">
+                <button 
+                    onClick={goToEditSectorPage}
+                    className="btn btn-outline-primary btn-sm d-flex align-items-center gap-2"
+                >
+                    <Pencil size={16} />
+                    <span className="d-none d-sm-inline">Editar</span>
+                </button>
+            </div>
         </div>
-      </div>
 
-      <nav style={{ borderBottom: '1px solid #ccc' }}>
-        <button style={getActiveTabStyle('users')} onClick={() => setActiveTab('users')}>
-          Usuários
-        </button>
-        <button style={getActiveTabStyle('categories')} onClick={() => setActiveTab('categories')}>
-          Categorias
-        </button>
-        <button style={getActiveTabStyle('metrics')} onClick={() => setActiveTab('metrics')}>
-          Métricas
-        </button>
-        <button style={getActiveTabStyle('logs')} onClick={() => setActiveTab('logs')}>
-          Registros
-        </button>
-      </nav>
+        {/* Card Principal (Hero) */}
+        <div className="custom-card p-4 mb-4">
+            <div className="row align-items-center">
+                {/* Imagem */}
+                <div className="col-auto">
+                    <div 
+                        className="rounded-circle overflow-hidden border d-flex align-items-center justify-content-center bg-light"
+                        style={{ width: '100px', height: '100px' }}
+                    >
+                        {sector.image ? (
+                            <img 
+                                src={sector.image} 
+                                alt={sector.name} 
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                            />
+                        ) : (
+                            <Layers size={40} className="text-secondary opacity-50" />
+                        )}
+                    </div>
+                </div>
 
-      <div style={{ padding: '20px 0' }}>
-        {activeTab === 'users' && sector.sector_id && <SectorUsers sectorId={sector.sector_id} />}
-        {activeTab === 'categories' && <SectorCategories sectorId={sector.sector_id} />}
-        {activeTab === 'metrics' && <SectorMetrics sectorId={sector.sector_id} />}
-        {activeTab === 'logs' && <SectorLogs sectorId={sector.sector_id} />}
+                {/* Informações */}
+                <div className="col">
+                    <h2 className="h4 fw-bold text-dark mb-1">{sector.name}</h2>
+                    <p className="text-muted mb-2">{sector.enterprise_name}</p>
+                    
+                    <div className="d-flex flex-wrap gap-3 text-sm text-secondary">
+                        <div title="Gerente Responsável">
+                           <span className="fw-semibold">Gerente:</span> {sector.manager_name}
+                        </div>
+                        <div className="vr opacity-25 d-none d-sm-block"></div>
+                        <div title="Data de Criação">
+                           <span className="fw-semibold">Criado em:</span> {sector.creation_date}
+                        </div>
+                        <div className="vr opacity-25 d-none d-sm-block"></div>
+                        <div>
+                            <span className={`badge ${sector.is_active ? 'bg-success' : 'bg-secondary'}`}>
+                                {sector.is_active ? 'Ativo' : 'Inativo'}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {/* Navegação por Abas (Tabs) */}
+        <div className="custom-card">
+            <div className="card-header bg-white border-bottom-0 pt-3 px-3">
+                <ul className="nav nav-tabs card-header-tabs">
+                    <li className="nav-item">
+                        <button 
+                            className={`nav-link d-flex align-items-center gap-2 ${activeTab === 'users' ? 'active fw-bold text-primary-custom' : 'text-secondary'}`}
+                            onClick={() => setActiveTab('users')}
+                        >
+                            <Users size={18} />
+                            Usuários
+                        </button>
+                    </li>
+                    <li className="nav-item">
+                        <button 
+                            className={`nav-link d-flex align-items-center gap-2 ${activeTab === 'categories' ? 'active fw-bold text-primary-custom' : 'text-secondary'}`}
+                            onClick={() => setActiveTab('categories')}
+                        >
+                            <FolderTree size={18} />
+                            Categorias
+                        </button>
+                    </li>
+                    <li className="nav-item">
+                        <button 
+                            className={`nav-link d-flex align-items-center gap-2 ${activeTab === 'metrics' ? 'active fw-bold text-primary-custom' : 'text-secondary'}`}
+                            onClick={() => setActiveTab('metrics')}
+                        >
+                            <BarChart2 size={18} />
+                            Métricas
+                        </button>
+                    </li>
+                    <li className="nav-item">
+                        <button 
+                            className={`nav-link d-flex align-items-center gap-2 ${activeTab === 'logs' ? 'active fw-bold text-primary-custom' : 'text-secondary'}`}
+                            onClick={() => setActiveTab('logs')}
+                        >
+                            <History size={18} />
+                            Registros
+                        </button>
+                    </li>
+                </ul>
+            </div>
+
+            <div className="card-body p-4">
+                {activeTab === 'users' && sector.sector_id && <SectorUsers sectorId={sector.sector_id} />}
+                {activeTab === 'categories' && <SectorCategories sectorId={sector.sector_id} />}
+                {activeTab === 'metrics' && <SectorMetrics sectorId={sector.sector_id} />}
+                {activeTab === 'logs' && <SectorLogs sectorId={sector.sector_id} />}
+            </div>
+        </div>
+
       </div>
     </div>
   );

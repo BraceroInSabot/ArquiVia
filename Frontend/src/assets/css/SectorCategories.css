@@ -120,3 +120,21 @@
   background-color: #007bff;
   color: white;
 }
+
+/* Grid Responsivo para Categorias */
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); /* Cards com largura mínima de 280px */
+  gap: 1.5rem; /* Espaçamento entre cards */
+}
+
+/* Ajuste visual para badges sutis (Bootstrap 5.3 tem classes nativas, mas garantimos aqui) */
+.bg-success-subtle {
+    background-color: #d1e7dd !important;
+    color: #0f5132 !important;
+}
+
+.bg-secondary-subtle {
+    background-color: #e2e3e5 !important;
+    color: #41464b !important;
+}

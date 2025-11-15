@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { 
+  ArrowLeft, Save, UploadCloud, Check, 
+  Loader2, AlertCircle, Layers 
+} from 'lucide-react'; // Ícones
+
 import sectorService from '../services/Sector/api';
+import '../assets/css/EnterprisePage.css'; // Reutiliza o CSS global
 
 const EditSectorPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -8,7 +14,7 @@ const EditSectorPage = () => {
   
   const [currentImageUrl, setCurrentImageUrl] = useState<string>('');
   const [name, setName] = useState('');
-  const [imageFile, setImageFile] = useState<File | null>(null); // Changed to File | null
+  const [imageFile, setImageFile] = useState<File | null>(null);
   
   const [staticData, setStaticData] = useState<{ enterprise: string; created: string; status: boolean } | null>(null);
 
@@ -16,6 +22,7 @@ const EditSectorPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // --- LÓGICA (INTACTA) ---
   useEffect(() => {
     if (!id) {
       setError('ID do setor não fornecido.');
@@ -30,7 +37,7 @@ const EditSectorPage = () => {
 
         setName(sector.name);
         setCurrentImageUrl(sector.image);
- setImageFile(null); // Clear image file on load, user will re-upload if needed
+        setImageFile(null); 
     
         setStaticData({
           enterprise: sector.enterprise_name,
@@ -55,8 +62,9 @@ const EditSectorPage = () => {
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
-      setImageFile(event.target.files[0]);
-      setCurrentImageUrl(URL.createObjectURL(event.target.files[0]));
+      const file = event.target.files[0];
+      setImageFile(file);
+      setCurrentImageUrl(URL.createObjectURL(file));
     } else {
       setImageFile(null);
     }
@@ -87,63 +95,184 @@ const EditSectorPage = () => {
       setIsSubmitting(false);
     }
   };
+  // --- FIM DA LÓGICA ---
+
+
+  // --- RENDERIZAÇÃO ---
 
   if (isLoading) {
-    return <p>Carregando dados para edição...</p>;
+    return (
+        <div className="page-container d-flex justify-content-center align-items-center">
+            <div className="text-center text-muted">
+                <Loader2 className="animate-spin text-primary-custom mb-3" size={48} />
+                <p>Carregando dados para edição...</p>
+            </div>
+        </div>
+    );
   }
 
   if (error && !staticData) {
-    return <p style={{ color: 'red' }}>{error}</p>;
+    return (
+        <div className="page-container container py-5">
+            <div className="alert alert-danger d-flex align-items-center" role="alert">
+                <AlertCircle className="me-2" size={20} />
+                <div>{error}</div>
+            </div>
+            <button className="btn btn-secondary mt-3" onClick={handleCancel}>Voltar</button>
+        </div>
+    );
   }
 
-  console.log("Current Image File:", imageFile);
   return (
-    <div style={{ padding: '20px' }}>
-      <form onSubmit={handleSubmit}>
-        <div style={{ border: '1px solid #ccc', padding: '16px', borderRadius: '8px', marginBottom: '40px' }}>
-          <h2 style={{ marginTop: 0 }}>Editando Setor: {name}</h2>
-          
-          <p><strong>Empresa:</strong> {staticData?.enterprise}</p>
-          <p><strong>Status:</strong> {staticData?.status ? 'Ativo' : 'Inativo'}</p>
-
-          <hr/>
-          
-          <div style={{ margin: '15px 0' }}>
-            <label htmlFor="name" style={{ display: 'block', fontWeight: 'bold' }}>Nome do Setor:</label>
-            <input
-              type="text"
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              style={{ width: '100%', padding: '8px' }}
-            />
-          </div>
-
-          <div style={{ margin: '15px 0' }}>
-            <label htmlFor="image" style={{ display: 'block', fontWeight: 'bold' }}>Imagem do Setor (JPG, PNG, SVG):</label>
-            <img src={currentImageUrl} alt="" />
-            <input
-              type="file"
-              id="image"
- accept="image/jpeg, image/png, image/svg+xml"
-              onChange={handleImageChange}
-              style={{ width: '100%', padding: '8px' }}
- // value={imageFile ? imageFile.name : ''} // Display selected file name
-            />
+    <div className="page-container">
+      <div className="container py-5">
+        
+        {/* Cabeçalho */}
+        <div className="d-flex align-items-center mb-4">
+          <button 
+            onClick={handleCancel} 
+            className="btn btn-light btn-sm me-3 text-secondary"
+            title="Cancelar e Voltar"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h1 className="h3 mb-1 fw-bold text-body-custom">Editar Setor</h1>
+            <p className="text-muted mb-0">Atualize as informações do setor</p>
           </div>
         </div>
 
-        <div>
-          <button type="submit" disabled={isSubmitting} style={{ marginRight: '10px' }}>
-            {isSubmitting ? 'Salvando...' : 'Salvar Alterações'}
-          </button>
-          <button type="button" onClick={handleCancel} disabled={isSubmitting}>
-            Cancelar
-          </button>
+        {/* Conteúdo Centralizado */}
+        <div className="row justify-content-center">
+          <div className="col-12 col-lg-8 col-xl-6">
+            <div className="custom-card p-4">
+
+              <form onSubmit={handleSubmit}>
+                
+                {/* Informações Estáticas (Somente Leitura) */}
+                <div className="mb-4 bg-light p-3 rounded border">
+                    <div className="d-flex justify-content-between mb-2">
+                        <span className="text-muted small fw-bold text-uppercase">Empresa</span>
+                        <span className="fw-semibold text-dark">{staticData?.enterprise}</span>
+                    </div>
+                    <div className="d-flex justify-content-between">
+                        <span className="text-muted small fw-bold text-uppercase">Status</span>
+                        <span className={`badge ${staticData?.status ? 'bg-success' : 'bg-secondary'}`}>
+                            {staticData?.status ? 'Ativo' : 'Inativo'}
+                        </span>
+                    </div>
+                </div>
+
+                {/* Campo Nome */}
+                <div className="mb-4">
+                    <label htmlFor="name" className="form-label fw-semibold text-secondary">
+                        Nome do Setor
+                    </label>
+                    <input
+                        type="text"
+                        id="name"
+                        className="form-control form-control-lg"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        required
+                    />
+                </div>
+
+                {/* Campo Imagem (Upload Customizado com Preview) */}
+                <div className="mb-4">
+                    <label htmlFor="image" className="form-label fw-semibold text-secondary">
+                        Imagem do Setor <small className="text-muted fw-normal">(Opcional)</small>
+                    </label>
+                    
+                    <div className="d-flex gap-3 align-items-start">
+                        {/* Preview da Imagem Atual/Nova */}
+                        <div 
+                            className="flex-shrink-0 rounded overflow-hidden border bg-white d-flex align-items-center justify-content-center"
+                            style={{ width: '80px', height: '80px' }}
+                        >
+                             {currentImageUrl ? (
+                                <img src={currentImageUrl} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                                <Layers size={32} className="text-secondary opacity-50" />
+                            )}
+                        </div>
+
+                        {/* Input de Arquivo */}
+                        <div className="flex-grow-1 position-relative">
+                            <input
+                                type="file"
+                                id="image"
+                                className="form-control"
+                                accept="image/jpeg, image/png, image/svg+xml"
+                                onChange={handleImageChange}
+                                style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 2 }}
+                            />
+                            
+                            {/* Visual do Input */}
+                            <div className={`d-flex align-items-center justify-content-center p-3 border rounded-3 bg-light h-100 ${imageFile ? 'border-success' : 'border-dashed'}`}>
+                                <div className="text-center">
+                                    {imageFile ? (
+                                        <div className="d-flex align-items-center gap-2 text-success">
+                                            <Check size={20} />
+                                            <span className="fw-medium small text-truncate" style={{ maxWidth: '180px' }}>{imageFile.name}</span>
+                                        </div>
+                                    ) : (
+                                        <div className="d-flex align-items-center gap-2 text-secondary">
+                                            <UploadCloud size={20} />
+                                            <span className="fw-medium small">Alterar Imagem</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Erro */}
+                {error && (
+                    <div className="alert alert-danger d-flex align-items-center mb-3" role="alert">
+                        <AlertCircle className="me-2" size={20} />
+                        <div>{error}</div>
+                    </div>
+                )}
+
+                {/* Botões de Ação */}
+                <div className="d-grid gap-2">
+                    <button 
+                        type="submit" 
+                        className="btn btn-primary-custom py-2 d-flex align-items-center justify-content-center gap-2"
+                        disabled={isSubmitting}
+                    >
+                        {isSubmitting ? (
+                            <>
+                                <Loader2 className="animate-spin" size={20} />
+                                Salvando...
+                            </>
+                        ) : (
+                            <>
+                                <Save size={20} />
+                                Salvar Alterações
+                            </>
+                        )}
+                    </button>
+                    
+                    <button 
+                        type="button" 
+                        className="btn btn-light text-secondary" 
+                        onClick={handleCancel}
+                        disabled={isSubmitting}
+                    >
+                        Cancelar
+                    </button>
+                </div>
+
+              </form>
+
+            </div>
+          </div>
         </div>
 
-        {error && <p style={{ color: 'red', marginTop: '10px' }}>{error}</p>}
-      </form>
+      </div>
     </div>
   );
 };

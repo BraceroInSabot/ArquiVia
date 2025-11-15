@@ -1,8 +1,11 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
+import { X, UserPlus, Loader2, AlertCircle } from 'lucide-react'; // Ícones
 import sectorService from '../services/Sector/api';
 import type { SectorUser, AddSectorUserPayload } from '../services/core-api';
 
-// --- Interfaces e Estilos ---
+// Reutiliza o CSS base de modais que já criamos
+import '../assets/css/ClassificationModal.css'; 
 
 interface ModalProps {
   isOpen: boolean;
@@ -10,30 +13,6 @@ interface ModalProps {
   sectorId: number;
   onUserAdded: (newUser: SectorUser) => void;
 }
-
-const OVERLAY_STYLE: React.CSSProperties = {
-  position: 'fixed',
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  backgroundColor: 'rgba(0, 0, 0, 0.7)',
-  zIndex: 1000,
-};
-
-const MODAL_STYLE: React.CSSProperties = {
-  position: 'fixed',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  backgroundColor: '#FFF',
-  padding: '20px',
-  borderRadius: '8px',
-  zIndex: 1001,
-  width: '400px',
-};
-
-// --- O Componente ---
 
 const AddSectorUserModal = ({ isOpen, onClose, sectorId, onUserAdded }: ModalProps) => {
   const [email, setEmail] = useState('');
@@ -50,13 +29,10 @@ const AddSectorUserModal = ({ isOpen, onClose, sectorId, onUserAdded }: ModalPro
     setError(null);
 
     try {
-      // 1. Chama o serviço atualizado, passando o email
       const response = await sectorService.addUserToSector(sectorId, { user_email: email } as AddSectorUserPayload);
 
-      // 2. Avisa o componente pai (SectorUsers) que um novo usuário foi adicionado
       onUserAdded(response.data);
       
-      // 3. Limpa o formulário e fecha o modal
       setEmail('');
       onClose();
 
@@ -71,50 +47,88 @@ const AddSectorUserModal = ({ isOpen, onClose, sectorId, onUserAdded }: ModalPro
   };
 
   const handleClose = () => {
-    // Reseta o estado ao fechar
     setEmail('');
     setError(null);
     onClose();
   };
 
-  return (
-    <div style={OVERLAY_STYLE} onClick={handleClose}>
-      <div style={MODAL_STYLE} onClick={(e) => e.stopPropagation()}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3>Adicionar Usuário ao Setor</h3>
-          <button onClick={handleClose} style={{ border: 'none', background: 'none', fontSize: '20px', cursor: 'pointer' }}>
-            &times;
+  return createPortal(
+    <div className="modal-overlay" onClick={handleClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '450px' }}>
+        
+        {/* Cabeçalho do Modal */}
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <h4 className="mb-0 fw-bold text-dark d-flex align-items-center gap-2">
+            <UserPlus size={24} className="text-primary-custom" />
+            Adicionar Usuário
+          </h4>
+          <button 
+            onClick={handleClose} 
+            className="btn btn-link text-secondary p-0 text-decoration-none"
+            title="Fechar"
+          >
+            <X size={24} />
           </button>
         </div>
         
+        {/* Mensagem de Erro */}
+        {error && (
+          <div className="alert alert-danger d-flex align-items-center mb-3" role="alert">
+            <AlertCircle className="me-2 flex-shrink-0" size={20} />
+            <div style={{ fontSize: '0.9rem' }}>{error}</div>
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit}>
-          <div style={{ margin: '20px 0' }}>
-            <label htmlFor="email" style={{ display: 'block', marginBottom: '5px' }}>
-              Email do Usuário:
+          <div className="mb-4">
+            <label htmlFor="email" className="form-label fw-semibold text-secondary">
+              Email do Usuário
             </label>
             <input
               type="email"
               id="email"
+              className="form-control form-control-lg"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              style={{ width: '100%', padding: '8px' }}
+              placeholder="exemplo@email.com"
+              autoFocus
             />
+            <div className="form-text">
+              O usuário deve estar previamente cadastrado no sistema.
+            </div>
           </div>
           
-          {error && <p style={{ color: 'red' }}>{error}</p>}
-
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-            <button type="button" onClick={handleClose} disabled={isSubmitting}>
+          {/* Rodapé / Botões */}
+          <div className="d-flex justify-content-end gap-2 pt-2 border-top">
+            <button 
+              type="button" 
+              onClick={handleClose} 
+              className="btn btn-light text-secondary"
+              disabled={isSubmitting}
+            >
               Cancelar
             </button>
-            <button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Adicionando...' : 'Adicionar'}
+            
+            <button 
+              type="submit" 
+              className="btn btn-primary-custom d-flex align-items-center gap-2"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="animate-spin" size={18} />
+                  Adicionando...
+                </>
+              ) : (
+                'Adicionar'
+              )}
             </button>
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Save, X, Loader2, AlertCircle } from 'lucide-react'; // Ícones
 import documentService from '../services/Document/api';
 import type { CreateCategoryPayload } from '../services/core-api';
-import '../assets/css/ClassificationModal.css'; // Reutiliza o CSS de modais
+
+// Reutiliza o CSS base de modais
+import '../assets/css/ClassificationModal.css'; 
 
 interface CreateCategoryModalProps {
   sectorId: number;
   onClose: () => void;
-  onSuccess: () => void; // Callback para recarregar a lista
+  onSuccess: () => void;
 }
 
 const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({ sectorId, onClose, onSuccess }) => {
@@ -40,7 +43,9 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({ sectorId, onC
 
     } catch (err: any) {
       console.error("Erro ao criar categoria:", err);
-      const errMsg = err.response?.data?.message || "Falha ao criar categoria.";
+      // Mensagem de erro amigável
+      const errMsg = err.response?.data?.message || 
+                     (err.response?.data?.data?.category ? err.response.data.data.category[0] : "Falha ao criar categoria.");
       setError(errMsg);
     } finally {
       setIsSaving(false);
@@ -48,56 +53,101 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({ sectorId, onC
   };
 
   return createPortal(
-    <div className="modal-overlay">
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close-btn" onClick={onClose}>&times;</button>
-        <h2>Nova Categoria</h2>
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
         
-        {error && <p className="classification-error">{error}</p>}
+        {/* Cabeçalho */}
+        <div className="d-flex justify-content-between align-items-center mb-4">
+            <h4 className="fw-bold text-dark mb-0">Nova Categoria</h4>
+            <button 
+                onClick={onClose} 
+                className="btn btn-link text-secondary p-0 text-decoration-none"
+                title="Fechar"
+            >
+                <X size={24} />
+            </button>
+        </div>
+        
+        {/* Erro */}
+        {error && (
+            <div className="alert alert-danger d-flex align-items-center mb-3" role="alert">
+                <AlertCircle className="me-2 flex-shrink-0" size={20} />
+                <div style={{ fontSize: '0.9rem' }}>{error}</div>
+            </div>
+        )}
 
-        <form className="classification-form" onSubmit={handleSave}>
-          <div className="form-item">
-            <label htmlFor="cat_name">Nome</label>
+        <form onSubmit={handleSave}>
+          
+          {/* Campo Nome */}
+          <div className="mb-3">
+            <label htmlFor="cat_name" className="form-label fw-semibold text-secondary">Nome da Categoria</label>
             <input 
               type="text" 
               id="cat_name"
+              className="form-control"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="category-search-input"
               placeholder="Ex: Contratos 2024"
+              autoFocus
             />
           </div>
 
-          <div className="form-item">
-            <label htmlFor="cat_desc">Descrição</label>
+          {/* Campo Descrição */}
+          <div className="mb-3">
+            <label htmlFor="cat_desc" className="form-label fw-semibold text-secondary">Descrição <small className="text-muted fw-normal">(Opcional)</small></label>
             <textarea
               id="cat_desc"
+              className="form-control"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="category-search-input"
+              placeholder="Descreva o propósito desta categoria..."
               style={{ resize: 'vertical' }}
             />
           </div>
 
-          <div className="form-item">
-            <label htmlFor="cat_public">Pública?</label>
+          {/* Checkbox Pública */}
+          <div className="mb-4 form-check">
             <input 
               type="checkbox" 
+              className="form-check-input"
               id="cat_public"
               checked={isPublic}
               onChange={(e) => setIsPublic(e.target.checked)}
+              style={{ cursor: 'pointer' }}
             />
+            <label htmlFor="cat_public" className="form-check-label user-select-none" style={{ cursor: 'pointer' }}>
+                Tornar Pública <small className="text-muted d-block">Permite que todos os membros da empresa visualizem.</small>
+            </label>
           </div>
 
-          <div className="modal-footer">
+          {/* Rodapé / Botões */}
+          <div className="d-flex justify-content-end gap-2 pt-3 border-top">
+            <button 
+                type="button" 
+                className="btn btn-light text-secondary"
+                onClick={onClose}
+                disabled={isSaving}
+            >
+                Cancelar
+            </button>
             <button 
               type="submit" 
-              className="modal-save-btn"
+              className="btn btn-primary-custom d-flex align-items-center gap-2"
               disabled={isSaving || !name}
             >
-              {isSaving ? "Criando..." : "Criar Categoria"}
+               {isSaving ? (
+                  <>
+                    <Loader2 className="animate-spin" size={18} />
+                    Criando...
+                  </>
+                ) : (
+                  <>
+                    <Save size={18} />
+                    Criar Categoria
+                  </>
+                )}
             </button>
           </div>
         </form>

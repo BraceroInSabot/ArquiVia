@@ -14,6 +14,20 @@ from apps.APISetor.models import Sector
 from .utils.feed_formating import format_activity_feed
 from .serializers import DashboardDocumentSerializer, ActivityLogSerializer
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from django.shortcuts import get_object_or_404
+from django.db.models import Count, Q
+from datetime import datetime, timedelta
+
+from apps.APIDocumento.models import Document
+from apps.APISetor.models import Sector
+from apps.core.utils import default_response
+
+from .serializers import DashboardDocumentSerializer
+from .permissions import IsSectorManagerOrOwner
+
 class OperationalDashboardView(APIView):
     """
     Endpoint centralizado para o Dashboard Operacional.
@@ -110,3 +124,105 @@ class OperationalDashboardView(APIView):
             data=data # type: ignore
         ))
         
+
+class SectorDashboardView(APIView):
+    """
+    Endpoint para o Dashboard Gerencial focado em um Setor.
+    Calcula KPIs de volume e insights de fluxo de trabalho.
+    """
+    permission_classes = [IsAuthenticated, IsSectorManagerOrOwner]
+
+    def get(self, request, sector_pk: int):
+        
+        # --- 1. Validação e Permissão ---
+        
+        # O 'select_related' aqui é CRUCIAL. 
+        # Ele otimiza a checagem de permissão (IsSectorManagerOrOwner)
+        # para que ela não faça uma nova query ao checar 'obj.enterprise.owner'.
+        try:
+            sector = Sector.objects.select_related('enterprise__owner').get(sector_id=sector_pk)
+        except Sector.DoesNotExist:
+            return Response(default_response(False, "Setor não encontrado."), status=404)
+
+        # Checa se o usuário (request.user) pode ver o objeto (sector)
+        self.check_object_permissions(request, sector)
+
+        # --- 2. Query Base ---
+        # Filtra todos os documentos que pertencem a este setor
+        sector_docs = Document.objects.filter(sector=sector)
+
+        # --- 3. Cálculo dos 5 KPIs (Uma única consulta) ---
+        
+        kpi_data = sector_docs.aggregate(
+            # KPI 1: Total
+            total_documentos=Count('document_id'),
+            
+            # KPI 2: Pendentes (Baseado nos seus modelos)
+            pendentes=Count('document_id', filter=Q(
+                classification__classification_status__status="Revisão necessária"
+            )),
+            
+            # KPI 3: Concluídos
+            concluidos=Count('document_id', filter=Q(
+                classification__classification_status__status="Concluído"
+            )),
+            
+            # KPI 4: Arquivados
+            arquivados=Count('document_id', filter=Q(
+                classification__classification_status__status="Arquivado"
+            )),
+            
+            # KPI 5: Públicos
+            publicos=Count('document_id', filter=Q(
+                classification__privacity__privacity="Publico"
+            ))
+        )
+        
+        # --- 4. Cálculo dos 3 Insights (Queries separadas) ---
+
+        # Insight 1: Gargalo (Documentos pendentes mais antigos)
+        oldest_pending_docs = sector_docs.filter(
+            classification__classification_status__status="Revisão necessária"
+        ).order_by('created_at')[:3] # Ordem ASC (mais antigo primeiro)
+
+        # Insight 2: Risco (Deleções recentes)
+        seven_days_ago = datetime.now() - timedelta(days=7)
+        deleted_count = Document.history.filter( # type: ignore
+            sector=sector,
+            history_type='-', # Tipo 'Exclusão'
+            history_date__gte=seven_days_ago
+        ).count()
+
+        # Insight 3: Carga de Trabalho (Top 5 contribuidores)
+        contributors = Document.history.filter( # type: ignore
+            sector=sector,
+            history_type__in=['+', '~'] # Criações + Edições
+        ).values(
+            'history_user__name' # Agrupa por nome
+        ).annotate(
+            activity_count=Count('history_id') # Conta as ações
+        ).order_by('-activity_count')[:5]
+
+        
+        # --- 5. Montagem da Resposta Final ---
+        
+        data = {
+            "kpis": {
+                "total_documentos": kpi_data['total_documentos'],
+                "pendentes": kpi_data['pendentes'],
+                "concluidos": kpi_data['concluidos'],
+                "arquivados": kpi_data['arquivados'],
+                "publicos": kpi_data['publicos'],
+            },
+            "insights": {
+                "alerta_exclusoes_7dias": deleted_count,
+                "gargalos_pendentes": DashboardDocumentSerializer(oldest_pending_docs, many=True).data,
+                "top_colaboradores": list(contributors)
+            }
+        }
+        
+        return Response(default_response(
+            success=True,
+            message=f"Dashboard do setor '{sector.name}' carregado.",
+            data=data
+        ))

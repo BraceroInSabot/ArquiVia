@@ -1,5 +1,5 @@
 import api from '../core-api';
-import type { Sector, ResponseStructure, SectorUser, AddSectorUserPayload, promoteUserToManagerPayload, promoteUserToAdministratorPayload, ToggleSectorStatusPayload, RemoveSectorPayload } from '../core-api';
+import type { Sector, ResponseStructure, SectorUser, AddSectorUserPayload, promoteUserToManagerPayload, promoteUserToAdministratorPayload, ToggleSectorStatusPayload, RemoveSectorPayload, SectorDashboardData } from '../core-api';
 
 const sectorService = {
     /**
@@ -93,7 +93,16 @@ const sectorService = {
    */
   updateSector(id: number, data: FormData): Promise<{ data: Sector }> {
     return api.put(`/setor/alterar/${id}/`, data);
-  }
+  },
+
+  /**
+   * Busca os dados do Dashboard Gerencial para um setor.
+   * (Baseado na sua View)
+   * @param sector_id O ID (pk) do setor.
+   */
+  getSectorDashboard(sector_id: number): Promise<{ data: ResponseStructure<SectorDashboardData> }> {
+    return api.get(`/painel/gerencial/${sector_id}/`);
+  },
 };
 
 export default sectorService;

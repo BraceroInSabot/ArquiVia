@@ -1,0 +1,52 @@
+/* Card de KPI */
+.card-kpi .kpi-value {
+  font-size: 2.2rem;
+  line-height: 1.1;
+  color: #343a40;
+}
+
+.card-kpi .kpi-title {
+  font-weight: 600;
+}
+
+.card-kpi .kpi-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Herda a cor (text-primary, text-warning) do pai */
+  color: currentColor; 
+  background-color: currentColor;
+  opacity: 0.15;
+}
+
+/* Garante que o ícone interno (SVG) tenha a cor certa */
+.card-kpi.text-primary .kpi-icon { background-color: var(--primary-color); }
+.card-kpi.text-warning .kpi-icon { background-color: #ffc107; }
+.card-kpi.text-success .kpi-icon { background-color: #198754; }
+.card-kpi.text-secondary .kpi-icon { background-color: #6c757d; }
+.card-kpi.text-info .kpi-icon { background-color: #0dcaf0; }
+
+.card-kpi .kpi-icon svg {
+  opacity: 1;
+  color: var(--white); /* Ícone branco dentro do círculo colorido */
+}
+
+/* Animação (caso não esteja global) */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Efeito de clique */
+.cursor-pointer {
+  cursor: pointer;
+}
+.list-group-item-action:hover {
+  background-color: #f8f9fa;
+}

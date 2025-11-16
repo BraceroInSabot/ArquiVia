@@ -9,17 +9,10 @@ import sectorService from '../services/Sector/api';
 import type { Sector } from '../services/core-api';
 import SectorUsers from '../components/SectorUsers';  
 import SectorCategories from '../components/SectorCategories'; // Ajuste o caminho se necessário
+import SectorMetrics from '../components/SectorMetrics'
 
 import '../assets/css/EnterprisePage.css'; // Reutiliza estilos base
 
-// Componentes Placeholder (Poderiam ser extraídos depois)
-const SectorMetrics = ({ sectorId }: { sectorId: number }) => (
-  <div className="p-4 text-center bg-light rounded border border-dashed">
-    <BarChart2 size={48} className="text-secondary opacity-25 mb-3" />
-    <h5 className="text-muted">Métricas do Setor</h5>
-    <p className="text-muted small">Gráficos e estatísticas do setor {sectorId} aparecerão aqui.</p>
-  </div>
-);
 
 const SectorLogs = ({ sectorId }: { sectorId: number }) => (
   <div className="p-4 text-center bg-light rounded border border-dashed">

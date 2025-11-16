@@ -266,6 +266,37 @@ export interface DashboardData {
   activity_feed: ActivityFeedItem[];
 }
 
+export interface KpiData {
+  total_documentos: number;
+  pendentes: number;
+  concluidos: number;
+  arquivados: number;
+  publicos: number;
+}
+
+export interface GargaloDocument {
+  document_id: number;
+  title: string;
+  created_at: string;
+  status_label: string;
+}
+
+export interface TopColaborador {
+  history_user__name: string;
+  activity_count: number;
+}
+
+export interface InsightData {
+  alerta_exclusoes_7dias: number;
+  gargalos_pendentes: GargaloDocument[];
+  top_colaboradores: TopColaborador[];
+}
+
+export interface SectorDashboardData {
+  kpis: KpiData;
+  insights: InsightData;
+}
+
 const api = axios.create({
   baseURL: URL,
   withCredentials: true,

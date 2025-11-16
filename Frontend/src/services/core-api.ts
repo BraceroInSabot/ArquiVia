@@ -236,6 +236,36 @@ export interface ChangePasswordPayload {
   c_new_password: string;
 }
 
+export interface RecentDocument {
+  document_id: number;
+  title: string;
+  created_at: string;
+  status_label: string;
+}
+
+export interface ReviewPendingDocument {
+  document_id: number;
+  title: string;
+  created_at: string;
+  status_label: string;
+}
+
+export interface ActivityFeedItem {
+  timestamp: string;
+  message: string;
+  action_type: "+" | "~" | "-";
+  metadata: {
+    document_id: number;
+    user_id: number;
+  };
+}
+
+export interface DashboardData {
+  my_recent_documents: RecentDocument[];
+  review_pending_documents: ReviewPendingDocument[];
+  activity_feed: ActivityFeedItem[];
+}
+
 const api = axios.create({
   baseURL: URL,
   withCredentials: true,

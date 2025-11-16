@@ -2,7 +2,7 @@ import { Routes, Route } from 'react-router-dom';
 import IndexPage from './pages/Index';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
-import PanelPage from './pages/PanelPage';
+import DashboardPage from './pages/DashboardPage';
 import ProtectedRoute from './utils/protected_route';
 import EnterprisePage from './pages/EnterprisePage';
 import CreateEnterprisePage from './pages/CreateEnterprisePage';
@@ -32,7 +32,7 @@ function ArquiVia() {
         {/* Tratamento de rotas privadas. Somente usuários logados podem fazer o acesso. */}
         <Route element={<ProtectedRoute />}>
           <Route element={<MainLayout />}>
-            <Route path="/painel" element={<PanelPage />} />
+            <Route path="/painel" element={<DashboardPage />} />
             <Route path="/empresas" element={<EnterprisePage />} />
             <Route path="/criar-empresa" element={<CreateEnterprisePage />} />
             <Route path="/empresas/editar/:id" element={<EditEnterprisePage />} />

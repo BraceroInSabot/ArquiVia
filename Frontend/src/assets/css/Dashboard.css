@@ -1,0 +1,39 @@
+/* Card customizado para o Carrossel (Fundo Escuro) */
+.custom-card-dark {
+  background-color: #343a40; /* Cor escura do Bootstrap */
+  /* Opcional: Gradiente */
+  background-image: linear-gradient(135deg, #495057 0%, #343a40 100%);
+  border: none;
+}
+
+.custom-card-dark .fw-bold {
+  color: #fff;
+}
+
+.custom-card-dark p {
+  color: #ced4da;
+}
+
+/* Efeito de hover e clique nos cards */
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.list-group-item-action:hover {
+  background-color: #f8f9fa;
+}
+
+/* Ícones do Feed de Atividade */
+.activity-icon {
+  flex-shrink: 0;
+  padding-top: 4px;
+}
+
+/* Animação de Spin (caso não esteja global) */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.animate-spin {
+  animation: spin 1s linear infinite;
+}

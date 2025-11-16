@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText, ChevronLeft, ChevronRight } from 'lucide-react';
+import { FileText, ChevronRight, RefreshCcw } from 'lucide-react';
 import type { RecentDocument } from '../../services/core-api';
 
 interface CarouselProps {
@@ -19,6 +19,10 @@ const RecentDocumentsCarousel: React.FC<CarouselProps> = ({ documents }) => {
   return (
     <div id="recentDocsCarousel" className="carousel slide" data-bs-ride="carousel">
       <div className="carousel-inner">
+        <div className="d-flex mb-2 fw-bold text-dark align-items-center gap-2 fs-2">
+            <RefreshCcw />
+            Continue de onde parou
+        </div>
         {documents.map((doc, index) => (
           <div 
             key={doc.document_id} 

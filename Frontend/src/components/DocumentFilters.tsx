@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Funnel, Search } from 'lucide-react';
-import type { DocumentFilters } from '../services/core-api';
+import type { 
+  DocumentFilters, 
+  AvailableCategorySearch, 
+  AvailableUser 
+} from '../services/core-api';
 import DocumentFilterSearch from './DocumentFilterSearch';
 
 import '../assets/css/DocumentFilters.css'; 
@@ -9,11 +13,17 @@ import '../assets/css/EnterprisePage.css';
 interface DocumentFiltersProps {
   defaultFilters: DocumentFilters;
   onFilterChange: (filters: DocumentFilters) => void;
+  availableCategories: AvailableCategorySearch[];
+  availableReviewers: AvailableUser[];
+  isLoading: boolean;
 }
 
 const DocumentFiltersComponent: React.FC<DocumentFiltersProps> = ({ 
   defaultFilters, 
-  onFilterChange 
+  onFilterChange,
+  availableCategories,
+  availableReviewers,
+  isLoading
 }) => {
   const [filters, setFilters] = useState<DocumentFilters>(defaultFilters);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -52,6 +62,7 @@ const DocumentFiltersComponent: React.FC<DocumentFiltersProps> = ({
           className={`btn ${isFilterOpen ? 'btn-primary-custom' : 'btn-outline-secondary'} shadow-sm`}
           onClick={() => setIsFilterOpen(prev => !prev)}
           title="Filtros avançados"
+          disabled={isLoading}
         >
           <Funnel size={20} />
         </button>
@@ -62,6 +73,7 @@ const DocumentFiltersComponent: React.FC<DocumentFiltersProps> = ({
           value={filters.groupBy || 'none'}
           onChange={(e) => handleFilterUpdate({ groupBy: e.target.value as any })}
           style={{ maxWidth: '200px' }}
+          disabled={isLoading}
         >
           <option value="none">Não agrupar</option>
           <option value="enterprise">Agrupar por Empresa</option>
@@ -78,6 +90,7 @@ const DocumentFiltersComponent: React.FC<DocumentFiltersProps> = ({
             value={filters.searchTerm}
             onChange={(e) => handleFilterUpdate({ searchTerm: e.target.value })}
             autoComplete="off"
+            disabled={isLoading}
           />
           <div className="position-absolute top-50 end-0 translate-middle-y pe-3 text-muted">
             <Search size={20} />
@@ -92,6 +105,9 @@ const DocumentFiltersComponent: React.FC<DocumentFiltersProps> = ({
               currentFilters={filters}
               onAdvancedChange={handleAdvancedFilterChange}
               onApply={handleApplyAdvancedFilters}
+              availableCategories={availableCategories}
+              availableReviewers={availableReviewers}
+              isLoading={isLoading}
             />
           </div>
         </div>

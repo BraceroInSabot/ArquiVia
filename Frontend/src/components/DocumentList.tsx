@@ -232,7 +232,7 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
           <div className="vr mx-1 opacity-25"></div>
           <button 
             onClick={() => handleToggleStatus(doc)} 
-            className={`btn btn-light btn-sm ${doc.is_active ? 'text-warning' : 'text-success'}`}
+            className={`btn btn-light btn-sm ${!doc.is_active ? 'text-warning' : 'text-success'}`}
             title={doc.is_active ? 'Desativar Documento' : 'Ativar Documento'}
             disabled={actionLoadingId === doc.document_id}
           >

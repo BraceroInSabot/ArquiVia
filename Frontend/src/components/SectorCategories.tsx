@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Pencil, Trash2, Loader2, AlertCircle, Tag } from 'lucide-react'; // Ícones
+import toast from 'react-hot-toast';
 
 import documentService from '../services/Document/api';
 import type { Category } from '../services/core-api';
@@ -51,7 +52,7 @@ const SectorCategories: React.FC<SectorCategoriesProps> = ({ sectorId }) => {
       setCategories(prev => prev.filter(cat => cat.category_id !== categoryId));
     } catch (err: any) {
       const errMsg = err.response?.data?.data?.non_field_errors?.[0] || "Falha ao excluir categoria.";
-      alert(errMsg);
+      toast.error(errMsg);
     } finally {
       setDeletingId(null);
     }

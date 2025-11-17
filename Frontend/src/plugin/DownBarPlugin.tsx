@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $generateHtmlFromNodes } from '@lexical/html';
 import jsPDF from 'jspdf';
+import toast from 'react-hot-toast';
 //@ts-ignore
 import { type EditorState } from 'lexical'; 
 
@@ -60,7 +61,7 @@ export default function ActionsPlugin({
 
     const handleFilesClick = () => {
         if (documentId) setIsFilesModalOpen(true);
-        else alert("Salve o documento antes de visualizar anexos.");
+        else toast.error("Salve o documento antes de visualizar anexos.");
     };
 
     const handleHistoryClick = async () => {
@@ -69,7 +70,7 @@ export default function ActionsPlugin({
             return;
         }
         if (!documentId) {
-            alert("Salve o documento pelo menos uma vez para ver o histórico.");
+            toast.error("Salve o documento pelo menos uma vez para ver o histórico.");
             return;
         }
 
@@ -101,8 +102,7 @@ export default function ActionsPlugin({
             editor.setEditorState(editorState);
             setIsHistoryVisible(false);
         } catch (e) {
-            console.error("Falha ao reverter documento:", e);
-            alert("Erro ao reverter versão.");
+            toast.error("Erro ao reverter versão.");
         }
     };
 

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, UserCheck, AtSign, Lock, FileImage, Loader2, AlertCircle, Save } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 import Validate from '../utils/credential_validation';
 import registerService from '../services/User/api'; 
@@ -58,7 +59,7 @@ const RegisterForm = () => {
       const api_response = await registerService.register(formData);
       
       if (api_response) {
-        alert('Registro realizado com sucesso! Faça seu login.');
+        toast.success('Registro realizado com sucesso! Faça seu login.');
         navigate('/entrar');
       }
     } catch (err: any) {

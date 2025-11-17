@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, UploadCloud, Check, Loader2, AlertCircle, Building2 } from 'lucide-react'; // Ícones
+import toast from 'react-hot-toast';
 
 import { useAuth } from '../contexts/AuthContext';
 import enterpriseService from '../services/Enterprise/api';
@@ -85,7 +86,7 @@ const CreateSectorPage = () => {
 
       try {
          await sectorService.createSector(formData);
-         alert('Setor criado com sucesso!');
+         toast.success('Setor criado com sucesso!');
          navigate('/setores'); 
       } catch (err: any) {
          const errorMessage = err.response?.data?.detail || "Falha ao criar o setor.";

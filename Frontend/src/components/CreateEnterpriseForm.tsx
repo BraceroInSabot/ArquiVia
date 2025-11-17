@@ -3,6 +3,7 @@ import Validate from '../utils/enterprise_validation';
 import { useNavigate } from 'react-router-dom';
 import enterpriseService from '../services/Enterprise/api';
 import { Save, AlertCircle, UploadCloud, Check } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const CreateEnterpriseForm = () => {
   const [name, setName] = useState('');
@@ -41,7 +42,7 @@ const CreateEnterpriseForm = () => {
       const api_response = await enterpriseService.createEnterprise(formData);
 
       if (api_response) {
-        alert('Empresa criada com sucesso!');
+        toast.error('Empresa criada com sucesso!');
         setName('');
         setImageFile(null);
         navigate("/empresas");
@@ -49,7 +50,7 @@ const CreateEnterpriseForm = () => {
 
     } catch (err: any) {
       const errorMessage = err.response?.data?.detail || 'Falha ao criar a empresa.';
-      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

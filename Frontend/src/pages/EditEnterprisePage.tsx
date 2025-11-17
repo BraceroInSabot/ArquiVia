@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, UploadCloud, Check, Loader2, AlertCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 import enterpriseService from '../services/Enterprise/api';
 import '../assets/css/EnterprisePage.css'; // Reutiliza o CSS global de empresas
@@ -65,7 +66,7 @@ const EditEnterprisePage = () => {
       
       await enterpriseService.updateEnterprise(Number(id), formData);
 
-      alert('Empresa atualizada com sucesso!');
+      toast.success('Empresa atualizada com sucesso!');
       
       navigate('/empresas');
 

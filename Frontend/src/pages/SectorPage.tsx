@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, AlertCircle, Plus } from 'lucide-react'; // Novos ícones
+import toast from 'react-hot-toast';
 
 import sectorService from '../services/Sector/api';
 import type { Sector, ToggleSectorStatusPayload, RemoveSectorPayload } from '../services/core-api';
@@ -69,11 +70,10 @@ const SectorPage = () => {
         try {
             //@ts-ignore
             await sectorService.deleteSector(id as RemoveSectorPayload);
-            alert(`Setor ID: ${id} removido com sucesso.`);
+            toast.success(`Setor ID: ${id} removido com sucesso.`);
             window.location.reload();
         } catch (err) {
-            console.error("Falha ao remover setor:", err);
-            alert("Não foi possível remover o setor.");
+            toast.error("Não foi possível remover o setor.");
         }
         };
         deleteSector();
@@ -95,7 +95,7 @@ const SectorPage = () => {
         await sectorService.toggleSectorStatus(sector_id);
         window.location.reload();
       } catch (err) {
-        alert(`Não foi possível ${actionText} o setor.`);
+        toast.error(`Não foi possível ${actionText} o setor.`);
       }
     }
   };

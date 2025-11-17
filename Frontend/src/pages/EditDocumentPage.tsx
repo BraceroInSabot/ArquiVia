@@ -8,6 +8,7 @@ import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import type { EditorState } from 'lexical';
+import toast from 'react-hot-toast';
 //@ts-ignore
 import { $getRoot, $isParagraphNode } from 'lexical';
 //@ts-ignore
@@ -134,8 +135,7 @@ const EditDocumentPage = () => {
           setInitialContent(doc.content);
           
         } catch (error) {
-          console.error("Falha ao buscar documento:", error);
-          alert("Não foi possível carregar o documento. Verifique o console.");
+          toast.error("Não foi possível carregar o documento. Verifique o console.");
           setInitialContent(null);
         }
       } else {

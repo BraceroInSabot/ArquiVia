@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Loader2 } from 'lucide-react'; // Ícones
+import toast from 'react-hot-toast';
 
 import documentService from '../services/Document/api'; 
 import type { CreateDocument } from '../services/core-api';
@@ -61,8 +62,7 @@ const CreateDocumentButton: React.FC = () => {
       navigate(`/documento/editar/${newDocumentId}`); 
 
     } catch (error) {
-      console.error('Erro ao criar documento:', error);
-      alert("Houve um erro ao tentar criar o documento. Tente novamente.");
+      toast.error("Houve um erro ao tentar criar o documento. Tente novamente.");
     } finally {
       setIsLoading(false);
     }

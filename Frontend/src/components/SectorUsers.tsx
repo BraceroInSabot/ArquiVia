@@ -3,6 +3,7 @@ import { Trash2, Shield, UserCheck, UserMinus, UserPlus, Loader2, AlertCircle } 
 import sectorService from '../services/Sector/api';
 import { useAuth } from '../contexts/AuthContext';
 import type { promoteUserToAdministratorPayload, SectorUser } from '../services/core-api';
+import toast from 'react-hot-toast';
 
 import AddSectorUserModal from './AddSectorUserModal';
 
@@ -81,11 +82,10 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
     if (window.confirm("Tem certeza que deseja remover este usuário?")) {
       try {
         await sectorService.removeUserFromSector(sectorUserLinkId);
-        alert("Usuário removido com sucesso.");
+        toast.success("Usuário removido com sucesso.");
         window.location.reload();
       } catch (err) {
-        console.error("Falha ao remover usuário do setor:", err);
-        alert("Não foi possível remover o usuário do setor.");
+        toast.error("Não foi possível remover o usuário do setor.");
       }
     }
   };
@@ -94,11 +94,10 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
     try {
       //@ts-ignore
       await sectorService.promoteUserToManager(sectorId, { new_manager_email: userEmail });
-      alert("Usuário promovido a gerente com sucesso.");
+      toast.success("Usuário promovido a gerente com sucesso.");
       window.location.reload();
     } catch (err) {
-      console.error("Falha ao promover usuário para gerente:", err);
-      alert("Não foi possível promover o usuário para gerente.");
+      toast.error("Não foi possível promover o usuário para gerente.");
     }
   };
 
@@ -106,11 +105,10 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
     try {
       //@ts-ignore
       await sectorService.promoteUserToAdministrator({sectorUserLinkId, makeAdmin});
-      alert(`Usuário ${makeAdmin ? 'promovido' : 'rebaixado'} com sucesso.`);
+      toast.success(`Usuário ${makeAdmin ? 'promovido' : 'rebaixado'} com sucesso.`);
       window.location.reload();
     } catch (err) {
-      console.error("Falha ao alterar cargo de administrador:", err);
-      alert("Não foi possível alterar o cargo do usuário.");
+      toast.error("Não foi possível alterar o cargo do usuário.");
     }
   };
 

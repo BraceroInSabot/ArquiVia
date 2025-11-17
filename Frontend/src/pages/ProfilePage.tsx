@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import type { UserDetails } from '../services/core-api';
 import ChangePasswordModal from '../components/ChangePasswordModal';
 import DeactivateAccountModal from '../components/DeactivateAccountModal';
+import toast from 'react-hot-toast';
 
 
 // 1. Importar ícones Lucide-React
@@ -109,8 +110,7 @@ const ProfilePage = () => {
       await fetchProfile(); 
       setIsEditing(false);
     } catch (err) {
-      console.error("Erro ao atualizar:", err);
-      alert("Erro ao atualizar dados.");
+      toast.error("Erro ao atualizar dados.");
     } finally {
       setIsSaving(false);
     }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, type ChangeEvent } from 'react';
+import toast from 'react-hot-toast';
 import { createPortal } from 'react-dom';
 import documentService from '../services/Document/api';
 import type { AttachedFile } from '../services/core-api';
@@ -96,7 +97,7 @@ export default function AttachedFilesModal({ documentId, onClose }: AttachedFile
       
     } catch (err: any) {
       console.error("Erro ao remover anexo:", err);
-      alert("Não foi possível remover o anexo. Tente novamente.");
+      toast.error("Não foi possível remover o anexo. Tente novamente.");
     } finally {
       setDeletingFileId(null);
     }

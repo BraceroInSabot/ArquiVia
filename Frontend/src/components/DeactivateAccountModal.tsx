@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, AlertTriangle, Lock, Loader2, AlertCircle } from 'lucide-react'; // Ícones
+import toast from 'react-hot-toast';
 
 import userService from '../services/User/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -26,14 +27,14 @@ const DeactivateAccountModal: React.FC<DeactivateAccountModalProps> = ({ onClose
     try {
       await userService.deactivateAccount(password);
       
-      alert("Sua conta foi desativada com sucesso.");
+      toast.success("Sua conta foi desativada com sucesso.");
       logout(); 
 
     } catch (err: any) {
       console.error("Erro ao desativar conta:", err);
       
       if (err.response && err.response.status === 400) {
-        alert("Senha incorreta. Por medidas de segurança, você será deslogado.");
+        toast.error("Senha incorreta. Por medidas de segurança, você será deslogado.");
         logout(); 
       } else {
         setError("Ocorreu um erro ao tentar desativar a conta. Tente novamente.");

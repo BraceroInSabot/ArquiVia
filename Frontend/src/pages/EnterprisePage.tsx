@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Loader2, AlertCircle } from 'lucide-react'; // Ícones Lucide
+import { Plus, Loader2, AlertCircle } from 'lucide-react'; // Ícones 
+import toast from 'react-hot-toast';
 
 // Imports de Lógica/API
 import enterpriseService from '../services/Enterprise/api';
@@ -56,10 +57,10 @@ const EnterprisePage = () => {
         Criado em: ${new Date(enterprise.created_at).toLocaleString()}
       `;
 
-      alert(enterpriseData);
+      toast.success(enterpriseData);
 
     } catch (error) {
-      alert('Não foi possível carregar os dados atualizados da empresa. Tente novamente.');
+      toast.error('Não foi possível carregar os dados atualizados da empresa. Tente novamente.');
     }
   };
 
@@ -73,7 +74,7 @@ const EnterprisePage = () => {
 
     if (window.confirm(`Tem certeza que deseja ${actionText} a empresa com ID: ${id}?`)) {
       try {
-        await enterpriseService.toggleEnterpriseStatus(id, newStatus);
+        const response = await enterpriseService.toggleEnterpriseStatus(id, newStatus);
 
         setEnterprises(currentEnterprises =>
           currentEnterprises.map(enterprise => {
@@ -84,10 +85,10 @@ const EnterprisePage = () => {
           })
         );
         
-        alert(`Empresa ${actionText}da com sucesso!`);
+        toast.success(`${response.data.mensagem}`);
 
       } catch (error) {
-        alert(`Não foi possível alterar o status da empresa. Tente novamente.`);
+        toast.error(`Não foi possível alterar o status da empresa. Tente novamente.`);
       }
     }
   };
@@ -101,10 +102,10 @@ const EnterprisePage = () => {
           currentEnterprises.filter(enterprise => enterprise.enterprise_id !== id)
         );
 
-        alert(`Empresa com ID: ${id} deletada com sucesso!`);
+        toast.success(`Empresa com ID: ${id} deletada com sucesso!`);
 
       } catch (error) {
-        alert('Não foi possível deletar a empresa. Verifique se ela não possui dados vinculados e tente novamente.');
+        toast.error('Não foi possível deletar a empresa. Verifique se ela não possui dados vinculados e tente novamente.');
       }
     }
   };

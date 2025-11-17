@@ -4,7 +4,7 @@ import {
   ArrowLeft, Save, UploadCloud, Check, 
   Loader2, AlertCircle, Layers 
 } from 'lucide-react'; // Ícones
-
+import toast from 'react-hot-toast';
 import sectorService from '../services/Sector/api';
 import '../assets/css/EnterprisePage.css'; // Reutiliza o CSS global
 
@@ -85,7 +85,7 @@ const EditSectorPage = () => {
 
     try {
       await sectorService.updateSector(Number(id), formData);
-      alert('Setor atualizado com sucesso!');
+      toast.success('Setor atualizado com sucesso!');
       navigate(`/setor/${id}`); 
 
     } catch (err: any) {

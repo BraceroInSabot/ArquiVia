@@ -1,6 +1,7 @@
 import React, { useState, useRef, type DragEvent } from 'react';
 import { createPortal } from 'react-dom';
 import type { CreateVideoNodePayload } from '../components/node/VideoNode'; // Verifique o caminho
+import toast from 'react-hot-toast';
 
 interface VideoUploadModalProps {
   onClose: () => void;
@@ -58,7 +59,7 @@ export default function VideoUploadModal({ onClose, onSubmit }: VideoUploadModal
   const processFile = (file: File) => {
     // Validação simples de tipo
     if (!file.type.startsWith('video/')) {
-      alert('Por favor, selecione um arquivo de vídeo.');
+      toast.error('Por favor, selecione um arquivo de vídeo.');
       return;
     }
     
@@ -72,7 +73,7 @@ export default function VideoUploadModal({ onClose, onSubmit }: VideoUploadModal
 
   const handleUrlSubmit = () => {
     if (!url) {
-      alert('Por favor, insira uma URL.');
+      toast.error('Por favor, insira uma URL.');
       return;
     }
 

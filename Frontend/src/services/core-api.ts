@@ -300,6 +300,7 @@ export interface DocumentFilters {
   privacityId?: string;
   reviewer?: string;
   categories?: string;
+  groupBy?: 'none' | 'enterprise' | 'sector' | 'both';
 }
 
 export interface AvailableCategorySearch {

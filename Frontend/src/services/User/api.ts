@@ -1,4 +1,4 @@
-import type { LoginCredentials, RequestPasswordReset, ResponseStructure, UserDetails, ChangePasswordPayload } from '../core-api';
+import type { LoginCredentials, RequestPasswordReset, ResponseStructure, UserDetails, ChangePasswordPayload, AvailableUser } from '../core-api';
 import api from '../core-api'
 
 const userService = {
@@ -77,6 +77,15 @@ const userService = {
     return api.delete('/usuario/desativar/', { 
       data: { password } 
     });
+  },
+
+  
+  /**
+   * Retorna todos os usuários que o usuário logado pode "ver".
+   * Usado para preencher o autocomplete de filtros.
+   */
+  listAvailableUsers(): Promise<{ data: ResponseStructure<AvailableUser[]> }> {
+    return api.get('/usuario/listar/');
   },
 };
 

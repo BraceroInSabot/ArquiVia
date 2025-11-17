@@ -306,6 +306,11 @@ export interface AvailableCategorySearch {
   enterprise_name: string;
 }
 
+export interface AvailableUser {
+  user_id: number;
+  name: string;
+}
+
 const api = axios.create({
   baseURL: URL,
   withCredentials: true,

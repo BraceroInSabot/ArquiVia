@@ -7,8 +7,9 @@ from rest_framework.views import Response, APIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from apps.APISetor.models import Sector, SectorUser
 from apps.APIEmpresa.models import Enterprise
-from .serializer import ChangePasswordSerializer, RegistroUsuarioSerializer, UserDetailSerializer, UserEditSerializer
+from .serializer import ChangePasswordSerializer, RegistroUsuarioSerializer, UserDetailSerializer, UserEditSerializer, UserSearchSerializer
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from django.conf import settings
@@ -405,3 +406,55 @@ class RedefinirSenhaView(APIView):
             res.status_code = 500
             res.data = default_response(success=False, message="Houve um erro ao redefinir a senha.")
             return res
+
+class UsersLinkedToMyListView(APIView):
+    """
+    Lista todos os usuários "colegas" do usuário logado.
+    
+    Isso inclui todos os usuários que compartilham ao menos
+    uma empresa com o usuário (Owners, Managers, Members).
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserSearchSerializer
+
+    def get(self, request):
+        request_user = request.user
+
+        user_enterprises = Enterprise.objects.filter(
+            Q(owner=request_user) |
+            Q(sectors__sector_links__user=request_user) |
+            Q(sectors__manager=request_user)
+        ).distinct()
+
+        if not user_enterprises.exists():
+            queryset = AbsUser.objects.filter(pk=request_user.pk)
+            serializer = self.serializer_class(queryset, many=True)
+            return Response(default_response(True, "Usuário não vinculado a empresas.", serializer.data))
+
+        owner_ids = user_enterprises.values_list('owner_id', flat=True)
+
+        manager_ids = Sector.objects.filter(
+            enterprise__in=user_enterprises
+        ).values_list('manager_id', flat=True)
+
+        member_ids = SectorUser.objects.filter(
+            sector__enterprise__in=user_enterprises
+        ).values_list('user_id', flat=True)
+
+        all_user_ids = set(owner_ids) | set(manager_ids) | set(member_ids)
+
+        queryset = AbsUser.objects.filter(
+            pk__in=all_user_ids
+        ).order_by('name')
+
+        serializer = self.serializer_class(queryset, many=True)
+
+        res: HttpResponse = Response()
+        res.status_code = 200
+        res.data = default_response(
+            success=True,
+            message=f"Encontrados {queryset.count()} usuários.",
+            data=serializer.data
+        )
+        return res
+    

@@ -136,3 +136,12 @@ class ChangePasswordSerializer(serializers.Serializer):
                  {"new_password": "A nova senha deve ser diferente da atual."}
              )
         return data
+
+class UserSearchSerializer(serializers.ModelSerializer):
+    """
+    Serializer leve para listagem de usuários (busca).
+    """
+    class Meta:
+        model = User
+        fields = ['user_id', 'name',]
+        read_only_fields = ['user_id', 'name',]

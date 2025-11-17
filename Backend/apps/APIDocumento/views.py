@@ -185,7 +185,7 @@ class ActivateOrDeactivateDocumentView(APIView):
             ret.data = {
                 "Data": {
                     "sucesso": False,
-                    "mensagem": "ID inválido."
+                    "mensagem": "Documento inválido."
                 }
             }
             return ret

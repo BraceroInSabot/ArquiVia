@@ -1,4 +1,5 @@
 from rest_framework.permissions import BasePermission
+from apps.APIDocumento.models import Document
 from apps.APISetor.models import Sector, SectorUser
 
 class IsLinkedToDocument(BasePermission):
@@ -62,4 +63,23 @@ class CanAttachDocument(BasePermission):
             return True
         
         return False
+
+class CanActivateOrDeactivateDocument(BasePermission):
+    message = "Você não tem permissão para ativar ou desativar este documento."
     
+    def has_object_permission(self, request, view,  obj):
+        print(obj)
+        if not isinstance(obj, Document):
+             return False
+
+        is_owner = obj.sector.enterprise.owner == request.user # type: ignore
+        is_manager = obj.sector.manager == request.user # type: ignore
+        is_adm = SectorUser.objects.filter(
+            is_adm=True, 
+            sector=obj.sector,
+            user=request.user
+        ).exists()
+        
+        print(is_owner, is_manager, is_adm)
+    
+        return is_owner or is_manager or is_adm

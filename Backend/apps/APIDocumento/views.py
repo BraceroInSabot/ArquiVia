@@ -6,9 +6,15 @@ from apps.APIEmpresa.models import Enterprise
 from apps.APISetor.models import Sector, SectorUser
 from apps.APIDocumento.models import Attached_Files_Document, Document
 from rest_framework.permissions import IsAuthenticated
-from .serializers import AttachFileSerializer, DocumentCreateSerializer, DocumentDetailSerializer, DocumentListSerializer, DocumentUpdateSerializer
+from .serializers import (
+    AttachFileSerializer, 
+    DocumentCreateSerializer, 
+    DocumentDetailSerializer, 
+    DocumentListSerializer, 
+    DocumentUpdateSerializer,
+)
 from rest_framework.parsers import JSONParser
-from apps.APIDocumento.permissions import CanAttachDocument, IsLinkedToDocument
+from apps.APIDocumento.permissions import CanAttachDocument, IsLinkedToDocument, CanActivateOrDeactivateDocument
 from apps.core.utils import default_response
 from django.http import HttpResponse
 from django.db.models import Q
@@ -174,60 +180,14 @@ class UpdateDocumentView(APIView):
         return res
     
 class ActivateOrDeactivateDocumentView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, CanActivateOrDeactivateDocument]
     
-    def put(self, request):
-        document_id = request.data.get('document_id', '')
+    def put(self, request, pk: int):
+        document = get_object_or_404(Document, pk=pk)
         
-        if type(document_id) != int:
-            ret = Response()
-            ret.status_code = 400
-            ret.data = {
-                "Data": {
-                    "sucesso": False,
-                    "mensagem": "Documento inválido."
-                }
-            }
-            return ret
-
-        try:
-            document = Document.objects.get(doc_id=document_id)
-        except Document.DoesNotExist:
-            ret = Response()
-            ret.status_code = 404
-            ret.data = {
-                "Data": {
-                    "sucesso": False,
-                    "mensagem": "Documento não encontrado."
-                }
-            }
-            return ret
+        self.check_object_permissions(request, document)
         
-        try:
-            if not (SectorUser.objects.filter(user=request.user, sector=document.sector).exists() 
-                or 
-                Sector.objects.filter(manager=request.user, sector_id=document.sector.sector_id).exists()):
-                ret = Response()
-                ret.status_code = 403
-                ret.data = {
-                    "Data": {
-                        "sucesso": False,
-                        "mensagem": "Você não tem permissão para completar essa ação."
-                    }
-                }
-                return ret
-        except Exception as e:
-            ret = Response()
-            ret.status_code = 500
-            ret.data = {
-                "Data": {
-                    "sucesso": False,
-                    "mensagem": f"Erro ao verificar permissão do usuário: {str(e)}"
-                }
-            }
-            return ret
-        
-        document.is_eliminate = not document.is_eliminate
+        document.is_active = not document.is_active
         document.save()
         
         ret = Response()
@@ -235,7 +195,7 @@ class ActivateOrDeactivateDocumentView(APIView):
         ret.data = {
             "Data": {
                 "sucesso": True,
-                "mensagem": "Documento eliminado com sucesso."
+                "mensagem": f"Documento {"eliminado" if document.is_active else "restaurado"} com sucesso."
             }
         }
         return ret

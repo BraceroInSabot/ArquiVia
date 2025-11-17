@@ -1,0 +1,18 @@
+/* Container de Carregamento (opcional, mas bom para garantir o fundo) */
+.loading-container {
+  background-color: var(--bg-color, #f8f9fa);
+}
+
+/* Animação de Spin (caso não esteja global) */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}

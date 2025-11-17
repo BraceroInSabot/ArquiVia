@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search } from 'lucide-react'; // Ícone
+import { Funnel, Search } from 'lucide-react'; // Ícone
 import type { DocumentFilters } from '../services/core-api';
 
 // Reutiliza CSS global se necessário, mas focaremos em classes utilitárias
@@ -50,13 +50,7 @@ const DocumentFiltersComponent: React.FC<DocumentFiltersProps> = ({
           />
         </div>
         
-        {/* Botão de Buscar */}
-        <button 
-          type="submit"
-          className="btn btn-primary-custom px-4 fw-semibold"
-        >
-          Buscar
-        </button>
+        <Funnel />
 
       </div>
     </form>

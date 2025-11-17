@@ -145,6 +145,7 @@ export interface DocumentList {
   title: string;
   creator_name: string;
   created_at: string;
+  is_active: boolean;
 }
 
 export interface UpdateDocumentPayload {

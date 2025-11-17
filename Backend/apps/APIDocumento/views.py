@@ -182,7 +182,7 @@ class UpdateDocumentView(APIView):
 class ActivateOrDeactivateDocumentView(APIView):
     permission_classes = [IsAuthenticated, CanActivateOrDeactivateDocument]
     
-    def put(self, request, pk: int):
+    def patch(self, request, pk: int):
         document = get_object_or_404(Document, pk=pk)
         
         self.check_object_permissions(request, document)

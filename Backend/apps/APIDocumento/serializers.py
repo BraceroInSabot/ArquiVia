@@ -147,7 +147,7 @@ class DocumentListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Document
-        fields = ['document_id', 'title', 'creator_name', 'created_at']
+        fields = ['document_id', 'title', 'creator_name', 'created_at', 'is_active', 'sector']
         
 class DocumentUpdateSerializer(serializers.ModelSerializer):
     """

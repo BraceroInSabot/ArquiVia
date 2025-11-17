@@ -29,7 +29,7 @@ class Document(models.Model):
         blank=True, 
         db_column='FK_classification_document')
     created_at = models.DateTimeField(auto_now_add=True, db_column='date_created_at_document')
-    is_active = models.BooleanField(default=False, db_column='is_active_document')
+    is_active = models.BooleanField(default=True, db_column='is_active_document')
     
     history = HistoricalRecords(table_name='Document_Record')
 

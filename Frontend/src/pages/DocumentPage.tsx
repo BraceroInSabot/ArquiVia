@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { FileText } from 'lucide-react'; // Ícone
 import type { DocumentFilters } from '../services/core-api';
 
 import DocumentFiltersComponent from '../components/DocumentFilters';
@@ -14,7 +13,7 @@ export interface DocumentPageProps {
 }
 
 const DocumentPage: React.FC<DocumentPageProps> = ({ 
-  defaultFilters = { type: 'All', searchTerm: '' } 
+  defaultFilters = { type: '', searchTerm: '' }  //@ts-ignore
 }) => {
   
   const [activeFilters, setActiveFilters] = useState<DocumentFilters>(defaultFilters);

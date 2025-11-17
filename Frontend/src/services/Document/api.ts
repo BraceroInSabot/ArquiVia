@@ -207,6 +207,23 @@ const documentService = {
   revertDocument(document_id: number, history_id: number): Promise<{ data: ResponseStructure<Document> }> {
     return api.post(`/documento-auditoria/${document_id}/reverter/${history_id}/`, {});
   },
+
+  /**
+   * (PATCH) Ativa ou desativa um documento (toggle).
+   * Endpoint: /api/documento/ativar-desativar/<pk>/
+   */
+  toggleDocumentStatus(document_id: number): Promise<{ data: ResponseStructure<any> }> {
+    // A view PATCH não parece esperar um body, apenas a ação
+    return api.patch(`/documento/ativar-desativar/${document_id}/`);
+  },
+
+  /**
+   * (DELETE) Exclui permanentemente um documento.
+   * Endpoint: /api/documento/excluir/<pk>/
+   */
+  deleteDocument(document_id: number): Promise<{ data: ResponseStructure<null> }> {
+    return api.delete(`/documento/excluir/${document_id}/`);
+  },
 };
 
 export default documentService;

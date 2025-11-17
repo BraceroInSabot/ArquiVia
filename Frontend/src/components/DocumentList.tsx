@@ -1,6 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Settings, User, Calendar, SearchX, Loader2, AlertCircle } from 'lucide-react'; // Ícones
+// 1. Importe os ícones necessários
+import { 
+  Eye, Settings, User, Calendar, SearchX, Loader2, AlertCircle, 
+  Trash2, Power 
+} from 'lucide-react'; 
 
 import type { DocumentList, DocumentFilters } from '../services/core-api';
 import documentService from '../services/Document/api';
@@ -20,12 +24,12 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDocId, setSelectedDocId] = useState<number | null>(null);
-
-  // Estado para armazenar a mensagem de busca do backend
   const [searchMessage, setSearchMessage] = useState<string>('');
+  
+  // Estado para feedback de loading nos botões de ação
+  const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
 
-
-  // --- EFEITO PRINCIPAL: BUSCA vs LISTAGEM (INTACTO) ---
+  // --- EFEITO PRINCIPAL: BUSCA vs LISTAGEM ---
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
@@ -35,22 +39,17 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
       try {
         let response;
 
-        // 1. Verifica se QUALQUER filtro está ativo
         const hasSearchTerm = filters.searchTerm && filters.searchTerm.trim() !== '';
-        const hasAdvancedFilters = (filters.isReviewed && filters.isReviewed !== '') ||
-                                 (filters.statusId && filters.statusId !== '') ||
-                                 (filters.privacityId && filters.privacityId !== '') ||
+        const hasAdvancedFilters = (filters.isReviewed && filters.isReviewed !== 'all') ||
+                                 (filters.statusId && filters.statusId !== 'all') ||
+                                 (filters.privacityId && filters.privacityId !== 'all') ||
                                  (filters.reviewer && filters.reviewer.trim() !== '') ||
                                  (filters.categories && filters.categories.trim() !== '');
 
         if (hasSearchTerm || hasAdvancedFilters) {
-          
-          // 2. CORREÇÃO: Passa o objeto 'filters' inteiro para o serviço
           response = await documentService.searchDocuments(filters);
-          setSearchMessage(response.data.mensagem || ''); // Usa 'message'
-
+          setSearchMessage(response.data.mensagem || '');
         } else {
-          // Se não tem filtro, lista todos (padrão)
           response = await documentService.getDocuments();
         }
 
@@ -66,10 +65,9 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
       }
     };
 
-    // 3. REMOVIDO o 'setTimeout'. A busca é imediata quando 'filters' muda.
     loadData();
 
-  }, [filters]); // 4. CORREÇÃO: A dependência é o objeto 'filters'
+  }, [filters]); // Dependência correta
 
 
   // --- Funções de Navegação e Modal ---
@@ -85,6 +83,51 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
   const handleModalClose = () => {
     setIsModalOpen(false);
     setSelectedDocId(null);
+  };
+  
+  // --- FUNÇÕES DE AÇÃO (Exclusão e Desativação) ---
+  
+  const handleToggleStatus = async (doc: DocumentList) => {
+    const actionText = doc.is_active ? "Desativar" : "Ativar";
+    if (!window.confirm(`Tem certeza que deseja ${actionText} o documento "${doc.title}"?`)) return;
+
+    setActionLoadingId(doc.document_id);
+    try {
+      await documentService.toggleDocumentStatus(doc.document_id);
+      
+      // Atualiza o estado localmente no sucesso
+      setDocuments(prevDocs => 
+        prevDocs.map(d => 
+          d.document_id === doc.document_id ? { ...d, is_active: !d.is_active } : d
+        )
+      );
+    } catch (err: any) {
+      console.error(`Falha ao ${actionText} documento:`, err);
+      // Exibe o erro do backend (ex: 403 Proibido)
+      alert(err.response?.data?.message || `Falha ao ${actionText} o documento.`);
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const handleDelete = async (doc: DocumentList) => {
+    if (!window.confirm(`ATENÇÃO: Deseja EXCLUIR PERMANENTEMENTE o documento "${doc.title}"?\n\nEsta ação não pode ser desfeita.`)) return;
+
+    setActionLoadingId(doc.document_id);
+    try {
+      await documentService.deleteDocument(doc.document_id);
+      
+      // Remove da lista localmente no sucesso
+      setDocuments(prevDocs => 
+        prevDocs.filter(d => d.document_id !== doc.document_id)
+      );
+      
+    } catch (err: any) {
+      console.error("Falha ao excluir documento:", err);
+      alert(err.response?.data?.message || "Falha ao excluir o documento.");
+    } finally {
+      setActionLoadingId(null);
+    }
   };
 
   // --- Renderização ---
@@ -119,7 +162,6 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
 
   return (
     <>
-      {/* Exibe a mensagem de sucesso da busca, se houver */}
       {searchMessage && filters.searchTerm && (
           <p className="text-muted small mb-3 fst-italic">
               {searchMessage}
@@ -128,53 +170,82 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
 
       {/* Grid de Documentos */}
       <div className="row g-3">
-        {documents.map(doc => (
-          <div key={doc.document_id} className="col-12 col-md-6 col-xl-4">
-            <div className="card h-100 border shadow-sm hover-effect">
-                <div className="card-body d-flex flex-column">
-                    
-                    {/* Título */}
-                    <h6 className="fw-bold text-dark mb-2 text-truncate" title={doc.title}>
-                        {doc.title || "Sem Título"}
-                    </h6>
-                    
-                    {/* Metadados */}
-                    <div className="text-muted small mb-3 flex-grow-1">
-                        <div className="d-flex align-items-center gap-2 mb-1">
-                            <User size={14} />
-                            <span className="text-truncate">{doc.creator_name}</span>
-                        </div>
-                        <div className="d-flex align-items-center gap-2">
-                            <Calendar size={14} />
-                            {/* Formata a data para melhor leitura */}
-                            <span>{doc.created_at}</span>
-                        </div>
-                    </div>
+        {documents.map(doc => {
+          
+          return (
+            <div key={doc.document_id} className="col-12 col-md-6 col-xl-4">
+              {/* Adiciona classe de opacidade se inativo */}
+              <div className={`card h-100 border shadow-sm hover-effect ${!doc.is_active ? 'opacity-75 bg-light' : ''}`}>
+                  <div className="card-body d-flex flex-column">
+                      
+                      <h6 className="fw-bold text-dark mb-2 text-truncate" title={doc.title}>
+                          {doc.title || "Sem Título"}
+                      </h6>
+                      
+                      <div className="text-muted small mb-3 flex-grow-1">
+                          <div className="d-flex align-items-center gap-2 mb-1">
+                              <User size={14} />
+                              <span className="text-truncate">{doc.creator_name}</span>
+                          </div>
+                          <div className="d-flex align-items-center gap-2">
+                              <Calendar size={14} />
+                              <span>{doc.created_at}</span>
+                          </div>
+                      </div>
 
-                    {/* Ações */}
-                    <div className="d-flex justify-content-end gap-2 border-top pt-2 mt-auto">
-                        <button 
-                            onClick={() => handleEditClick(doc.document_id)} 
-                            className="btn btn-light btn-sm text-primary"
-                            title="Visualizar / Editar Conteúdo"
-                        >
-                            <Eye size={16} />
-                            <span className="d-none d-lg-inline ms-1">Abrir</span>
-                        </button>
-                        
-                        <button 
-                            onClick={() => handleModalOpen(doc.document_id)} 
-                            className="btn btn-light btn-sm text-secondary"
-                            title="Configurações e Classificação"
-                        >
-                            <Settings size={16} />
-                        </button>
-                    </div>
+                      {/* --- BOTÕES DE AÇÃO (SEM LÓGICA DE PERMISSÃO) --- */}
+                      <div className="d-flex justify-content-end gap-2 border-top pt-2 mt-auto">
+                          
+                          <button 
+                              onClick={() => handleEditClick(doc.document_id)} 
+                              className="btn btn-light btn-sm text-primary"
+                              title="Visualizar / Editar Conteúdo"
+                          >
+                              <Eye size={16} />
+                              <span className="d-none d-lg-inline ms-1">Abrir</span>
+                          </button>
+                          
+                          <button 
+                              onClick={() => handleModalOpen(doc.document_id)} 
+                              className="btn btn-light btn-sm text-secondary"
+                              title="Configurações e Classificação"
+                          >
+                              <Settings size={16} />
+                          </button>
 
-                </div>
+                          {/* Divisor */}
+                          <div className="vr mx-1 opacity-25"></div>
+
+                          {/* Botão Ativar/Desativar */}
+                          <button 
+                            onClick={() => handleToggleStatus(doc)} 
+                            className={`btn btn-light btn-sm ${!doc.is_active ? 'text-warning' : 'text-success'}`}
+                            title={doc.is_active ? 'Desativar Documento' : 'Ativar Documento'}
+                            disabled={actionLoadingId === doc.document_id}
+                          >
+                            <Power size={16} />
+                          </button>
+                          
+                          {/* Botão Excluir */}
+                          <button 
+                            onClick={() => handleDelete(doc)} 
+                            className="btn btn-light btn-sm text-danger"
+                            title="Excluir Documento"
+                            disabled={actionLoadingId === doc.document_id}
+                          >
+                            {actionLoadingId === doc.document_id ? (
+                              <Loader2 size={16} className="animate-spin" />
+                            ) : (
+                              <Trash2 size={16} />
+                            )}
+                          </button>
+
+                      </div>
+                  </div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {isModalOpen && selectedDocId && (

@@ -285,7 +285,7 @@ class ListAttachedFilesToDocumentView(APIView):
         
         self.check_object_permissions(request, queryset)
         
-        attached_files = queryset.attached_files.filter(detached_at__isnull=True)
+        attached_files = queryset.attached_files.filter(detached_at__isnull=True) # type: ignore
         
         serializer = AttachFileSerializer(attached_files, many=True)
         

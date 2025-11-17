@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Funnel, Search } from 'lucide-react'; // Ícone
+import { Funnel, Search } from 'lucide-react';
 import type { DocumentFilters } from '../services/core-api';
+// Importe o componente de filtros avançados
+import DocumentFilterSearch from './DocumentFilterSearch';
 
-// Reutiliza CSS global se necessário, mas focaremos em classes utilitárias
-import '../assets/css/EnterprisePage.css'; 
+// Importe o CSS para a animação (Opcional, mas recomendado)
+import '../assets/css/DocumentFilter.css'; 
+import '../assets/css/EnterprisePage.css'; // Reutiliza CSS global
 
 interface DocumentFiltersProps {
   defaultFilters: DocumentFilters;
@@ -15,8 +18,8 @@ const DocumentFiltersComponent: React.FC<DocumentFiltersProps> = ({
   onFilterChange 
 }) => {
   const [searchTerm, setSearchTerm] = useState(defaultFilters.searchTerm || '');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  // Sincroniza se o pai mudar o filtro externamente
   useEffect(() => {
     setSearchTerm(defaultFilters.searchTerm || '');
   }, [defaultFilters]);
@@ -29,30 +32,55 @@ const DocumentFiltersComponent: React.FC<DocumentFiltersProps> = ({
     e.preventDefault();
     onFilterChange({ searchTerm: searchTerm });
   };
+  
+  const toggleFilterArea = () => {
+    setIsFilterOpen(prev => !prev);
+  };
 
   return (
     <form onSubmit={handleSubmit} className="w-100">
       <div className="d-flex gap-2">
         
-        {/* Grupo do Input com Ícone */}
+        {/* Botão de Filtro (Esquerda) */}
+        <button 
+          type="button" 
+          // Atualiza o visual do botão quando ativo
+          className={`btn ${isFilterOpen ? 'btn-primary-custom' : 'btn-outline-secondary'} shadow-sm`}
+          onClick={toggleFilterArea}
+          title="Filtros avançados"
+        >
+          <Funnel size={20} />
+        </button>
+        
+        {/* Input de Busca (Direita) */}
         <div className="position-relative flex-grow-1">
-          <div className="position-absolute top-50 start-0 translate-middle-y ps-3 text-muted pointer-events-none">
-            <Search size={20} />
-          </div>
           <input
             type="text"
             name="q"
-            className="form-control ps-5 py-2" // ps-5 dá espaço para o ícone
+            className="form-control form-control-lg ps-3 pe-5"
             placeholder="Pesquisar por título ou conteúdo..."
             value={searchTerm}
             onChange={handleChange}
             autoComplete="off"
           />
+          <div className="position-absolute top-50 end-0 translate-middle-y pe-3 text-muted">
+            <Search size={20} />
+          </div>
         </div>
         
-        <Funnel />
-
       </div>
+
+      {/* --- CORREÇÃO AQUI --- */}
+      {/* Usamos 'isFilterOpen && ...' para renderizar o 
+          componente DocumentFilterSearch APENAS se o estado for true. */}
+      {isFilterOpen && (
+        <div className="filter-area-container">
+          <div className="card card-body mt-3 shadow-sm" style={{ backgroundColor: '#fdfdfd' }}>
+            <DocumentFilterSearch />
+          </div>
+        </div>
+      )}
+
     </form>
   );
 };

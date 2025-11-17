@@ -7,7 +7,7 @@ class Enterprise(models.Model):
     enterprise_id = models.AutoField(primary_key=True, db_column='PK_enterprise')
     name = models.CharField(null=False, max_length=100, db_column='name_enterprise')
     owner = models.ForeignKey(User, on_delete=models.CASCADE, db_column='FK_owner_enterprise', related_name='enterprises')
-    image = models.ImageField(upload_to='enterprise_images/', default='templates/enterprise_image_default.png', db_column="image_enterprise", null=True, blank=True)
+    image = models.ImageField(upload_to='enterprise_images/', db_column="image_enterprise", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, db_column='date_created_at_enterprise')
     is_active = models.BooleanField(default=True, db_column='is_active_enterprise')
 

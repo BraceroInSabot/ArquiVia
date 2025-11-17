@@ -140,13 +140,6 @@ export interface CreateDocument {
   categories: string[];
 }
 
-export interface DocumentFilters {
-  searchTerm?: string;
-  type?: 'Contract' | 'Invoice' | 'Report' | 'All';
-  dateFrom?: string;
-  dateTo?: string;
-}
-
 export interface DocumentList {
   document_id: number;
   title: string;
@@ -295,6 +288,15 @@ export interface InsightData {
 export interface SectorDashboardData {
   kpis: KpiData;
   insights: InsightData;
+}
+
+export interface DocumentFilters {
+  searchTerm: string;
+  isReviewed?: string;
+  statusId?: string;
+  privacityId?: string;
+  reviewer?: string;
+  categories?: string;
 }
 
 const api = axios.create({

@@ -2,6 +2,7 @@ from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView, Response
 from django.contrib.auth import get_user_model
+from apps.APIEmpresa.models import Enterprise
 from apps.APISetor.models import Sector, SectorUser
 from apps.APIDocumento.models import Attached_Files_Document, Document
 from rest_framework.permissions import IsAuthenticated
@@ -390,56 +391,95 @@ class ListAttachedFilesToDocumentView(APIView):
     
 class DocumentSearchView(APIView):
     """
-    Endpoint de Recuperação de Informação (Full-Text Search).
-    Query Param: ?q=termo_da_busca
+    Endpoint unificado de Busca e Filtro de Documentos.
+    Combina IR (q=) com filtros estruturados (status_id=, etc.).
     """
-    permission_classes = [IsAuthenticated] # Ajuste conforme sua regra de negócio
+    permission_classes = [IsAuthenticated]
+
+    serializer_class = DocumentListSerializer 
 
     def get(self, request):
         request_user = request.user
-        query = request.query_params.get('q', '')
+        
+        querySearch = request.query_params.get('q', None)
+        status_id = request.query_params.get('status_id', None)
+        privacity_id = request.query_params.get('privacity_id', None)
+        reviewer_name = request.query_params.get('reviewer_name', None)
+        
+        is_reviewed_param = request.query_params.get('is_reviewed', None)
+        is_reviewed = None
+        if is_reviewed_param == 'true':
+            is_reviewed = True
+        elif is_reviewed_param == 'false':
+            is_reviewed = False
 
-        if not query:
-            res: HttpResponse = Response()
-            res.status_code = 400
-            res.data = default_response(
-                success=False, 
-                message="Termo de busca não informado."
+        categories_list = request.query_params.get('categories')
+        if categories_list is not None:
+            categories_list = categories_list.split(';')
+            categories_list = [category.strip() for category in categories_list]
+
+
+
+        enterprise_links = Enterprise.objects.filter(
+            Q(owner=request_user) |
+            Q(sectors__sector_links__user=request_user) |
+            Q(sectors__manager=request_user)
+        ).distinct()
+        
+        queryset = Document.objects.filter(
+            sector__enterprise__in=enterprise_links
+        )
+        
+        if is_reviewed is not None:
+            queryset = queryset.filter(classification__is_reviewed=is_reviewed)
+        
+        if status_id:
+            queryset = queryset.filter(classification__classification_status=status_id)
+        
+        if privacity_id:
+            queryset = queryset.filter(classification__privacity=privacity_id)
+            
+        if reviewer_name:
+            queryset = queryset.filter(classification__reviewer__name__icontains=reviewer_name)
+
+        if categories_list:
+            queryset = queryset.filter(categories__category__in=categories_list)
+            print(queryset.query, categories_list)
+
+        
+        if querySearch:
+            vector = (
+                SearchVector('title', weight='A', config='portuguese') + 
+                SearchVector('content', weight='B', config='portuguese')
             )
-            return res
+            search_query = SearchQuery(querySearch, config='portuguese')
+            
+            queryset = queryset.annotate(
+                rank=SearchRank(vector, search_query)
+            ).filter(
+                rank__gte=0.1
+            ).order_by('-rank')
+        else:
+            queryset = queryset.order_by('-created_at')
 
-        # Vetorização, tokenização, stemming
-        vector = (
-            SearchVector('title', weight='A', config='portuguese') + 
-            SearchVector('content', weight='B', config='portuguese')
-        )
-
-        # Busca de querys
-        search_query = SearchQuery(query, config='portuguese')
-
-        # Annotate (cria campos virtuais) e Filter
-        documents = Document.objects.annotate(
-            rank=SearchRank(vector, search_query)
-        ).filter(
-            rank__gte=0.1 # Filtra apenas o que tiver relevância mínima (ex: 0.1)
-        ).order_by('-rank') # Ordena do maior rank (mais relevante) para o menor
-        
-        query = (
-            Q(creator=request_user) |
-            Q(sector__enterprise__owner=request_user) |
-            Q(sector__manager=request_user) |
-            Q(sector__sector_links__user=request_user)
+        queryset = queryset.distinct().select_related(
+            'sector', 
+            'classification__classification_status', 
+            'classification__privacity',
+            'classification__reviewer',
+            'creator'
+        ).prefetch_related(
+            'categories'
         )
         
-        documents_queryset = documents.filter(query)
-
-        serializer = DocumentListSerializer(documents_queryset, many=True)
-
+        serializer = self.serializer_class(queryset, many=True)
+        
         res: HttpResponse = Response()
         res.status_code = 200
         res.data = default_response(
             success=True,
-            message=f"Encontrados {documents_queryset.count()} documentos relevantes.",
+            message=f"Encontrados {queryset.count()} documentos relevantes.",
             data=serializer.data
         )
         return res
+    

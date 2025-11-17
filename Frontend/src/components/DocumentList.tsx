@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Settings, User, Calendar, SearchX, Loader2, AlertCircle } from 'lucide-react'; // Ícones
 
@@ -30,16 +30,27 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
     const loadData = async () => {
       setLoading(true);
       setError(null);
-      setSearchMessage(''); // Limpa mensagem anterior
+      setSearchMessage(''); 
       
       try {
         let response;
 
-        if (filters.searchTerm && filters.searchTerm.trim() !== '') {
-          console.log(`Buscando por: ${filters.searchTerm}`);
-          response = await documentService.searchDocuments(filters.searchTerm);
-          setSearchMessage(response.data.mensagem || ''); // Usa 'message' (padrão da sua response structure)
+        // 1. Verifica se QUALQUER filtro está ativo
+        const hasSearchTerm = filters.searchTerm && filters.searchTerm.trim() !== '';
+        const hasAdvancedFilters = (filters.isReviewed && filters.isReviewed !== '') ||
+                                 (filters.statusId && filters.statusId !== '') ||
+                                 (filters.privacityId && filters.privacityId !== '') ||
+                                 (filters.reviewer && filters.reviewer.trim() !== '') ||
+                                 (filters.categories && filters.categories.trim() !== '');
+
+        if (hasSearchTerm || hasAdvancedFilters) {
+          
+          // 2. CORREÇÃO: Passa o objeto 'filters' inteiro para o serviço
+          response = await documentService.searchDocuments(filters);
+          setSearchMessage(response.data.mensagem || ''); // Usa 'message'
+
         } else {
+          // Se não tem filtro, lista todos (padrão)
           response = await documentService.getDocuments();
         }
 
@@ -55,13 +66,10 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
       }
     };
 
-    const timer = setTimeout(() => {
-        loadData();
-    }, 300);
+    // 3. REMOVIDO o 'setTimeout'. A busca é imediata quando 'filters' muda.
+    loadData();
 
-    return () => clearTimeout(timer);
-
-  }, [filters.searchTerm]);
+  }, [filters]); // 4. CORREÇÃO: A dependência é o objeto 'filters'
 
 
   // --- Funções de Navegação e Modal ---
@@ -103,7 +111,6 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
     return (
         <div className="text-center text-muted py-5 bg-light rounded border border-dashed mt-3">
             <SearchX size={48} className="opacity-25 mb-3" />
-            {/* Exibe a mensagem vinda do backend (ex: "Nenhum documento encontrado para 'xyz'") */}
             <p className="mb-0 fw-medium">{searchMessage || "Nenhum documento encontrado."}</p>
             {filters.searchTerm && <small>Tente outro termo de busca.</small>}
         </div>
@@ -139,6 +146,7 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
                         </div>
                         <div className="d-flex align-items-center gap-2">
                             <Calendar size={14} />
+                            {/* Formata a data para melhor leitura */}
                             <span>{doc.created_at}</span>
                         </div>
                     </div>

@@ -1,5 +1,5 @@
 import api from '../core-api';
-import type { Classification, CreateDocument, Document, DocumentList, ResponseStructure, UpdateDocumentPayload, UpdateClassificationPayload, Category, AddCategoriesPayload, CreateCategoryPayload, UpdateCategoryPayload, AttachedFile, DocumentHistory} from '../core-api';
+import type { Classification, CreateDocument, Document, DocumentList, ResponseStructure, UpdateDocumentPayload, UpdateClassificationPayload, Category, AddCategoriesPayload, CreateCategoryPayload, UpdateCategoryPayload, AttachedFile, DocumentHistory, DocumentFilters} from '../core-api';
 
 const documentService = {
     /**
@@ -152,11 +152,38 @@ const documentService = {
   },
 
   /**
-   * Busca documentos usando o sistema de Recuperação de Informação (Full-Text Search).
-   * @param query O termo da busca.
+   * Busca documentos usando RI e filtros avançados.
+   * @param filters O objeto com todos os filtros.
    */
-  searchDocuments(query: string): Promise<{ data: ResponseStructure<DocumentList[]> }> {
-    return api.get(`/documento/buscar/?q=${encodeURIComponent(query)}`);
+  searchDocuments(filters: DocumentFilters): Promise<{ data: ResponseStructure<DocumentList[]> }> {
+    // 2. Cria um objeto URLSearchParams para construir a query string
+    const params = new URLSearchParams();
+
+    // 3. Adiciona o termo de busca principal (q)
+    if (filters.searchTerm) {
+      params.append('q', filters.searchTerm);
+    }
+
+    // 4. Adiciona os filtros avançados (ignorando 'all' ou valores vazios)
+    if (filters.isReviewed && filters.isReviewed !== '') {
+      params.append('is_reviewed', filters.isReviewed);
+    }
+    if (filters.statusId && filters.statusId !== '') {
+      params.append('status_id', filters.statusId);
+    }
+    if (filters.privacityId && filters.privacityId !== '') {
+      params.append('privacity_id', filters.privacityId);
+    }
+    if (filters.reviewer && filters.reviewer.trim() !== '') {
+      params.append('reviewer_name', filters.reviewer);
+    }
+    if (filters.categories && filters.categories.trim() !== '') {
+      params.append('categories', filters.categories);
+    }
+
+    const queryString = params.toString();
+
+    return api.get(`/documento/buscar/?${queryString}`);
   },
 
   /**

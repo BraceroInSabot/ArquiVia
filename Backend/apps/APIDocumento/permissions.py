@@ -83,3 +83,16 @@ class CanActivateOrDeactivateDocument(BasePermission):
         print(is_owner, is_manager, is_adm)
     
         return is_owner or is_manager or is_adm
+    
+class CanDELETEDocument(BasePermission):
+    message = "Você não tem permissão para deletar este documento."
+    
+    def has_object_permission(self, request, view,  obj):
+        if not isinstance(obj, Document):
+             return False
+         
+        is_owner = obj.sector.enterprise.owner == request.user # type: ignore
+        is_manager = obj.sector.manager == request.user # type: ignore
+        
+        return is_owner or is_manager
+    

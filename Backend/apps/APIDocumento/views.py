@@ -14,7 +14,7 @@ from .serializers import (
     DocumentUpdateSerializer,
 )
 from rest_framework.parsers import JSONParser
-from apps.APIDocumento.permissions import CanAttachDocument, IsLinkedToDocument, CanActivateOrDeactivateDocument
+from apps.APIDocumento.permissions import CanAttachDocument, CanDELETEDocument, IsLinkedToDocument, CanActivateOrDeactivateDocument
 from apps.core.utils import default_response
 from django.http import HttpResponse
 from django.db.models import Q
@@ -192,78 +192,23 @@ class ActivateOrDeactivateDocumentView(APIView):
         
         ret = Response()
         ret.status_code = 200
-        ret.data = {
-            "Data": {
-                "sucesso": True,
-                "mensagem": f"Documento {"eliminado" if document.is_active else "restaurado"} com sucesso."
-            }
-        }
+        ret.data =  default_response(success=True, message=f"Documento {"desativado" if document.is_active else "restaurado"} com sucesso.")
         return ret
     
 class DeleteDocumentView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, CanDELETEDocument]
     
-    def delete(self, request):
-        document_id = request.data.get('document_id', '')
-        
-        if type(document_id) != int:
-            ret = Response()
-            ret.status_code = 400
-            ret.data = {
-                "Data": {
-                    "sucesso": False,
-                    "mensagem": "ID inválido."
-                }
-            }
-            return ret
+    def delete(self, request, pk: int):
 
-        try:
-            document = Document.objects.get(doc_id=document_id)
-        except Document.DoesNotExist:
-            ret = Response()
-            ret.status_code = 404
-            ret.data = {
-                "Data": {
-                    "sucesso": False,
-                    "mensagem": "Documento não encontrado."
-                }
-            }
-            return ret
+        document = get_object_or_404(Document, pk=pk)
         
-        try:
-            if not (SectorUser.objects.filter(user=request.user, sector=document.sector).exists() 
-                or 
-                Sector.objects.filter(manager=request.user, sector_id=document.sector.sector_id).exists()):
-                ret = Response()
-                ret.status_code = 403
-                ret.data = {
-                    "Data": {
-                        "sucesso": False,
-                        "mensagem": "Você não tem permissão para completar essa ação."
-                    }
-                }
-                return ret
-        except Exception as e:
-            ret = Response()
-            ret.status_code = 500
-            ret.data = {
-                "Data": {
-                    "sucesso": False,
-                    "mensagem": f"Erro ao verificar permissão do usuário: {str(e)}"
-                }
-            }
-            return ret
+        self.check_object_permissions(request, document)
         
         document.delete()
         
         ret = Response()
         ret.status_code = 200
-        ret.data = {
-            "Data": {
-                "sucesso": True,
-                "mensagem": "Documento deletado com sucesso."
-            }
-        }
+        ret.data = default_response(success=True, message="Documento excluído com sucesso.")
         return ret
     
 # Attaching Files

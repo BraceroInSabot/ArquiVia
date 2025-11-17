@@ -84,10 +84,6 @@ const RecentDocumentsCarousel: React.FC<CarouselProps> = ({ documents }) => {
       </div>
       
       {/* Controles (Removi o 'Prev' para simplificar, já que são só 3 itens) */}
-      <button className="carousel-control-prev" type="button" data-bs-target="#recentDocsCarousel" data-bs-slide="prev">
-        <ChevronLeft size={32} />
-        <span className="visually-hidden">Previous</span>
-      </button>
       <button className="carousel-control-next" type="button" data-bs-target="#recentDocsCarousel" data-bs-slide="next">
         <ChevronRight size={32} />
         <span className="visually-hidden">Next</span>

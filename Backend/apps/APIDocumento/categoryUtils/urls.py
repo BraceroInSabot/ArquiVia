@@ -1,13 +1,14 @@
 from django.urls import path
 from .views import (
     CreateCategoryView,
-    ListAvailableCategoriesView, 
+    ListAvailableCategoriesByDocumentIdView, 
     RetrieveCategoryView, 
     ListCategoryView, 
     UpdateCategoryView, 
     DeleteCategoryView, 
     LinkCategoriesToDocumentView,
-    ListCategoriesByDocumentView)
+    ListCategoriesByDocumentView,
+    ListAllDisponibleCategoriesView)
 
 category_urlpatterns = [
     path('categoria/criar/<int:pk>/', CreateCategoryView.as_view(), name='criar-categoria'),
@@ -17,5 +18,6 @@ category_urlpatterns = [
     path('categoria/excluir/<int:pk>/', DeleteCategoryView.as_view(), name='excluir-categoria'),
     path('categoria/vincular-categorias/<int:pk>/', LinkCategoriesToDocumentView.as_view(), name='vincular-categorias-documento'),
     path('categoria/visualizar/vinculos/<int:pk>/', ListCategoriesByDocumentView.as_view(), name='listar-vinculos-categoria'),
-    path('categoria/visualizar/disponiveis/<int:pk>/', ListAvailableCategoriesView.as_view(), name='listar-disponiveis-categoria'),
+    path('categoria/visualizar/disponiveis/<int:pk>/', ListAvailableCategoriesByDocumentIdView.as_view(), name='listar-categoria-disponiveis-documento'),
+    path('categoria/visualizar/disponiveis/', ListAllDisponibleCategoriesView.as_view(), name='listar-categorias-disponiveis')
 ]

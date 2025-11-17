@@ -1,5 +1,5 @@
 import api from '../core-api';
-import type { Classification, CreateDocument, Document, DocumentList, ResponseStructure, UpdateDocumentPayload, UpdateClassificationPayload, Category, AddCategoriesPayload, CreateCategoryPayload, UpdateCategoryPayload, AttachedFile, DocumentHistory, DocumentFilters} from '../core-api';
+import type { Classification, CreateDocument, Document, DocumentList, ResponseStructure, UpdateDocumentPayload, UpdateClassificationPayload, Category, AddCategoriesPayload, CreateCategoryPayload, UpdateCategoryPayload, AttachedFile, DocumentHistory, DocumentFilters, AvailableCategorySearch} from '../core-api';
 
 const documentService = {
     /**
@@ -184,6 +184,14 @@ const documentService = {
     const queryString = params.toString();
 
     return api.get(`/documento/buscar/?${queryString}`);
+  },
+
+  /**
+   * Retorna todas as categorias às quais o usuário tem acesso.
+   */
+  listAvailableCategories(): Promise<{ data: ResponseStructure<AvailableCategorySearch[]> }> {
+    // (Ajuste a URL se for diferente)
+    return api.get('/documento/categoria/visualizar/disponiveis/');
   },
 
   /**

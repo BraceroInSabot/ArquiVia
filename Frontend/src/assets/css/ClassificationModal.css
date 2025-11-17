@@ -141,3 +141,20 @@
 .search-result-item:last-child {
   border-bottom: none;
 }
+
+/* Em: src/assets/css/ClassificationModal.css */
+
+/* ... (seus estilos de .category-pill e .remove-pill-btn) ... */
+
+/* Novo estilo para as pílulas de SUGESTÃO */
+.suggestion-pill {
+  cursor: pointer;
+  background-color: #fff !important;
+  border-color: #0d6efd !important; /* Cor primária */
+  color: #0d6efd !important;
+  font-weight: 500;
+}
+
+.suggestion-pill:hover {
+  background-color: #e7f1ff !important; /* Azul claro */
+}

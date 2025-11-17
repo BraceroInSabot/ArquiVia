@@ -318,7 +318,7 @@ class ListCategoriesByDocumentView(APIView):
         res.data = default_response(success=True, data=serializer.data)
         return res
     
-class ListAvailableCategoriesView(APIView):
+class ListAvailableCategoriesByDocumentIdView(APIView):
     """
     Lista as categorias disponíveis para serem vinculadas a um
     documento específico.
@@ -382,5 +382,45 @@ class ListAvailableCategoriesView(APIView):
             success=True,
             message="Categorias disponíveis encontradas.",
             data=response_serializer.data
+        )
+        return res
+    
+class ListAllDisponibleCategoriesView(APIView):
+    """
+    Lista todas as categorias visíveis para o usuário logado.
+    
+    Isso inclui todas as categorias das empresas às quais
+    o usuário pertence (como Dono, Gerente ou Membro).
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = CategoryListSerializer
+
+    def get(self, request):
+        request_user = request.user
+
+        user_enterprise_links = Enterprise.objects.filter(
+            Q(owner=request_user) |
+            Q(sectors__sector_links__user=request_user) |
+            Q(sectors__manager=request_user)
+        ).distinct()
+
+
+        queryset = Category.objects.filter(
+            category_enterprise__in=user_enterprise_links
+        )
+        
+        final_queryset = queryset.select_related(
+            'category_enterprise',
+            'category_sector'
+        ).order_by('category')
+        
+        serializer = self.serializer_class(final_queryset, many=True)
+
+        res: HttpResponse = Response()
+        res.status_code = 200
+        res.data = default_response(
+            success=True,
+            message=f"Encontradas {final_queryset.count()} categorias.",
+            data=serializer.data
         )
         return res

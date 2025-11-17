@@ -4,7 +4,7 @@ import { Funnel, Search } from 'lucide-react';
 import type { DocumentFilters } from '../services/core-api';
 import DocumentFilterSearch from './DocumentFilterSearch';
 
-import '../assets/css/DocumentFilter.css'; 
+import '../assets/css/DocumentFilters.css'; 
 import '../assets/css/EnterprisePage.css'; 
 
 interface DocumentFiltersProps {
@@ -16,7 +16,7 @@ const DocumentFiltersComponent: React.FC<DocumentFiltersProps> = ({
   defaultFilters, 
   onFilterChange 
 }) => {
-  // 2. O estado 'filters' agora contém TODOS os filtros
+  // O estado 'filters' agora contém TUDO
   const [filters, setFilters] = useState<DocumentFilters>(defaultFilters);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
@@ -24,23 +24,23 @@ const DocumentFiltersComponent: React.FC<DocumentFiltersProps> = ({
     setFilters(defaultFilters);
   }, [defaultFilters]);
 
-  // 3. Atualiza apenas o searchTerm (busca rápida)
+  // Atualiza apenas o searchTerm (busca rápida)
   const handleSearchTermChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFilters(prev => ({ ...prev, searchTerm: e.target.value }));
   };
   
-  // 4. Atualiza os filtros avançados (chamado pelo filho)
+  // Atualiza os filtros avançados (chamado pelo filho)
   const handleAdvancedFilterChange = (advancedFilters: Partial<DocumentFilters>) => {
     setFilters(prev => ({ ...prev, ...advancedFilters }));
   };
 
-  // 5. Submete o formulário principal (botão 'Buscar' ou Enter)
+  // Submete o formulário principal (botão 'Buscar' ou Enter)
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onFilterChange(filters); // Envia todos os filtros
   };
   
-  // 6. Submete ao clicar em "Aplicar Filtros" (no filho)
+  // Submete ao clicar em "Aplicar Filtros" (no filho)
   const handleApplyAdvancedFilters = () => {
     onFilterChange(filters); // Envia todos os filtros
   };
@@ -67,8 +67,8 @@ const DocumentFiltersComponent: React.FC<DocumentFiltersProps> = ({
             onChange={handleSearchTermChange}
             autoComplete="off"
           />
-          <div className="position-absolute top-50 end-0 translate-middle-y pe-3 text-muted cursor-pointer">
-            <Search size={20} onClick={handleSubmit} />
+          <div className="position-absolute top-50 end-0 translate-middle-y pe-3 text-muted">
+            <Search size={20} />
           </div>
         </div>
       </div>
@@ -78,7 +78,7 @@ const DocumentFiltersComponent: React.FC<DocumentFiltersProps> = ({
         <div className="filter-area-container">
           <div className="card card-body mt-3 shadow-sm" style={{ backgroundColor: '#fdfdfd' }}>
             <DocumentFilterSearch 
-              // 7. Passa os filtros e os handlers para o filho
+              // 2. Passa os filtros e os handlers para o filho
               currentFilters={filters}
               onAdvancedChange={handleAdvancedFilterChange}
               onApply={handleApplyAdvancedFilters}

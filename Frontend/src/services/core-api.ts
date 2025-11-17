@@ -299,6 +299,13 @@ export interface DocumentFilters {
   categories?: string;
 }
 
+export interface AvailableCategorySearch {
+  category_id: number;
+  category: string;
+  sector_name: string;
+  enterprise_name: string;
+}
+
 const api = axios.create({
   baseURL: URL,
   withCredentials: true,

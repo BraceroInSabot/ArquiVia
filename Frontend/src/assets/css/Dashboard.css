@@ -37,3 +37,20 @@
 .animate-spin {
   animation: spin 1s linear infinite;
 }
+
+
+/* ... (estilos existentes do .custom-card-dark, etc.) ... */
+
+/* Estilo para o Card de CTA (Estado Vazio) */
+.custom-cta-card {
+  transition: all 0.3s ease;
+}
+
+.custom-cta-card .btn-primary-custom {
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.custom-cta-card .btn-primary-custom:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 123, 255, 0.4);
+}

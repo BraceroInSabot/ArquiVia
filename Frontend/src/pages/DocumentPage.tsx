@@ -12,8 +12,9 @@ export interface DocumentPageProps {
   defaultFilters?: DocumentFilters;
 }
 
+//@ts-ignore
 const DocumentPage: React.FC<DocumentPageProps> = ({ 
-  defaultFilters = { type: '', searchTerm: '' }  //@ts-ignore
+  defaultFilters = { type: '', searchTerm: '' }  
 }) => {
   
   const [activeFilters, setActiveFilters] = useState<DocumentFilters>(defaultFilters);

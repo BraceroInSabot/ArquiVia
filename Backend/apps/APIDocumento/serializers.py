@@ -144,10 +144,14 @@ class DocumentListSerializer(serializers.ModelSerializer):
     creator_name = serializers.CharField(source='creator.name', read_only=True)
     
     created_at = serializers.DateTimeField(format="%H:%M:%S - %d-%m-%Y", read_only=True) # type: ignore
+    
+    sector = serializers.CharField(source='sector.name', read_only=True)
+    
+    enterprise = serializers.CharField(source='sector.enterprise.name', read_only=True)
 
     class Meta:
         model = Document
-        fields = ['document_id', 'title', 'creator_name', 'created_at', 'is_active', 'sector']
+        fields = ['document_id', 'title', 'creator_name', 'created_at', 'is_active', 'sector', 'enterprise']
         
 class DocumentUpdateSerializer(serializers.ModelSerializer):
     """

@@ -146,6 +146,8 @@ export interface DocumentList {
   creator_name: string;
   created_at: string;
   is_active: boolean;
+  sector: string;
+  enterprise: string;
 }
 
 export interface UpdateDocumentPayload {

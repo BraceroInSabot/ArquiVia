@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, type ChangeEvent } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Save, Loader2, AlertCircle, Settings, ShapesIcon, Shapes } from 'lucide-react'; // Ícones
+import { X, Save, Loader2, AlertCircle, ShapesIcon } from 'lucide-react'; // Ícones
 
 import documentService from '../services/Document/api';
 import type { UpdateClassificationPayload, Category, AddCategoriesPayload } from '../services/core-api';

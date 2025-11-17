@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import 'bootstrap/dist/css/bootstrap.min.css';
 import '../assets/css/HamburgerMenu.css';
 import { useAuth } from '../contexts/AuthContext';
 // 1. Importe o useLocation

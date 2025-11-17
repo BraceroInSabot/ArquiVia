@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, type ChangeEvent } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Save, Loader2, AlertCircle, Settings } from 'lucide-react'; // Ícones
+import { X, Save, Loader2, AlertCircle, Settings, ShapesIcon, Shapes } from 'lucide-react'; // Ícones
 
 import documentService from '../services/Document/api';
 import type { UpdateClassificationPayload, Category, AddCategoriesPayload } from '../services/core-api';
@@ -281,8 +281,8 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
           {/* Cabeçalho do Modal */}
           <div className="d-flex justify-content-between align-items-center p-3 px-4 border-bottom">
             <h5 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-                <Settings size={20} className="text-primary-custom" />
-                Configurações do Documento
+                <ShapesIcon size={20} className="text-primary-custom" />
+                Classificação do Documento
             </h5>
             <button className="btn btn-link text-secondary p-0" onClick={handleCloseAttempt}>
                 <X size={24} />

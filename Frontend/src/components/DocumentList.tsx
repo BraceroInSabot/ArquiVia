@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 // 1. Importe os ícones necessários
 import { 
   Eye, Settings, User, Calendar, SearchX, Loader2, AlertCircle, 
-  Trash2, Power 
+  Trash2, Power, 
+  Shapes
 } from 'lucide-react'; 
 
 import type { DocumentList, DocumentFilters } from '../services/core-api';
@@ -208,9 +209,9 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
                           <button 
                               onClick={() => handleModalOpen(doc.document_id)} 
                               className="btn btn-light btn-sm text-secondary"
-                              title="Configurações e Classificação"
+                              title="Classificação e Categorias"
                           >
-                              <Settings size={16} />
+                              <Shapes size={16}/>
                           </button>
 
                           {/* Divisor */}

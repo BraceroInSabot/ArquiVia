@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
-from apps.APIDocumento.categoryUtils.permissions import IsCategoryADM, IsCategoryEditor, IsCategoryVisible, IsDocumentEditor
+from apps.APIDocumento.categoryUtils.permissions import CanListCategory, IsCategoryADM, IsCategoryEditor, IsCategoryVisible, IsDocumentEditor
 from apps.APIDocumento.permissions import IsLinkedToDocument
 from apps.core.utils import default_response
 from apps.APIDocumento.categoryUtils.serializers import CategoryDetailSerializer, CategoryListSerializer, CreateCategorySerializer, DeleteCategorySerializer, DocumentAddCategoriesSerializer, ListCategoriesByDocumentId, UpdateCategorySerializer
@@ -92,7 +92,7 @@ class ListCategoryView(APIView):
     2. A Categoria pertencer a uma Empresa à qual o usuário está vinculado
        (seja como dono, gerente de setor ou membro de setor).
     """
-    permission_classes = [IsAuthenticated, IsCategoryADM]
+    permission_classes = [IsAuthenticated, CanListCategory]
 
     def get(self, request, pk: int) -> HttpResponse:
         """

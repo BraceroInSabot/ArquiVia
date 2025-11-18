@@ -49,8 +49,28 @@ class IsCategoryADM(BasePermission):
             is_adm=True
         ).exists()
         
+        
         return is_owner or is_manager or is_adm
+
+class CanListCategory(BasePermission):
+    """
+    Concede permissão para apenas os usuários do setor (obj) listar as categorias.
+    """
+    message = "Você não tem permissão para visualizar esta categoria."
     
+    def has_object_permission(self, request, view, obj: Sector):
+        if not isinstance(obj, Sector):
+            return False
+        
+        is_owner = obj.enterprise.owner == request.user
+        is_manager = obj.manager == request.user
+        is_adm_or_member = SectorUser.objects.filter(
+            user=request.user,
+            sector=obj,
+        ).exists()        
+        
+        return is_owner or is_manager or is_adm_or_member 
+        
 class IsCategoryEditor(BasePermission):
     """
     Concede permissão para editar uma Categoria se o usuário for:

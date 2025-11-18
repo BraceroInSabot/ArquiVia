@@ -103,6 +103,7 @@ class ListEnterpriseView(APIView):
         )
 
         enterprises = Enterprise.objects.filter(query).select_related('owner').distinct()
+        sectors = Sector.objects.filter(enterprise__in=enterprises)
 
         serializer = EnterpriseSerializer(enterprises, many=True)
 

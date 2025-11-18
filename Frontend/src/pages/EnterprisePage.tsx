@@ -1,23 +1,31 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Loader2, AlertCircle } from 'lucide-react'; // Ícones 
-import toast from 'react-hot-toast';
+import { Plus, Loader2, AlertCircle } from 'lucide-react'; // Ícones
+import toast from 'react-hot-toast'; // Notificações
 
 // Imports de Lógica/API
 import enterpriseService from '../services/Enterprise/api';
 import type { Enterprise } from '../services/core-api';
-import EnterpriseList from '../components/EnterpriseList';
 
-// Import do CSS (Certifique-se de criar/salvar o arquivo CSS acima)
+// Componentes
+import EnterpriseList from '../components/EnterpriseList';
+import EnterpriseDetailsModal from '../components/EnterpriseDetailsModal'; // Novo Modal
+
+// Import do CSS
 import '../assets/css/EnterprisePage.css'; 
 
 const EnterprisePage = () => {
   const navigate = useNavigate();
+  
+  // Estados de Dados
   const [enterprises, setEnterprises] = useState<Enterprise[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // --- LÓGICA DE NEGÓCIO (INTACTA) ---
+  // Estado do Modal de Detalhes
+  const [viewingEnterprise, setViewingEnterprise] = useState<Enterprise | null>(null);
+
+  // --- LÓGICA DE NEGÓCIO ---
   useEffect(() => {
     const fetchEnterprises = async () => {
       try {
@@ -29,11 +37,15 @@ const EnterprisePage = () => {
         } else if (response.data && Array.isArray(response.data)) {
           setEnterprises(response.data);
         } else {
-          setError('Nenhuma empresa encontrada.');
+          // Não é necessariamente um erro, apenas lista vazia, 
+          // mas se o formato for inválido, cai aqui.
+          setEnterprises([]);
         }
 
       } catch (err) {
+        console.error(err);
         setError('Falha ao carregar as empresas.');
+        toast.error('Erro de conexão ao buscar empresas.');
       } finally {
         setIsLoading(false);
       }
@@ -42,25 +54,21 @@ const EnterprisePage = () => {
     fetchEnterprises();
   }, []);
 
-  const handleView = async (id: number) => {
-    try {
-      const response = await enterpriseService.getEnterpriseById(id);
-      // @ts-ignore
-      const enterprise = response.data.data;
-
-      const enterpriseData = `
-        Dados da Empresa (ID: ${enterprise.enterprise_id}):
-        --------------------------
-        Nome: ${enterprise.name}
-        Imagem: ${enterprise.image || 'Não informada'}
-        Ativo: ${enterprise.is_active ? 'Sim' : 'Não'}
-        Criado em: ${new Date(enterprise.created_at).toLocaleString()}
-      `;
-
-      toast.success(enterpriseData);
-
-    } catch (error) {
-      toast.error('Não foi possível carregar os dados atualizados da empresa. Tente novamente.');
+  // Abre o Modal de Detalhes
+  const handleView = (id: number) => {
+    // Busca a empresa no estado local para evitar requisição desnecessária
+    const enterpriseToView = enterprises.find(e => e.enterprise_id === id);
+    
+    if (enterpriseToView) {
+        setViewingEnterprise(enterpriseToView);
+    } else {
+        // Fallback: Se não achar no estado (raro), busca na API
+        enterpriseService.getEnterpriseById(id)
+            .then(res => {
+                 // @ts-ignore
+                 setViewingEnterprise(res.data.data || res.data);
+            })
+            .catch(() => toast.error("Erro ao carregar detalhes da empresa."));
     }
   };
 
@@ -72,9 +80,10 @@ const EnterprisePage = () => {
     const newStatus = !currentStatus;
     const actionText = newStatus ? "ativar" : "desativar";
 
-    if (window.confirm(`Tem certeza que deseja ${actionText} a empresa com ID: ${id}?`)) {
+    // window.confirm é aceitável para decisões críticas
+    if (window.confirm(`Tem certeza que deseja ${actionText} a empresa?`)) {
       try {
-        const response = await enterpriseService.toggleEnterpriseStatus(id, newStatus);
+        await enterpriseService.toggleEnterpriseStatus(id, newStatus);
 
         setEnterprises(currentEnterprises =>
           currentEnterprises.map(enterprise => {
@@ -85,16 +94,17 @@ const EnterprisePage = () => {
           })
         );
         
-        toast.success(`${response.data.mensagem}`);
+        toast.success(`Empresa ${newStatus ? 'ativada' : 'desativada'} com sucesso!`);
 
       } catch (error) {
-        toast.error(`Não foi possível alterar o status da empresa. Tente novamente.`);
+        console.error(error);
+        toast.error(`Não foi possível alterar o status da empresa.`);
       }
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (window.confirm(`Tem certeza que deseja deletar a empresa com ID: ${id}?`)) {
+    if (window.confirm(`ATENÇÃO: Tem certeza que deseja deletar esta empresa?\nIsso pode apagar todos os setores e documentos vinculados.`)) {
       try {
         await enterpriseService.deleteEnterprise(id);
 
@@ -102,10 +112,11 @@ const EnterprisePage = () => {
           currentEnterprises.filter(enterprise => enterprise.enterprise_id !== id)
         );
 
-        toast.success(`Empresa com ID: ${id} deletada com sucesso!`);
+        toast.success('Empresa deletada com sucesso!');
 
       } catch (error) {
-        toast.error('Não foi possível deletar a empresa. Verifique se ela não possui dados vinculados e tente novamente.');
+        console.error(error);
+        toast.error('Não foi possível deletar. Verifique se há vínculos ativos.');
       }
     }
   };
@@ -160,13 +171,22 @@ const EnterprisePage = () => {
           {!isLoading && !error && (
             <EnterpriseList
               enterprises={enterprises}
-              onView={handleView}
+              onView={handleView} // Agora abre o Modal
               onEdit={handleEdit}
               onToggleStatus={handleToggleStatus}
               onDelete={handleDelete}
             />
           )}
         </div>
+
+        {/* Modal de Detalhes (Renderizado Condicionalmente) */}
+        {viewingEnterprise && (
+            <EnterpriseDetailsModal 
+                enterprise={viewingEnterprise}
+                onClose={() => setViewingEnterprise(null)}
+            />
+        )}
+
       </div>
     </div>
   );

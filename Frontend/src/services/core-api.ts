@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-const BASE: string = "https://bracero.com.br/"
-// const BASE: string = "http://localhost:8000/"
+// const BASE: string = "https://bracero.com.br/"
+const BASE: string = "http://localhost:8000/"
 const VERSION: string = "api/v2/"
 const URL: string = BASE + VERSION
 
@@ -23,6 +23,12 @@ export interface RegisterCredentials {
   cpassword: string;
 }
 
+export interface SectorShort {
+  sector_id: number;
+  name: string;
+  is_active: boolean;
+}
+
 export interface Enterprise {
   enterprise_id: number;
   name: string;
@@ -31,6 +37,7 @@ export interface Enterprise {
   owner_name: string;
   is_active: boolean;
   created_at: string;
+  sectors: SectorShort[];
 }
 
 export interface ManyEnterprises {
@@ -314,6 +321,8 @@ export interface AvailableUser {
   user_id: number;
   name: string;
 }
+
+
 
 const api = axios.create({
   baseURL: URL,

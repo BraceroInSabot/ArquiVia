@@ -235,3 +235,45 @@
 .btn-icon:hover { background-color: #f1f5f9; color: #334155; }
 .btn-icon.view:hover { color: #0ea5e9; border-color: #bae6fd; background-color: #e0f2fe; }
 .btn-icon.revert:hover { color: #ef4444; border-color: #fecaca; background-color: #fee2e2; }
+
+/* ... todo o css anterior ... */
+
+/* --- RESPONSIVIDADE DA BARRA DE AÇÕES --- */
+@media (max-width: 768px) {
+  .actions-toolbar {
+    /* Permite rolagem se não couber */
+    max-width: 90vw; /* Ocupa no máximo 90% da tela */
+    overflow-x: auto; /* Habilita scroll horizontal */
+    justify-content: flex-start; /* Alinha ao início */
+    padding: 8px;
+    
+    /* Esconde a barra de rolagem nativa para ficar bonito */
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  
+  .actions-toolbar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
+
+  /* Diminui um pouco os botões no mobile */
+  .actions-toolbar .action-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+  }
+  
+  /* Esconde o texto "Salvar" e "Auto ON" para economizar espaço */
+  .actions-toolbar .action-btn.primary span,
+  .actions-toolbar .action-toggle span {
+    display: none !important;
+  }
+  
+  /* Ajusta o botão primário para ser apenas ícone redondo */
+  .actions-toolbar .action-btn.primary {
+    border-radius: 50%;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+  }
+}

@@ -49,49 +49,50 @@ class CreateDocumentView(APIView):
     
 class ListDocumentsView(APIView):
     """
-    Recupera uma lista de todos os documentos aos quais o usuário está vinculado.
-    Exclui o campo 'content' para uma resposta leve e otimizada.
-    
-    Um usuário está vinculado se for:
-    1. O criador do documento.
-    2. O dono da empresa do setor do documento.
-    3. O gerente do setor do documento.
-    4. Um membro (via SectorUser) do setor do documento.
+    Recupera uma lista de todos os documentos visíveis para o usuário.
+    Isso inclui:
+    1. Documentos da empresa que são PÚBLICOS (de qualquer setor).
+    2. Documentos do setor onde o usuário é membro/gerente.
+    3. Documentos que o usuário criou.
+    4. Todos os documentos se o usuário for o Dono da Empresa.
     """
     permission_classes = [IsAuthenticated]
 
     def get(self, request) -> HttpResponse:
-        """
-        Manipula a requisição GET para listar os documentos vinculados.
-
-        Args:
-            request (Request): O objeto da requisição do usuário.
-
-        Returns:
-            HttpResponse: Uma resposta contendo a lista de metadados dos documentos.
-        """
         request_user = request.user
 
-        query = (
+        enterprise_links = Enterprise.objects.filter(
+            Q(owner=request_user) |
+            Q(sectors__sector_links__user=request_user) |
+            Q(sectors__manager=request_user)
+        ).distinct()
+        
+        queryset = Document.objects.filter(
+            sector__enterprise__in=enterprise_links
+        )
+        
+        queryset = queryset.filter(
+            Q(classification__privacity__privacity='Público') | 
             Q(creator=request_user) |
             Q(sector__enterprise__owner=request_user) |
             Q(sector__manager=request_user) |
             Q(sector__sector_links__user=request_user)
-        )
-
-        documents_queryset = Document.objects.filter(query).select_related('creator').distinct()
-
-        serializer = DocumentListSerializer(documents_queryset, many=True)
+        ).distinct() 
         
-        if not serializer.data:
-            res: HttpResponse = Response()
-            res.status_code = 200
-            res.data = default_response(success=True, message="Nenhum documento encontrado.", data=[])
-            return res
+        queryset = queryset.select_related(
+            'classification__classification_status', 
+            'sector'
+        ).order_by('-created_at')
+
+        serializer = DocumentListSerializer(queryset, many=True)
         
         res: HttpResponse = Response()
         res.status_code = 200
-        res.data = default_response(success=True, message="Lista de documentos recuperada com sucesso.", data=serializer.data)
+        res.data = default_response(
+            success=True, 
+            message=f"Encontrados {queryset.count()} documentos.", 
+            data=serializer.data
+        )
         return res
     
 class RetrieveDocumentView(APIView):
@@ -340,16 +341,26 @@ class DocumentSearchView(APIView):
         
         if status_id:
             queryset = queryset.filter(classification__classification_status=status_id)
-        
-        if privacity_id:
+
+        print('atual', privacity_id)
+        if privacity_id == '1': # Privado
+            print('passou por aqui', queryset, privacity_id)
+            queryset = queryset.filter(
+                Q(classification__privacity=privacity_id) &
+                (
+                    Q(sector__enterprise__owner=request_user) |
+                    Q(sector__manager=request_user) |
+                    Q(sector__sector_links__user=request_user)
+                )
+            )
+        else: # Público
             queryset = queryset.filter(classification__privacity=privacity_id)
-            
+
         if reviewer_name:
             queryset = queryset.filter(classification__reviewer__name__icontains=reviewer_name)
 
         if categories_list:
             queryset = queryset.filter(categories__category__in=categories_list)
-            print(queryset.query, categories_list)
 
         
         if querySearch:

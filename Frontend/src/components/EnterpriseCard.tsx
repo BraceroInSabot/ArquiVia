@@ -1,6 +1,6 @@
 import type { Enterprise } from '../services/core-api';
 import { Eye, Pencil, Trash2, Building2 } from 'lucide-react'; // Ícones
-import '../assets/css/EnterpriseCard.css'
+import '../assets/css/EnterpriseCard.css';
 
 interface EnterpriseCardProps {
   enterprise: Enterprise;
@@ -50,7 +50,8 @@ const EnterpriseCard = ({ enterprise, onView, onEdit, onToggleStatus, onDelete }
         <hr className="my-3 text-muted" style={{ opacity: 0.1 }} />
 
         {/* Rodapé: Status e Ações */}
-        <div className="d-flex justify-content-between align-items-center mt-auto">
+        {/* ADICIONADO: 'flex-wrap' e 'gap-3' para responsividade */}
+        <div className="d-flex justify-content-between align-items-center mt-auto flex-wrap gap-3">
           
           {/* Switch de Status */}
           <div className="d-flex align-items-center">
@@ -75,7 +76,8 @@ const EnterpriseCard = ({ enterprise, onView, onEdit, onToggleStatus, onDelete }
           </div>
 
           {/* Grupo de Botões de Ação */}
-          <div className="d-flex gap-2">
+          {/* ADICIONADO: 'flex-wrap' para os botões não saírem do card */}
+          <div className="d-flex gap-2 flex-wrap">
             <button 
               onClick={() => onView(enterprise.enterprise_id)} 
               className="btn btn-light btn-sm text-primary-custom"

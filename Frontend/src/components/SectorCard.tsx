@@ -1,6 +1,8 @@
 import type { Sector, ToggleSectorStatusPayload } from '../services/core-api';
 import { Eye, Pencil, Trash2, Power, FileText, Layers } from 'lucide-react'; // Ícones
-import '../assets/css/SectorCard.css';
+
+// Reutiliza o CSS de EnterpriseCard (ou crie um SectorCard.css idêntico se preferir separar)
+import '../assets/css/EnterpriseCard.css'; 
 
 interface SectorCardProps {
   sector: Sector;
@@ -32,7 +34,7 @@ const SectorCard = ({ sector, onView, onEdit, onDelete, onDeactivateOrActivate }
   if (!canView) return null;
 
   return (
-    <div className="card h-100 border-0 shadow-sm hover-effect">
+    <div className="card h-100 border-0 shadow-sm" style={{ transition: 'transform 0.2s ease, box-shadow 0.2s ease' }}>
       <div className="card-body d-flex flex-column">
         
         {/* Cabeçalho: Imagem e Nome */}
@@ -72,10 +74,11 @@ const SectorCard = ({ sector, onView, onEdit, onDelete, onDeactivateOrActivate }
           </div>
         </div>
 
-        <hr className="my-2 text-muted opacity-25" />
+        <hr className="my-3 text-muted" style={{ opacity: 0.1 }} />
 
-        {/* Barra de Ações */}
-        <div className="d-flex justify-content-end align-items-center gap-2 mt-auto pt-2">
+        {/* Barra de Ações (Rodapé) */}
+        {/* 'mt-auto' joga para o fundo, 'flex-wrap' permite quebra de linha */}
+        <div className="d-flex justify-content-end align-items-center mt-auto flex-wrap gap-2">
           
           {/* Botão Documentos (Sempre visível se o card renderiza) */}
           <button className="btn btn-light btn-sm text-secondary" title="Ver Documentos">
@@ -106,7 +109,8 @@ const SectorCard = ({ sector, onView, onEdit, onDelete, onDeactivateOrActivate }
           {/* Ações Administrativas (Apenas Proprietário) */}
           {isOwner && (
             <>
-              <div className="vr mx-1 bg-secondary opacity-25"></div> {/* Divisor vertical */}
+              {/* Divisor Vertical (só aparece se não quebrar linha) */}
+              <div className="vr mx-1 bg-secondary opacity-25 d-none d-sm-block"></div> 
               
               <button 
                 onClick={() => 

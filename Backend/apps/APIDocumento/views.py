@@ -19,7 +19,9 @@ from apps.core.utils import default_response
 from django.http import HttpResponse
 from django.db.models import Q
 from rest_framework.parsers import MultiPartParser, FormParser
-from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
+from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank, TrigramSimilarity
+from django.db.models import Value, TextField
+from django.db.models.functions import Coalesce, Cast, Greatest
 
 User = get_user_model()
 
@@ -342,9 +344,7 @@ class DocumentSearchView(APIView):
         if status_id:
             queryset = queryset.filter(classification__classification_status=status_id)
 
-        print('atual', privacity_id)
         if privacity_id == '1': # Privado
-            print('passou por aqui', queryset, privacity_id)
             queryset = queryset.filter(
                 Q(classification__privacity=privacity_id) &
                 (
@@ -353,8 +353,10 @@ class DocumentSearchView(APIView):
                     Q(sector__sector_links__user=request_user)
                 )
             )
-        else: # Público
+        elif privacity_id == '2': # Público
             queryset = queryset.filter(classification__privacity=privacity_id)
+        else:
+            pass
 
         if reviewer_name:
             queryset = queryset.filter(classification__reviewer__name__icontains=reviewer_name)
@@ -362,19 +364,27 @@ class DocumentSearchView(APIView):
         if categories_list:
             queryset = queryset.filter(categories__category__in=categories_list)
 
-        
         if querySearch:
             vector = (
-                SearchVector('title', weight='A', config='portuguese') + 
-                SearchVector('content', weight='B', config='portuguese')
+                SearchVector('title', weight='B', config='portuguese') + 
+                SearchVector('content', weight='A', config='portuguese')
             )
+            
             search_query = SearchQuery(querySearch, config='portuguese')
             
             queryset = queryset.annotate(
-                rank=SearchRank(vector, search_query)
+                rank=SearchRank(
+                    vector, 
+                    search_query,
+                ),
+                sim_title=TrigramSimilarity('title', querySearch),
+                
+                sim_content=TrigramSimilarity(Cast(Coalesce('content', Value('{}')), TextField()), querySearch),
+            ).annotate(
+                similarity=Greatest('sim_title', 'sim_content')
             ).filter(
-                rank__gte=0.1
-            ).order_by('-rank')
+                Q(rank__gte=0.01) | Q(similarity__gt=0.1)
+            ).order_by('-similarity','-rank')
         else:
             queryset = queryset.order_by('-created_at')
 

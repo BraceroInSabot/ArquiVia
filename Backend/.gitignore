@@ -4,12 +4,12 @@ __pycache__
 */__pycache__
 */__pycache__/*
 */__pycache__.py
-*/migrations
 */__init__
 */__init__.py
 __init__.py
 *.sh
 *.bat
-migrations
 *.sqlite3
 dataset_teste_ir
+
+!apps/core/migrations

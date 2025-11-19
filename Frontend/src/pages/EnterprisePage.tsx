@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Loader2, AlertCircle } from 'lucide-react'; // Ícones
-import toast from 'react-hot-toast'; // Notificações
+import { Plus, Loader2, AlertCircle } from 'lucide-react'; 
+import toast from 'react-hot-toast'; 
 
 // Imports de Lógica/API
 import enterpriseService from '../services/Enterprise/api';
@@ -9,39 +9,43 @@ import type { Enterprise } from '../services/core-api';
 
 // Componentes
 import EnterpriseList from '../components/EnterpriseList';
-import EnterpriseDetailsModal from '../components/EnterpriseDetailsModal'; // Novo Modal
+import EnterpriseDetailsModal from '../components/EnterpriseDetailsModal';
+import ConfirmModal, { type ConfirmVariant } from '../components/ConfirmModal'; // 1. Importe o Modal
 
-// Import do CSS
 import '../assets/css/EnterprisePage.css'; 
+
+// Interface para o estado do modal de confirmação
+interface ConfirmConfig {
+  isOpen: boolean;
+  type: 'toggle' | 'delete' | null;
+  id: number | null;
+  currentStatus?: boolean; // Apenas para toggle
+  title: string;
+  message: string;
+  variant: ConfirmVariant;
+  confirmText: string;
+}
 
 const EnterprisePage = () => {
   const navigate = useNavigate();
   
-  // Estados de Dados
   const [enterprises, setEnterprises] = useState<Enterprise[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Estado do Modal de Detalhes
   const [viewingEnterprise, setViewingEnterprise] = useState<Enterprise | null>(null);
 
-  // --- LÓGICA DE NEGÓCIO ---
+  // 2. Estados para o Modal de Confirmação
+  const [isActionLoading, setIsActionLoading] = useState(false);
+  const [confirmConfig, setConfirmConfig] = useState<ConfirmConfig>({
+    isOpen: false, type: null, id: null, title: '', message: '', variant: 'warning', confirmText: ''
+  });
+
   useEffect(() => {
     const fetchEnterprises = async () => {
       try {
         const response = await enterpriseService.getEnterprises();
-        const listaDeEmpresas = response.data.data;
-
-        if (Array.isArray(listaDeEmpresas)) {
-          setEnterprises(listaDeEmpresas);
-        } else if (response.data && Array.isArray(response.data)) {
-          setEnterprises(response.data);
-        } else {
-          // Não é necessariamente um erro, apenas lista vazia, 
-          // mas se o formato for inválido, cai aqui.
-          setEnterprises([]);
-        }
-
+        const data = response.data.data;
+        setEnterprises(Array.isArray(data) ? data : (response.data as any) || []);
       } catch (err) {
         console.error(err);
         setError('Falha ao carregar as empresas.');
@@ -50,25 +54,17 @@ const EnterprisePage = () => {
         setIsLoading(false);
       }
     };
-
     fetchEnterprises();
   }, []);
 
-  // Abre o Modal de Detalhes
   const handleView = (id: number) => {
-    // Busca a empresa no estado local para evitar requisição desnecessária
     const enterpriseToView = enterprises.find(e => e.enterprise_id === id);
-    
     if (enterpriseToView) {
         setViewingEnterprise(enterpriseToView);
     } else {
-        // Fallback: Se não achar no estado (raro), busca na API
         enterpriseService.getEnterpriseById(id)
-            .then(res => {
-                 // @ts-ignore
-                 setViewingEnterprise(res.data.data || res.data);
-            })
-            .catch(() => toast.error("Erro ao carregar detalhes da empresa."));
+            .then(res => setViewingEnterprise(res.data as any))
+            .catch(() => toast.error("Erro ao carregar detalhes."));
     }
   };
 
@@ -76,61 +72,80 @@ const EnterprisePage = () => {
     navigate(`/empresas/editar/${id}`);
   };
 
-  const handleToggleStatus = async (id: number, currentStatus: boolean) => {
-    const newStatus = !currentStatus;
-    const actionText = newStatus ? "ativar" : "desativar";
+  // --- 3. NOVOS HANDLERS (ABREM O MODAL) ---
 
-    // window.confirm é aceitável para decisões críticas
-    if (window.confirm(`Tem certeza que deseja ${actionText} a empresa?`)) {
-      try {
+  const handleToggleStatusClick = (id: number, currentStatus: boolean) => {
+    const actionText = !currentStatus ? "Ativar" : "Desativar";
+    const variant = !currentStatus ? "success" : "warning";
+    
+    setConfirmConfig({
+      isOpen: true,
+      type: 'toggle',
+      id,
+      currentStatus,
+      title: `${actionText} Empresa?`,
+      message: `Tem certeza que deseja ${actionText.toLowerCase()} esta empresa?`,
+      variant,
+      confirmText: `Sim, ${actionText}`
+    });
+  };
+
+  const handleDeleteClick = (id: number) => {
+    setConfirmConfig({
+      isOpen: true,
+      type: 'delete',
+      id,
+      title: "Excluir Empresa?",
+      message: "ATENÇÃO: Isso pode apagar todos os setores e documentos vinculados. Esta ação é irreversível.",
+      variant: 'danger',
+      confirmText: "Sim, Excluir"
+    });
+  };
+
+  // --- 4. EXECUÇÃO DA AÇÃO (CHAMADA PELO MODAL) ---
+
+  const handleConfirmAction = async () => {
+    const { id, type, currentStatus } = confirmConfig;
+    if (!id || !type) return;
+
+    setIsActionLoading(true);
+
+    try {
+      if (type === 'toggle' && currentStatus !== undefined) {
+        const newStatus = !currentStatus;
         await enterpriseService.toggleEnterpriseStatus(id, newStatus);
 
-        setEnterprises(currentEnterprises =>
-          currentEnterprises.map(enterprise => {
-            if (enterprise.enterprise_id === id) {
-              return { ...enterprise, is_active: newStatus };
-            }
-            return enterprise;
-          })
-        );
-        
+        setEnterprises(prev => prev.map(e => 
+          e.enterprise_id === id ? { ...e, is_active: newStatus } : e
+        ));
         toast.success(`Empresa ${newStatus ? 'ativada' : 'desativada'} com sucesso!`);
-
-      } catch (error) {
-        console.error(error);
-        toast.error(`Não foi possível alterar o status da empresa.`);
-      }
-    }
-  };
-
-  const handleDelete = async (id: number) => {
-    if (window.confirm(`ATENÇÃO: Tem certeza que deseja deletar esta empresa?\nIsso pode apagar todos os setores e documentos vinculados.`)) {
-      try {
+      } 
+      else if (type === 'delete') {
         await enterpriseService.deleteEnterprise(id);
-
-        setEnterprises(currentEnterprises =>
-          currentEnterprises.filter(enterprise => enterprise.enterprise_id !== id)
-        );
-
+        
+        setEnterprises(prev => prev.filter(e => e.enterprise_id !== id));
         toast.success('Empresa deletada com sucesso!');
-
-      } catch (error) {
-        console.error(error);
-        toast.error('Não foi possível deletar. Verifique se há vínculos ativos.');
       }
+      
+      // Fecha o modal
+      setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+
+    } catch (error) {
+      console.error(error);
+      toast.error(`Não foi possível realizar a ação.`);
+    } finally {
+      setIsActionLoading(false);
     }
   };
 
-  const goToCreateEnterprisePage = () => {
-    navigate("/criar-empresa");
-  }
-  // --- FIM DA LÓGICA ---
+  const goToCreateEnterprisePage = () => navigate("/criar-empresa");
 
+
+  // --- RENDERIZAÇÃO ---
   return (
     <div className='page-container'>
       <div className='container py-5'>
         
-        {/* Cabeçalho */}
         <div className="d-flex justify-content-between align-items-center mb-4">
           <div>
             <h1 className="h3 mb-1 fw-bold text-body-custom">Gestão de Empresas</h1>
@@ -148,10 +163,7 @@ const EnterprisePage = () => {
           </button>
         </div>
         
-        {/* Conteúdo Principal */}
         <div className="custom-card p-4">
-          
-          {/* Estado de Loading */}
           {isLoading && (
             <div className="d-flex flex-column justify-content-center align-items-center py-5 text-muted">
               <Loader2 className="animate-spin text-primary-custom mb-3" size={48} />
@@ -159,7 +171,6 @@ const EnterprisePage = () => {
             </div>
           )}
 
-          {/* Estado de Erro */}
           {error && (
             <div className="alert alert-danger d-flex align-items-center" role="alert">
               <AlertCircle className="me-2" size={20} />
@@ -167,25 +178,36 @@ const EnterprisePage = () => {
             </div>
           )}
           
-          {/* Lista de Dados */}
           {!isLoading && !error && (
             <EnterpriseList
               enterprises={enterprises}
-              onView={handleView} // Agora abre o Modal
+              onView={handleView}
               onEdit={handleEdit}
-              onToggleStatus={handleToggleStatus}
-              onDelete={handleDelete}
+              // Passamos os handlers que abrem o modal
+              onToggleStatus={handleToggleStatusClick}
+              onDelete={handleDeleteClick}
             />
           )}
         </div>
 
-        {/* Modal de Detalhes (Renderizado Condicionalmente) */}
         {viewingEnterprise && (
             <EnterpriseDetailsModal 
                 enterprise={viewingEnterprise}
                 onClose={() => setViewingEnterprise(null)}
             />
         )}
+
+        {/* 5. Modal de Confirmação */}
+        <ConfirmModal 
+          isOpen={confirmConfig.isOpen}
+          onClose={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
+          onConfirm={handleConfirmAction}
+          isLoading={isActionLoading}
+          title={confirmConfig.title}
+          message={confirmConfig.message}
+          variant={confirmConfig.variant}
+          confirmText={confirmConfig.confirmText}
+        />
 
       </div>
     </div>

@@ -117,7 +117,7 @@ const SectorCard = ({ sector, onView, onEdit, onDelete, onDeactivateOrActivate }
                   //@ts-ignore
                   onDeactivateOrActivate(sector.sector_id as ToggleSectorStatusPayload)
                 } 
-                className={`btn btn-sm ${sector.is_active ? 'btn-light text-warning' : 'btn-light text-success'}`}
+                className={`btn btn-sm ${!sector.is_active ? 'btn-light text-warning' : 'btn-light text-success'}`}
                 title={sector.is_active ? 'Desativar' : 'Ativar'}
               >
                 <Power size={18} />

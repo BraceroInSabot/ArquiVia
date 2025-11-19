@@ -1,13 +1,16 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Pencil, Trash2, Loader2, AlertCircle, Tag } from 'lucide-react'; 
 import toast from 'react-hot-toast';
 
 import documentService from '../services/Document/api';
-import sectorService from '../services/Sector/api'; // Necessário para buscar permissões
-import { useAuth } from '../contexts/AuthContext'; // Necessário para pegar o usuário logado
+import sectorService from '../services/Sector/api'; 
+import { useAuth } from '../contexts/AuthContext'; 
 import type { Category } from '../services/core-api';
+
+// Modais
 import CreateCategoryModal from '../components/CreateCategoryModal';
 import EditCategoryModal from '../components/EditCategoryModal'; 
+import ConfirmModal from '../components/ConfirmModal'; // 1. Importe o Modal Genérico
 
 import '../assets/css/EnterprisePage.css';
 import '../assets/css/SectorCategories.css'; 
@@ -26,9 +29,16 @@ const SectorCategories: React.FC<SectorCategoriesProps> = ({ sectorId }) => {
   // Estado de Permissão
   const [canEdit, setCanEdit] = useState(false);
 
+  // Estados dos Modais de Criação/Edição
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [categoryToEdit, setCategoryToEdit] = useState<Category | null>(null);
-  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  // 2. Novo Estado para o Modal de Exclusão
+  const [deleteModalConfig, setDeleteModalConfig] = useState<{ isOpen: boolean; categoryId: number | null }>({
+    isOpen: false,
+    categoryId: null
+  });
+  const [isDeleting, setIsDeleting] = useState(false); // Loading do botão do modal
 
   const fetchAllData = useCallback(async () => {
     if (!sectorId || !loggedInUser) return;
@@ -37,23 +47,18 @@ const SectorCategories: React.FC<SectorCategoriesProps> = ({ sectorId }) => {
     setError(null);
     
     try {
-      // 1. Busca Categorias
       const categoriesPromise = documentService.listCategoriesBySector(sectorId);
-      
-      // 2. Busca Usuários do Setor para determinar permissão (igual ao SectorUsers)
       const usersPromise = sectorService.getSectorUsers(sectorId);
 
       const [categoriesResponse, usersResponse] = await Promise.all([categoriesPromise, usersPromise]);
       
       setCategories(categoriesResponse.data.data || []);
 
-      // 3. Lógica de Permissão
       const sectorUsers = usersResponse.data.data;
       if (Array.isArray(sectorUsers)) {
         //@ts-ignore
         const currentUserRole = sectorUsers.find(u => u.user_id === loggedInUser.data.user_id)?.role;
         
-        // Se for Proprietário, Gestor ou Admin, pode editar. Membro não.
         if (currentUserRole) {
             const role = currentUserRole.toLowerCase();
             if (role === 'proprietário' || role === 'gestor' || role === 'administrador') {
@@ -76,19 +81,40 @@ const SectorCategories: React.FC<SectorCategoriesProps> = ({ sectorId }) => {
     fetchAllData();
   }, [fetchAllData]);
 
-  const handleDelete = async (categoryId: number) => {
-    if (!window.confirm("Tem certeza que deseja excluir esta categoria?")) return;
+  // --- 3. Handler para ABRIR o Modal ---
+  const requestDelete = (categoryId: number) => {
+    setDeleteConfirmation({ isOpen: true, categoryId });
+  };
+  
+  // Helper para atualizar o estado do modal de forma limpa
+  const setDeleteConfirmation = (config: { isOpen: boolean; categoryId: number | null }) => {
+    setDeleteModalConfig(config);
+  };
 
-    setDeletingId(categoryId); 
+  // --- 4. Handler para EXECUTAR a Exclusão (Passado para o Modal) ---
+  const handleConfirmDelete = async () => {
+    const categoryId = deleteModalConfig.categoryId;
+    if (!categoryId) return;
+
+    setIsDeleting(true);
+    
     try {
       await documentService.deleteCategory(categoryId, sectorId);
+      
+      // Atualiza a lista localmente
       setCategories(prev => prev.filter(cat => cat.category_id !== categoryId));
       toast.success("Categoria excluída com sucesso.");
+      
+      // Fecha o modal
+      setDeleteConfirmation({ isOpen: false, categoryId: null });
+
     } catch (err: any) {
       const errMsg = err.response?.data?.data?.non_field_errors?.[0] || "Falha ao excluir categoria.";
       toast.error(errMsg);
+      // Fecha o modal mesmo em erro (ou pode manter aberto se preferir)
+      setDeleteConfirmation({ isOpen: false, categoryId: null });
     } finally {
-      setDeletingId(null);
+      setIsDeleting(false);
     }
   };
 
@@ -115,11 +141,9 @@ const SectorCategories: React.FC<SectorCategoriesProps> = ({ sectorId }) => {
   return (
     <div className="mt-4">
       
-      {/* Cabeçalho da Seção */}
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h5 className="fw-bold text-secondary mb-0">Categorias do Setor</h5>
         
-        {/* Botão de Criar (Só aparece se tiver permissão) */}
         {canEdit && (
             <button 
             className="btn btn-primary-custom btn-sm d-flex align-items-center gap-2 shadow-sm"
@@ -156,7 +180,6 @@ const SectorCategories: React.FC<SectorCategoriesProps> = ({ sectorId }) => {
                   {category.description || <span className="fst-italic opacity-50">Sem descrição.</span>}
                 </p>
                 
-                {/* Botões de Ação (Só aparecem se tiver permissão) */}
                 {canEdit && (
                     <div className="d-flex justify-content-end gap-2 pt-2 border-top">
                     <button 
@@ -169,15 +192,11 @@ const SectorCategories: React.FC<SectorCategoriesProps> = ({ sectorId }) => {
 
                     <button 
                         className="btn btn-light btn-sm text-danger"
-                        onClick={() => handleDelete(category.category_id)}
-                        disabled={deletingId === category.category_id}
+                        // 5. Atualizado para chamar requestDelete
+                        onClick={() => requestDelete(category.category_id)}
                         title="Excluir Categoria"
                     >
-                        {deletingId === category.category_id ? (
-                            <Loader2 size={16} className="animate-spin" />
-                        ) : (
-                            <Trash2 size={16} />
-                        )}
+                        <Trash2 size={16} />
                     </button>
                     </div>
                 )}
@@ -188,12 +207,12 @@ const SectorCategories: React.FC<SectorCategoriesProps> = ({ sectorId }) => {
         </div>
       )}
 
-      {/* Modais */}
+      {/* Modais de Criação e Edição */}
       {isCreateModalOpen && (
         <CreateCategoryModal
           sectorId={sectorId}
           onClose={() => setIsCreateModalOpen(false)}
-          onSuccess={() => fetchAllData()} // Recarrega tudo
+          onSuccess={() => fetchAllData()} 
         />
       )}
 
@@ -202,9 +221,22 @@ const SectorCategories: React.FC<SectorCategoriesProps> = ({ sectorId }) => {
           sectorId={sectorId}
           category={categoryToEdit}
           onClose={() => setCategoryToEdit(null)}
-          onSuccess={() => fetchAllData()} // Recarrega tudo
+          onSuccess={() => fetchAllData()} 
         />
       )}
+
+      {/* 6. Modal de Confirmação de Exclusão */}
+      <ConfirmModal 
+        isOpen={deleteModalConfig.isOpen}
+        onClose={() => setDeleteConfirmation({ isOpen: false, categoryId: null })}
+        onConfirm={handleConfirmDelete}
+        isLoading={isDeleting}
+        title="Excluir Categoria"
+        message="Tem certeza que deseja excluir esta categoria? Esta ação não pode ser desfeita e pode afetar documentos vinculados."
+        variant="danger"
+        confirmText="Sim, Excluir"
+        cancelText="Cancelar"
+      />
     </div>
   );
 };

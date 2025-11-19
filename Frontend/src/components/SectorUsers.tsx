@@ -1,11 +1,24 @@
-import { useState, useEffect } from 'react';
-import { Trash2, Shield, UserCheck, UserMinus, UserPlus, Loader2, AlertCircle } from 'lucide-react'; // Ícones
-import sectorService from '../services/Sector/api';
-import { useAuth } from '../contexts/AuthContext';
-import type { promoteUserToAdministratorPayload, SectorUser } from '../services/core-api';
+import { useState, useEffect, useCallback } from 'react';
+import { Trash2, Shield, UserCheck, UserMinus, UserPlus, Loader2, AlertCircle } from 'lucide-react'; 
 import toast from 'react-hot-toast';
 
+import sectorService from '../services/Sector/api';
+import { useAuth } from '../contexts/AuthContext';
+import type { SectorUser } from '../services/core-api';
+
 import AddSectorUserModal from './AddSectorUserModal';
+import ConfirmModal, { type ConfirmVariant } from './ConfirmModal'; // 1. Importe o Modal
+
+// Interface para configurar o modal dinamicamente
+interface ConfirmConfig {
+  isOpen: boolean;
+  type: 'remove' | 'promote_manager' | 'toggle_admin' | null;
+  data: any; // Dados flexíveis para passar ID, email ou payload
+  title: string;
+  message: string;
+  variant: ConfirmVariant;
+  confirmText: string;
+}
 
 interface SectorUsersProps {
   sectorId: number;
@@ -15,48 +28,47 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
   const [users, setUsers] = useState<SectorUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Permissões
   const [isOwner, setIsOwner] = useState(false);
   const [isManager, setIsManager] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const { user: loggedInUser, isLoading: isAuthLoading } = useAuth(); 
 
-  // --- LÓGICA (MANTIDA INTACTA) ---
-  useEffect(() => {
-    if (!loggedInUser && !isAuthLoading) {
-      setError("Não foi possível identificar o usuário logado.");
-      setIsLoading(false); 
-      return;
-    }
-    
-    if (!sectorId || !loggedInUser) {
-      return;
-    }
+  // 2. Estado do Modal de Confirmação
+  const [isActionLoading, setIsActionLoading] = useState(false);
+  const [confirmConfig, setConfirmConfig] = useState<ConfirmConfig>({
+    isOpen: false, type: null, data: null, title: '', message: '', variant: 'warning', confirmText: ''
+  });
 
-    const fetchAllData = async () => {
+  // --- BUSCA DE DADOS ---
+  const fetchAllData = useCallback(async () => {
+      if (!loggedInUser && !isAuthLoading) {
+        setError("Não foi possível identificar o usuário logado.");
+        setIsLoading(false); 
+        return;
+      }
+      if (!sectorId || !loggedInUser) return;
+
       setIsLoading(true);
       setError(null);
-      setIsOwner(false);
-      setIsManager(false);
-      setIsAdmin(false);
+      // Reseta permissões
+      setIsOwner(false); setIsManager(false); setIsAdmin(false);
 
       try {
         const usersResponse = await sectorService.getSectorUsers(sectorId);
         const sectorUsers = usersResponse.data.data;
         
-        if (!Array.isArray(sectorUsers)) {
-          console.error("A resposta da API de usuários não era um array:", usersResponse.data);
-          throw new Error("A resposta da API de usuários não continha um array.");
-        }
+        if (!Array.isArray(sectorUsers)) throw new Error("Formato de resposta inválido.");
         
         setUsers(sectorUsers);
         
-        //@ts-ignore
-        const userRoleInThisSector = sectorUsers.find(
-          //@ts-ignore
-          (user) => user.user_id === loggedInUser.data.user_id
-        )?.role;
+        // @ts-ignore
+        const userId = loggedInUser.data.user_id;
+        // @ts-ignore
+        const userRoleInThisSector = sectorUsers.find(u => u.user_id === userId)?.role;
 
         if (userRoleInThisSector) {
           const role = userRoleInThisSector.toLowerCase();
@@ -65,63 +77,98 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
           else if (role === 'administrador') setIsAdmin(true);
         }
       } catch (err) {
-        console.error("Falha ao buscar dados dos usuários:", err);
-        setError("Não foi possível carregar os dados dos usuários.");
+        console.error("Falha ao buscar dados:", err);
+        setError("Não foi possível carregar os usuários.");
       } finally {
         setIsLoading(false);
       }
-    };
-    fetchAllData();
   }, [sectorId, loggedInUser, isAuthLoading]);
 
+  useEffect(() => {
+    fetchAllData();
+  }, [fetchAllData]);
+
   const handleUserAdded = (newUser: SectorUser) => {
-    setUsers(currentUsers => [...currentUsers, newUser]);
+    setUsers(current => [...current, newUser]);
+    toast.success("Usuário adicionado com sucesso!");
   };
 
-  const handleUserRemove = async (sectorUserLinkId: number) => {
-    if (window.confirm("Tem certeza que deseja remover este usuário?")) {
-      try {
-        await sectorService.removeUserFromSector(sectorUserLinkId);
+  // --- 3. HANDLERS DE ABERTURA DE MODAL (Request Action) ---
+
+  const requestRemove = (user: SectorUser) => {
+    setConfirmConfig({
+      isOpen: true,
+      type: 'remove',
+      data: user.sector_user_id,
+      title: "Remover Usuário?",
+      message: `Tem certeza que deseja remover "${user.user_name}" deste setor?`,
+      variant: 'danger',
+      confirmText: "Sim, Remover"
+    });
+  };
+
+  const requestPromoteManager = (user: SectorUser) => {
+    setConfirmConfig({
+      isOpen: true,
+      type: 'promote_manager',
+      data: user.user_email,
+      title: "Promover a Gerente?",
+      message: `ATENÇÃO: Ao promover "${user.user_name}" a Gerente, você deixará de ser o Gerente deste setor (se for o caso). Deseja continuar?`,
+      variant: 'warning',
+      confirmText: "Sim, Promover"
+    });
+  };
+
+  const requestToggleAdmin = (user: SectorUser, makeAdmin: boolean) => {
+    const action = makeAdmin ? "Promover a Administrador" : "Rebaixar de Administrador";
+    setConfirmConfig({
+      isOpen: true,
+      type: 'toggle_admin',
+      data: { sectorUserLinkId: user.sector_user_id, makeAdmin },
+      title: `${action}?`,
+      message: `Deseja realmente ${makeAdmin ? 'tornar' : 'remover'} "${user.user_name}" como administrador do setor?`,
+      variant: 'info',
+      confirmText: "Confirmar"
+    });
+  };
+
+  // --- 4. EXECUÇÃO DA AÇÃO ---
+
+  const handleConfirmAction = async () => {
+    const { type, data } = confirmConfig;
+    if (!type) return;
+
+    setIsActionLoading(true);
+
+    try {
+      if (type === 'remove') {
+        await sectorService.removeUserFromSector(data);
+        setUsers(prev => prev.filter(u => u.sector_user_id !== data));
         toast.success("Usuário removido com sucesso.");
-        window.location.reload();
-      } catch (err) {
-        toast.error("Não foi possível remover o usuário do setor.");
+      } 
+      else if (type === 'promote_manager') {
+        // @ts-ignore
+        await sectorService.promoteUserToManager(sectorId, { new_manager_email: data });
+        toast.success("Gerente alterado com sucesso.");
+        fetchAllData(); // Recarrega tudo pois permissões mudam
       }
+      else if (type === 'toggle_admin') {
+        // @ts-ignore
+        await sectorService.promoteUserToAdministrator(data);
+        toast.success(`Permissão de administrador ${data.makeAdmin ? 'concedida' : 'removida'}.`);
+        fetchAllData(); // Recarrega para atualizar a lista
+      }
+
+      setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+
+    } catch (err: any) {
+      console.error("Erro na ação:", err);
+      const msg = err.response?.data?.message || "Falha ao realizar a operação.";
+      toast.error(msg);
+    } finally {
+      setIsActionLoading(false);
     }
   };
-
-  const handlePromoteUserToManager = async (userEmail: string) => {
-    try {
-      //@ts-ignore
-      await sectorService.promoteUserToManager(sectorId, { new_manager_email: userEmail });
-      toast.success("Usuário promovido a gerente com sucesso.");
-      window.location.reload();
-    } catch (err) {
-      toast.error("Não foi possível promover o usuário para gerente.");
-    }
-  };
-
-  const handlePromoteUserToAdministrator = async ({ sectorUserLinkId, makeAdmin }: promoteUserToAdministratorPayload) => {
-    try {
-      //@ts-ignore
-      await sectorService.promoteUserToAdministrator({sectorUserLinkId, makeAdmin});
-      toast.success(`Usuário ${makeAdmin ? 'promovido' : 'rebaixado'} com sucesso.`);
-      window.location.reload();
-    } catch (err) {
-      toast.error("Não foi possível alterar o cargo do usuário.");
-    }
-  };
-
-  // Helper para cor do badge
-  const getRoleBadgeClass = (role: string) => {
-    const lowerRole = role.toLowerCase();
-    if (lowerRole === 'proprietário') return 'bg-warning text-dark';
-    if (lowerRole === 'gestor') return 'bg-primary text-white';
-    if (lowerRole === 'administrador') return 'bg-info text-white';
-    return 'bg-secondary text-white';
-  };
-  // --- FIM DA LÓGICA ---
-
 
   // --- RENDERIZAÇÃO ---
 
@@ -144,6 +191,15 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
   }
 
   const hasPermission = isOwner || isManager || isAdmin;
+
+  // Helper para cor do badge
+  const getRoleBadgeClass = (role: string) => {
+    const lowerRole = role.toLowerCase();
+    if (lowerRole === 'proprietário') return 'bg-warning text-dark';
+    if (lowerRole === 'gestor') return 'bg-primary text-white';
+    if (lowerRole === 'administrador') return 'bg-info text-white';
+    return 'bg-secondary text-white';
+  };
 
   return (
     <div className="mt-4">
@@ -190,7 +246,6 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
                 const isSelf = user.user_id === loggedInUser.data.user_id;
                 const isTargetOwner = targetRole === 'proprietário';
                 
-                // Lógica de permissão para remover
                 const canRemove = !isSelf && !isTargetOwner && (
                     isOwner || 
                     (isManager && (targetRole === 'administrador' || targetRole === 'membro')) || 
@@ -216,7 +271,7 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
                             {/* Botão Remover */}
                             {canRemove && (
                               <button 
-                                onClick={() => handleUserRemove(user.sector_user_id)}
+                                onClick={() => requestRemove(user)} // <-- Chama requestRemove
                                 className="btn btn-light btn-sm text-danger"
                                 title="Remover Usuário"
                               >
@@ -227,7 +282,7 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
                             {/* Botão Promover a Gerente */}
                             {isOwner && (targetRole === 'membro' || targetRole === 'administrador') && (
                               <button 
-                                onClick={() => handlePromoteUserToManager(user.user_email)}
+                                onClick={() => requestPromoteManager(user)} // <-- Chama requestPromoteManager
                                 className="btn btn-light btn-sm text-primary"
                                 title="Promover para Gerente"
                               >
@@ -235,10 +290,10 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
                               </button>
                             )}
                             
-                            {/* Botão Promover/Rebaixar Admin */}
+                            {/* Botões de Admin */}
                             {(isOwner || isManager) && targetRole === 'membro' && (
                               <button 
-                                onClick={() => handlePromoteUserToAdministrator({sectorUserLinkId: user.sector_user_id, makeAdmin: true})}
+                                onClick={() => requestToggleAdmin(user, true)} // <-- Chama requestToggleAdmin
                                 className="btn btn-light btn-sm text-info"
                                 title="Promover para Administrador"
                               >
@@ -248,7 +303,7 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
 
                             {(isOwner || isManager) && targetRole === 'administrador' && (
                               <button 
-                                onClick={() => handlePromoteUserToAdministrator({sectorUserLinkId: user.sector_user_id, makeAdmin: false})}
+                                onClick={() => requestToggleAdmin(user, false)} // <-- Chama requestToggleAdmin
                                 className="btn btn-light btn-sm text-secondary"
                                 title="Rebaixar de Administrador"
                               >
@@ -266,6 +321,18 @@ const SectorUsers = ({ sectorId }: SectorUsersProps) => {
           </table>
         </div>
       )}
+
+      {/* 5. Modal de Confirmação */}
+      <ConfirmModal 
+        isOpen={confirmConfig.isOpen}
+        onClose={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={handleConfirmAction}
+        isLoading={isActionLoading}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        variant={confirmConfig.variant}
+        confirmText={confirmConfig.confirmText}
+      />
     </div>
   );
 };

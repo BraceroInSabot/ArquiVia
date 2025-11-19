@@ -155,7 +155,7 @@ export default function ActionsPlugin({
                                 {apiHistory.map((entry) => (
                                     <li key={entry.history_id} className="list-group-item list-group-item-action d-flex justify-content-between align-items-center px-3 py-2">
                                         <div className="history-info">
-                                            <span className="fw-medium small">{new Date(entry.history_date).toLocaleString()}</span>
+                                            <span className="fw-medium small">{entry.history_date}</span>
                                             <span className="text-muted small d-block">{entry.user_name} • {entry.action}</span>
                                         </div>
                                         <div className="d-flex gap-1">
@@ -263,7 +263,7 @@ export default function ActionsPlugin({
                 onConfirm={handleConfirmRevert}
                 isLoading={isReverting}
                 title="Reverter Versão"
-                message={`Tem certeza que deseja reverter para a versão de ${new Date(revertConfig.historyEntry?.history_date || '').toLocaleString()}? Isso substituirá o conteúdo atual.`}
+                message={`Tem certeza que deseja reverter para a versão de ${revertConfig.historyEntry?.history_date || ''}? Isso substituirá o conteúdo atual.`}
                 variant="warning"
                 confirmText="Sim, Reverter"
             />

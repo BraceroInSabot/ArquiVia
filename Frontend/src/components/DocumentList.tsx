@@ -251,7 +251,7 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
           </div>
           <div className="d-flex align-items-center gap-2" title="Data de Criação">
             <Calendar size={14} />
-            <span>{new Date(doc.created_at).toLocaleDateString()}</span>
+            <span>{doc.created_at}</span>
           </div>
         </div>
 

@@ -208,7 +208,7 @@ export default function AttachedFilesModal({ documentId, onClose }: AttachedFile
                                 {file.title}
                             </h6>
                             <small className="text-muted d-block">
-                                {new Date(file.attached_at).toLocaleDateString()} • {new Date(file.attached_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                {file.attached_at} • {new Date(file.attached_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                             </small>
                         </div>
                     </div>

@@ -35,7 +35,7 @@ class IsCategoryADM(BasePermission):
     Concede permissão para apenas:
     1. Donos
     2. Gestores
-    3. Membros
+    3. Administradores
     do setor (obj) listar as categorias.
     """
     message = "Você não tem permissão para visualizar esta categoria."

@@ -85,7 +85,7 @@ class ListDocumentsView(APIView):
         queryset = queryset.select_related(
             'classification__classification_status', 
             'sector'
-        ).order_by('-created_at')
+        ).order_by('-is_active', '-created_at')
 
         paginator = DocumentPagination()
         result_page = paginator.paginate_queryset(queryset, request, view=self)

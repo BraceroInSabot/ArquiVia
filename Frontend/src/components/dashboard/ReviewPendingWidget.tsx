@@ -39,7 +39,7 @@ const ReviewPendingWidget: React.FC<ReviewProps> = ({ documents }) => {
                   {doc.title}
                 </span>
                 <small className="text-muted">
-                  Criado em: {new Date(doc.created_at).toLocaleDateString()}
+                  Criado em: {doc.created_at}
                 </small>
               </div>
               <ChevronRight size={18} className="text-muted" />

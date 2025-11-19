@@ -159,7 +159,7 @@ const ViewSectorPage = () => {
                     <div className="d-flex flex-wrap gap-3 text-sm text-secondary">
                         <div><span className="fw-semibold">Gerente:</span> {sector.manager_name}</div>
                         <div className="vr opacity-25 d-none d-sm-block"></div>
-                        <div><span className="fw-semibold">Criado em:</span> {new Date(sector.creation_date).toLocaleDateString()}</div>
+                        <div><span className="fw-semibold">Criado em:</span> {sector.creation_date}</div>
                         <div className="vr opacity-25 d-none d-sm-block"></div>
                         <div><span className={`badge ${sector.is_active ? 'bg-success' : 'bg-secondary'}`}>{sector.is_active ? 'Ativo' : 'Inativo'}</span></div>
                     </div>

@@ -88,7 +88,7 @@ export default function ActionsPlugin({
 
     const handleRevert = async (historyEntry: DocumentHistory) => {
         if (!documentId) return;
-        const confirmMsg = `Tem certeza que deseja reverter para a versão de ${new Date(historyEntry.history_date).toLocaleString()}? \nIsso substituirá o conteúdo atual.`;
+        const confirmMsg = `Tem certeza que deseja reverter para a versão de ${historyEntry.history_date}? \nIsso substituirá o conteúdo atual.`;
         if (!window.confirm(confirmMsg)) return;
 
         try {
@@ -134,7 +134,7 @@ export default function ActionsPlugin({
                                     <li key={entry.history_id} className="history-item">
                                         <div className="history-info">
                                             <span className="history-timestamp">
-                                                {new Date(entry.history_date).toLocaleDateString()} 
+                                                {entry.history_date} 
                                                 <small className="ms-1 text-muted">
                                                     {new Date(entry.history_date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                                 </small>

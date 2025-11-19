@@ -183,7 +183,7 @@ export default function AttachedFilesModal({ documentId, onClose }: AttachedFile
                 <div className="file-info">
                   <span className="file-title">{file.title}</span>
                   <span className="file-date">
-                    Anexado em: {new Date(file.attached_at).toLocaleDateString()} às {new Date(file.attached_at).toLocaleTimeString()}
+                    Anexado em: {file.attached_at} às {file.attached_at}
                   </span>
                 </div>
                 <div className="file-actions">

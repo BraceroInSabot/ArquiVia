@@ -83,7 +83,7 @@ const EnterpriseDetailsModal: React.FC<EnterpriseDetailsModalProps> = ({ enterpr
                             <div className="d-flex flex-column">
                                 <span className="text-muted" style={{fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: 'bold'}}>Criação</span>
                                 <span className="fw-bold text-dark small">
-                                    {new Date(enterprise.created_at).toLocaleDateString()}
+                                    {enterprise.created_at}
                                 </span>
                             </div>
                         </div>

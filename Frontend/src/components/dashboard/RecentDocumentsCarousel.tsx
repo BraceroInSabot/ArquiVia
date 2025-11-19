@@ -73,7 +73,7 @@ const RecentDocumentsCarousel: React.FC<CarouselProps> = ({ documents }) => {
               <FileText size={40} className="mb-3 opacity-50" />
               <h3 className="fw-bold mb-1">{doc.title}</h3>
               <p className="mb-0">
-                Criado em: {new Date(doc.created_at).toLocaleDateString()}
+                Criado em: {doc.created_at}
                 <span className={`ms-3 fw-bold ${getStatusClass(doc.status_label)}`}>
                   ({doc.status_label})
                 </span>

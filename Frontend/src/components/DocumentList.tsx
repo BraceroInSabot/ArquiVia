@@ -12,6 +12,7 @@ import PaginationControl from './PaginationControl';
 import ConfirmModal, { type ConfirmVariant } from './ConfirmModal'; // 1. Importe o Modal
 
 import "../assets/css/EnterprisePage.css"; 
+import toast from 'react-hot-toast';
 
 interface DocumentListProps {
   filters: DocumentFilters;
@@ -180,7 +181,7 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
 
     } catch (err: any) {
       const errorMsg = err.response?.data?.message || "Falha ao realizar a operação.";
-      alert(errorMsg); // Use toast.error se disponível
+      toast.error(errorMsg); // Use toast.error se disponível
     } finally {
       setIsActionLoading(false);
     }
@@ -278,7 +279,7 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
 
           <button 
             onClick={() => requestToggleStatus(doc)} 
-            className={`btn btn-light btn-sm ${doc.is_active ? 'text-warning' : 'text-success'}`}
+            className={`btn btn-light btn-sm ${!doc.is_active ? 'text-warning' : 'text-success'}`}
             title={doc.is_active ? 'Desativar Documento' : 'Ativar Documento'}
             disabled={isActionLoading && confirmConfig.doc?.document_id === doc.document_id}
           >

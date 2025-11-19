@@ -15,6 +15,7 @@ import AttachedFilesModal from '../components/AttachedFilesModal';
 import documentService from '../services/Document/api';
 import type { DocumentHistory } from '../services/core-api';
 import ConfirmModal from '../components/ConfirmModal'; // Importe o Modal de Confirmação
+import toast from 'react-hot-toast';
 
 // Remova a importação do CSS customizado, usaremos só Bootstrap
 // import '../assets/css/ActionsPlugin.css'; 
@@ -67,7 +68,7 @@ export default function ActionsPlugin({
 
     const handleFilesClick = () => {
         if (documentId) setIsFilesModalOpen(true);
-        else alert("Salve o documento antes de visualizar anexos.");
+        else toast.error("Salve o documento antes de visualizar anexos.");
     };
 
     const handleHistoryClick = async () => {
@@ -76,7 +77,7 @@ export default function ActionsPlugin({
             return;
         }
         if (!documentId) {
-            alert("Salve o documento pelo menos uma vez para ver o histórico.");
+            toast.error("Salve o documento pelo menos uma vez para ver o histórico.");
             return;
         }
 
@@ -118,7 +119,7 @@ export default function ActionsPlugin({
 
         } catch (e) {
             console.error("Falha ao reverter:", e);
-            alert("Erro ao reverter versão."); // Use toast se tiver
+            toast.error("Erro ao reverter versão."); // Use toast se tiver
         } finally {
             setIsReverting(false);
         }

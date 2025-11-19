@@ -1,5 +1,5 @@
 import api from '../core-api';
-import type { Classification, CreateDocument, Document, DocumentList, ResponseStructure, UpdateDocumentPayload, UpdateClassificationPayload, Category, AddCategoriesPayload, CreateCategoryPayload, UpdateCategoryPayload, AttachedFile, DocumentHistory, DocumentFilters, AvailableCategorySearch} from '../core-api';
+import type { Classification, CreateDocument, Document, DocumentList, ResponseStructure, UpdateDocumentPayload, UpdateClassificationPayload, Category, AddCategoriesPayload, CreateCategoryPayload, UpdateCategoryPayload, AttachedFile, DocumentHistory, DocumentFilters, AvailableCategorySearch, PaginatedResponse} from '../core-api';
 
 const documentService = {
     /**
@@ -21,8 +21,8 @@ const documentService = {
   /**
    * Consulta os documentos vinculados ao usuário.
    */
-  getDocuments(): Promise<{ data: ResponseStructure<DocumentList[]> }> {
-    return api.get('/documento/visualizar/');
+  getDocuments(page: number = 1): Promise<{ data: ResponseStructure<PaginatedResponse<DocumentList>> }> {
+     return api.get(`/documento/visualizar/?page=${page}`);
   },
 
   /** 
@@ -155,34 +155,19 @@ const documentService = {
    * Busca documentos usando RI e filtros avançados.
    * @param filters O objeto com todos os filtros.
    */
-  searchDocuments(filters: DocumentFilters): Promise<{ data: ResponseStructure<DocumentList[]> }> {
-    // 2. Cria um objeto URLSearchParams para construir a query string
+  searchDocuments(filters: DocumentFilters, page: number = 1): Promise<{ data: ResponseStructure<PaginatedResponse<DocumentList>> }> {
     const params = new URLSearchParams();
 
-    // 3. Adiciona o termo de busca principal (q)
-    if (filters.searchTerm) {
-      params.append('q', filters.searchTerm);
-    }
+    params.append('page', page.toString());
 
-    // 4. Adiciona os filtros avançados (ignorando 'all' ou valores vazios)
-    if (filters.isReviewed && filters.isReviewed !== '') {
-      params.append('is_reviewed', filters.isReviewed);
-    }
-    if (filters.statusId && filters.statusId !== '') {
-      params.append('status_id', filters.statusId);
-    }
-    if (filters.privacityId && filters.privacityId !== '') {
-      params.append('privacity_id', filters.privacityId);
-    }
-    if (filters.reviewer && filters.reviewer.trim() !== '') {
-      params.append('reviewer_name', filters.reviewer);
-    }
-    if (filters.categories && filters.categories.trim() !== '') {
-      params.append('categories', filters.categories);
-    }
+    if (filters.searchTerm) params.append('q', filters.searchTerm);
+    if (filters.isReviewed && filters.isReviewed !== 'all') params.append('is_reviewed', filters.isReviewed);
+    if (filters.statusId && filters.statusId !== 'all') params.append('status_id', filters.statusId);
+    if (filters.privacityId && filters.privacityId !== 'all') params.append('privacity_id', filters.privacityId);
+    if (filters.reviewer && filters.reviewer.trim() !== '') params.append('reviewer_name', filters.reviewer);
+    if (filters.categories && filters.categories.trim() !== '') params.append('categories', filters.categories);
 
     const queryString = params.toString();
-
     return api.get(`/documento/buscar/?${queryString}`);
   },
 

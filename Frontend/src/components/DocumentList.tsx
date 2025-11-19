@@ -5,9 +5,10 @@ import {
   Trash2, Power, Building, Layers, Archive 
 } from 'lucide-react'; 
 
-import type { DocumentList, DocumentFilters } from '../services/core-api';
+import type { DocumentList, DocumentFilters, PaginatedResponse } from '../services/core-api';
 import documentService from '../services/Document/api';
 import ClassificationModal from '../components/ClassificationModal';
+import PaginationControl from './PaginationControl'; // Importe o componente de paginação
 
 import "../assets/css/EnterprisePage.css"; 
 
@@ -20,11 +21,17 @@ interface DocumentGroup {
   docs: DocumentList[];
 }
 
+const PAGE_SIZE = 21; // Definido pela regra de negócio do backend
+
 const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
   const [documents, setDocuments] = useState<DocumentList[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
+  // Estados de Paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDocId, setSelectedDocId] = useState<number | null>(null);
@@ -32,6 +39,12 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
   
   const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
 
+  // Reset de página ao mudar filtros
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters]);
+
+  // --- EFEITO PRINCIPAL: BUSCA vs LISTAGEM ---
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
@@ -39,29 +52,35 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
       setSearchMessage(''); 
       
       try {
-        let response;
+        let responseData: PaginatedResponse<DocumentList>;
+        let message = '';
         
         const hasSearchTerm = filters.searchTerm && filters.searchTerm.trim() !== '';
-        const hasAdvancedFilters = (filters.isReviewed && filters.isReviewed !== '') ||
-                                 (filters.statusId && filters.statusId !== '') ||
-                                 (filters.privacityId && filters.privacityId !== '') ||
+        const hasAdvancedFilters = (filters.isReviewed && filters.isReviewed !== 'all') ||
+                                 (filters.statusId && filters.statusId !== 'all') ||
+                                 (filters.privacityId && filters.privacityId !== 'all') ||
                                  (filters.reviewer && filters.reviewer.trim() !== '') ||
-                                 (filters.categories && filters.categories.trim() !== '')
+                                 (filters.categories && filters.categories.trim() !== '');
 
         if (hasSearchTerm || hasAdvancedFilters) {
-          response = await documentService.searchDocuments(filters);
-          setSearchMessage(response.data.mensagem || '');
+          const res = await documentService.searchDocuments(filters, currentPage);
+          responseData = res.data.data;
+          message = res.data.mensagem;
+          setSearchMessage(message || '');
         } else {
-          response = await documentService.getDocuments();
+          const res = await documentService.getDocuments(currentPage);
+          responseData = res.data.data;
         }
 
-        setDocuments(response.data.data || []);
+        setDocuments(responseData.results || []);
+        setTotalCount(responseData.count || 0);
         
       } catch (err: any) {
         console.error("Erro na listagem/busca:", err);
         const msg = err.response?.data?.message || "Falha ao carregar documentos.";
         setError(msg);
         setDocuments([]);
+        setTotalCount(0);
       } finally {
         setLoading(false);
       }
@@ -69,8 +88,9 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
 
     loadData();
 
-  }, [filters]); 
+  }, [filters, currentPage]); 
 
+  // --- Handlers ---
   const handleEditClick = (documentId: number) => {
     navigate(`/documento/editar/${documentId}`);
   };
@@ -113,6 +133,8 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
       setDocuments(prevDocs => 
         prevDocs.filter(d => d.document_id !== doc.document_id)
       );
+      // Opcional: Recarregar dados para atualizar a paginação se um item for excluído
+      // loadData();
     } catch (err: any) {
       alert(err.response?.data?.message || "Falha ao excluir o documento.");
     } finally {
@@ -154,34 +176,6 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
 
   }, [documents, filters.groupBy]);
 
-  if (loading) {
-    return (
-        <div className="d-flex justify-content-center align-items-center py-5 text-muted">
-            <Loader2 className="animate-spin me-2" size={24} />
-            <span>Carregando documentos...</span>
-        </div>
-    );
-  }
-
-  if (error) {
-    return (
-        <div className="alert alert-danger d-flex align-items-center mt-3 mx-auto" style={{ maxWidth: '600px' }} role="alert">
-            <AlertCircle className="me-2" size={20} />
-            <div>{error}</div>
-        </div>
-    );
-  }
-
-  if (documents.length === 0) {
-    return (
-        <div className="text-center text-muted py-5 bg-light rounded border border-dashed mt-3">
-            <SearchX size={48} className="opacity-25 mb-3" />
-            <p className="mb-0 fw-medium">{searchMessage || "Nenhum documento encontrado."}</p>
-            {filters.searchTerm && <small>Tente outro termo de busca.</small>}
-        </div>
-    );
-  }
-
   const getGroupIcon = () => {
     if (filters.groupBy === 'enterprise') return <Building size={20} />;
     if (filters.groupBy === 'sector') return <Layers size={20} />;
@@ -210,7 +204,7 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
           </div>
           <div className="d-flex align-items-center gap-2" title="Data de Criação">
             <Calendar size={14} />
-            <span>{doc.created_at}</span>
+            <span>{new Date(doc.created_at).toLocaleDateString()}</span>
           </div>
         </div>
         <div className="d-flex justify-content-end gap-2 border-top pt-2 mt-auto">
@@ -255,6 +249,37 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
     </div>
   );
 
+
+  // --- RENDERIZAÇÃO ---
+
+  if (loading) {
+    return (
+        <div className="d-flex justify-content-center align-items-center py-5 text-muted">
+            <Loader2 className="animate-spin me-2" size={24} />
+            <span>Carregando documentos...</span>
+        </div>
+    );
+  }
+
+  if (error) {
+    return (
+        <div className="alert alert-danger d-flex align-items-center mt-3 mx-auto" style={{ maxWidth: '600px' }} role="alert">
+            <AlertCircle className="me-2" size={20} />
+            <div>{error}</div>
+        </div>
+    );
+  }
+
+  if (documents.length === 0) {
+    return (
+        <div className="text-center text-muted py-5 bg-light rounded border border-dashed mt-3">
+            <SearchX size={48} className="opacity-25 mb-3" />
+            <p className="mb-0 fw-medium">{searchMessage || "Nenhum documento encontrado."}</p>
+            {filters.searchTerm && <small>Tente outro termo de busca.</small>}
+        </div>
+    );
+  }
+
   return (
     <>
       {searchMessage && filters.searchTerm && (
@@ -296,6 +321,18 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
         </div>
       )}
       
+      {/* --- PAGINAÇÃO --- */}
+      <PaginationControl 
+        currentPage={currentPage}
+        totalCount={totalCount}
+        pageSize={PAGE_SIZE}
+        onPageChange={(newPage) => {
+            setLoading(true); // Feedback visual
+            setCurrentPage(newPage);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+      />
+
       {isModalOpen && selectedDocId && (
         <ClassificationModal
           documentId={selectedDocId}

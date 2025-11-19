@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-const BASE: string = "https://bracero.com.br/"
-// const BASE: string = "http://localhost:8000/"
+// const BASE: string = "https://bracero.com.br/"
+const BASE: string = "http://localhost:8000/"
 const VERSION: string = "api/v2/"
 const URL: string = BASE + VERSION
 
@@ -308,6 +308,7 @@ export interface DocumentFilters {
   reviewer?: string;
   categories?: string;
   groupBy?: 'none' | 'enterprise' | 'sector' | 'both';
+  page?: number;
 }
 
 export interface AvailableCategorySearch {
@@ -322,7 +323,12 @@ export interface AvailableUser {
   name: string;
 }
 
-
+export interface PaginatedResponse<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+}
 
 const api = axios.create({
   baseURL: URL,

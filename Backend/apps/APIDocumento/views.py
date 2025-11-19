@@ -2,6 +2,7 @@ from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView, Response
 from django.contrib.auth import get_user_model
+from apps.core.pagination import DocumentPagination
 from apps.APIEmpresa.models import Enterprise
 from apps.APISetor.models import Sector, SectorUser
 from apps.APIDocumento.models import Attached_Files_Document, Document
@@ -86,6 +87,25 @@ class ListDocumentsView(APIView):
             'sector'
         ).order_by('-created_at')
 
+        paginator = DocumentPagination()
+        result_page = paginator.paginate_queryset(queryset, request, view=self)
+        
+        print(result_page, result_page is not None)
+        
+        if result_page is not None:
+            print(222)
+            serializer = DocumentListSerializer(result_page, many=True)
+            paginated_data = paginator.get_paginated_response(serializer.data).data
+            
+            res: HttpResponse = Response()
+            res.status_code = 200
+            res.data = default_response(
+                success=True, 
+                message=f"Encontrados {queryset.count()} documentos. Paginação aplicada.", 
+                data=paginated_data # type: ignore
+            )
+            return res
+        
         serializer = DocumentListSerializer(queryset, many=True)
         
         res: HttpResponse = Response()

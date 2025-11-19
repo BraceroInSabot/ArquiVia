@@ -134,5 +134,9 @@ class IsDocumentEditor(BasePermission):
             sector=document.sector
         ).exists():
             return True
+        
+        if not document.classification.privacity.privacity == 'Privado': # type: ignore
+            return True
+
 
         return False

@@ -15,7 +15,6 @@ class IsLinkedToDocument(BasePermission):
     def has_object_permission(self, request, view, obj):
         user = request.user
 
-        print(f"OBJETO: {obj}", f"TIPO: {type(obj)}")
         if not obj.sector:
             return obj.creator == user
 
@@ -29,6 +28,9 @@ class IsLinkedToDocument(BasePermission):
             return True
         
         if SectorUser.objects.filter(user=user, sector=obj.sector).exists():
+            return True
+        
+        if obj.classification.privacity.privacity == 'Público':
             return True
 
         return False

@@ -62,7 +62,7 @@ class CreateCategorySerializer(ModelSerializer):
         is_manager = category_sector.manager == user
         is_adm = SectorUser.objects.filter(user=user, sector=category_sector, is_adm=True).exists()
 
-        if not (is_owner or is_manager):
+        if not (is_owner or is_manager or is_adm):
             raise serializers.ValidationError("Você não tem permissão para criar documentos neste setor.")
             
         return category_sector

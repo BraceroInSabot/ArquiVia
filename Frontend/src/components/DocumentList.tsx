@@ -9,7 +9,7 @@ import type { DocumentList, DocumentFilters, PaginatedResponse } from '../servic
 import documentService from '../services/Document/api';
 import ClassificationModal from '../components/ClassificationModal';
 import PaginationControl from './PaginationControl';
-import ConfirmModal, { type ConfirmVariant } from './ConfirmModal'; // Importe o Modal Genérico
+import ConfirmModal, { type ConfirmVariant } from './ConfirmModal'; // 1. Importe o Modal
 
 import "../assets/css/EnterprisePage.css"; 
 
@@ -22,10 +22,10 @@ interface DocumentGroup {
   docs: DocumentList[];
 }
 
-// Estado para configuração do Modal de Confirmação
+// Interface para configurar o Modal de Confirmação
 interface ConfirmConfig {
   isOpen: boolean;
-  type: 'delete' | 'toggle' | null;
+  type: 'toggle' | 'delete' | null;
   doc: DocumentList | null;
   title: string;
   message: string;
@@ -45,31 +45,20 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
   const [totalCount, setTotalCount] = useState(0);
 
   const navigate = useNavigate();
-  
-  // Modais de Edição/Configuração
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDocId, setSelectedDocId] = useState<number | null>(null);
-  
-  // Mensagem de Busca
   const [searchMessage, setSearchMessage] = useState<string>('');
   
+  // 2. Estado para o Modal de Confirmação
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [confirmConfig, setConfirmConfig] = useState<ConfirmConfig>({
-    isOpen: false,
-    type: null,
-    doc: null,
-    title: '',
-    message: '',
-    variant: 'warning',
-    confirmText: 'Confirmar'
+    isOpen: false, type: null, doc: null, title: '', message: '', variant: 'warning', confirmText: ''
   });
 
-  // Reset de página
   useEffect(() => {
     setCurrentPage(1);
   }, [filters]);
 
-  // --- EFEITO PRINCIPAL: BUSCA vs LISTAGEM ---
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
@@ -81,13 +70,11 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
         let message = '';
         
         const hasSearchTerm = filters.searchTerm && filters.searchTerm.trim() !== '';
-        
-        // Lógica de filtro atualizada para verificar string vazia ('') em vez de 'all'
         const hasAdvancedFilters = (filters.isReviewed && filters.isReviewed !== '') ||
                                  (filters.statusId && filters.statusId !== '') ||
                                  (filters.privacityId && filters.privacityId !== '') ||
                                  (filters.reviewer && filters.reviewer.trim() !== '') ||
-                                 (filters.categories && filters.categories.trim() !== '') 
+                                 (filters.categories && filters.categories.trim() !== '')
 
         if (hasSearchTerm || hasAdvancedFilters) {
           const res = await documentService.searchDocuments(filters, currentPage);
@@ -118,7 +105,7 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
   }, [filters, currentPage]); 
 
 
-  // --- Handlers de Navegação e Modal de Classificação ---
+  // --- Handlers de Navegação ---
   const handleEditClick = (documentId: number) => {
     navigate(`/documento/editar/${documentId}`);
   };
@@ -133,7 +120,7 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
     setSelectedDocId(null);
   };
   
-  // --- HANDLERS DE AÇÃO (Preparam o Modal) ---
+  // --- 3. HANDLERS DE AÇÃO (Abrem o Modal) ---
 
   const requestToggleStatus = (doc: DocumentList) => {
     const actionText = doc.is_active ? "Desativar" : "Ativar";
@@ -144,7 +131,7 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
       type: 'toggle',
       doc: doc,
       title: `${actionText} Documento?`,
-      message: `Você está prestes a ${actionText.toLowerCase()} o documento "${doc.title}".`,
+      message: `Tem certeza que deseja ${actionText.toLowerCase()} o documento "${doc.title}"?`,
       variant: variant,
       confirmText: `Sim, ${actionText}`
     });
@@ -156,44 +143,44 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
       type: 'delete',
       doc: doc,
       title: "Excluir Documento?",
-      message: `ATENÇÃO: Deseja EXCLUIR PERMANENTEMENTE o documento "${doc.title}"? Esta ação não pode ser desfeita.`,
+      message: "ATENÇÃO: Deseja EXCLUIR PERMANENTEMENTE este documento? Esta ação não pode ser desfeita.",
       variant: 'danger',
       confirmText: "Sim, Excluir"
     });
   };
 
-  // --- EXECUÇÃO DA AÇÃO (Chamada pelo Modal) ---
+  // --- 4. LÓGICA DE EXECUÇÃO (Chamada pelo Modal) ---
   
   const handleConfirmAction = async () => {
-    if (!confirmConfig.doc || !confirmConfig.type) return;
+    const { doc, type } = confirmConfig;
+    if (!doc || !type) return;
 
     setIsActionLoading(true);
-    const docId = confirmConfig.doc.document_id;
 
     try {
-      if (confirmConfig.type === 'toggle') {
-        await documentService.toggleDocumentStatus(docId);
-        // Atualiza localmente
+      if (type === 'toggle') {
+        await documentService.toggleDocumentStatus(doc.document_id);
         setDocuments(prevDocs => 
           prevDocs.map(d => 
-            d.document_id === docId ? { ...d, is_active: !d.is_active } : d
+            d.document_id === doc.document_id ? { ...d, is_active: !d.is_active } : d
           )
         );
+        // Toast de sucesso poderia vir aqui
       } 
-      else if (confirmConfig.type === 'delete') {
-        await documentService.deleteDocument(docId);
-        // Remove localmente
+      else if (type === 'delete') {
+        await documentService.deleteDocument(doc.document_id);
         setDocuments(prevDocs => 
-          prevDocs.filter(d => d.document_id !== docId)
+          prevDocs.filter(d => d.document_id !== doc.document_id)
         );
+        // Toast de sucesso poderia vir aqui
       }
       
-      // Fecha o modal no sucesso
+      // Fecha o modal
       setConfirmConfig(prev => ({ ...prev, isOpen: false }));
 
     } catch (err: any) {
       const errorMsg = err.response?.data?.message || "Falha ao realizar a operação.";
-      alert(errorMsg); // Pode substituir por toast.error se disponível
+      alert(errorMsg); // Use toast.error se disponível
     } finally {
       setIsActionLoading(false);
     }
@@ -201,7 +188,6 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
 
   // --- Agrupamento ---
   const groupedDocuments: DocumentGroup[] | null = useMemo(() => {
-    // Verifica string vazia ou 'none' para não agrupar
     const groupBy = filters.groupBy || 'none';
     
     if (groupBy === 'none' || documents.length === 0) {
@@ -242,7 +228,6 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
     return null;
   };
 
-  // --- Sub-componente de Renderização do Card ---
   const renderDocCard = (doc: DocumentList) => (
     <div className={`card h-100 border shadow-sm hover-effect ${!doc.is_active ? 'opacity-75 bg-light' : ''}`}>
       <div className="card-body d-flex flex-column">
@@ -266,8 +251,7 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
           </div>
           <div className="d-flex align-items-center gap-2" title="Data de Criação">
             <Calendar size={14} />
-            {/* DATA CRUA - SEM CONVERSÃO DE LOCALE */}
-            <span>{doc.created_at}</span>
+            <span>{new Date(doc.created_at).toLocaleDateString()}</span>
           </div>
         </div>
 
@@ -294,7 +278,7 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
 
           <button 
             onClick={() => requestToggleStatus(doc)} 
-            className={`btn btn-light btn-sm ${!doc.is_active ? 'text-warning' : 'text-success'}`}
+            className={`btn btn-light btn-sm ${doc.is_active ? 'text-warning' : 'text-success'}`}
             title={doc.is_active ? 'Desativar Documento' : 'Ativar Documento'}
             disabled={isActionLoading && confirmConfig.doc?.document_id === doc.document_id}
           >
@@ -307,7 +291,11 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
             title="Excluir Documento"
             disabled={isActionLoading && confirmConfig.doc?.document_id === doc.document_id}
           >
-             <Trash2 size={16} />
+            {isActionLoading && confirmConfig.doc?.document_id === doc.document_id ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <Trash2 size={16} />
+            )}
           </button>
 
         </div>
@@ -387,7 +375,6 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
         </div>
       )}
       
-      {/* Paginação */}
       <PaginationControl 
         currentPage={currentPage}
         totalCount={totalCount}
@@ -399,7 +386,6 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
         }}
       />
 
-      {/* Modal de Classificação */}
       {isModalOpen && selectedDocId && (
         <ClassificationModal
           documentId={selectedDocId}
@@ -407,7 +393,8 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
         />
       )}
 
-      <ConfirmModal
+      {/* 5. Renderiza o Modal de Confirmação */}
+      <ConfirmModal 
         isOpen={confirmConfig.isOpen}
         onClose={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
         onConfirm={handleConfirmAction}

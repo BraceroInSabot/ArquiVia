@@ -90,10 +90,7 @@ class ListDocumentsView(APIView):
         paginator = DocumentPagination()
         result_page = paginator.paginate_queryset(queryset, request, view=self)
         
-        print(result_page, result_page is not None)
-        
         if result_page is not None:
-            print(222)
             serializer = DocumentListSerializer(result_page, many=True)
             paginated_data = paginator.get_paginated_response(serializer.data).data
             
@@ -101,7 +98,7 @@ class ListDocumentsView(APIView):
             res.status_code = 200
             res.data = default_response(
                 success=True, 
-                message=f"Encontrados {queryset.count()} documentos. Paginação aplicada.", 
+                message=f"Encontrados {queryset.count()} documentos.", 
                 data=paginated_data # type: ignore
             )
             return res
@@ -417,6 +414,22 @@ class DocumentSearchView(APIView):
         ).prefetch_related(
             'categories'
         )
+        
+        paginator = DocumentPagination()
+        result_page = paginator.paginate_queryset(queryset, request, view=self)
+        
+        if result_page is not None:
+            serializer = self.serializer_class(result_page, many=True)
+            paginated_data = paginator.get_paginated_response(serializer.data).data
+            
+            res: HttpResponse = Response()
+            res.status_code = 200
+            res.data = default_response(
+                success=True, 
+                message=f"Encontrados {queryset.count()} documentos.", 
+                data=paginated_data # type: ignore
+            )
+            return res
         
         serializer = self.serializer_class(queryset, many=True)
         

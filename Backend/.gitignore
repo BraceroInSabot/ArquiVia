@@ -11,5 +11,6 @@ __init__.py
 *.bat
 *.sqlite3
 dataset_teste_ir
+docs_context
 
 !apps/core/migrations

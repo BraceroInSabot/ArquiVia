@@ -4,6 +4,7 @@ from rest_framework import serializers
 # PROJECT
 from .models import Enterprise
 from apps.APISetor.models import Sector
+from apps.core.utils import optimize_image
 
 class SectorSerializer(serializers.ModelSerializer):
     class Meta:
@@ -35,6 +36,22 @@ class EnterpriseSerializer(serializers.ModelSerializer):
             'is_active', 
             'created_at'
         ]
+    
+    def validate_image(self, value):
+        """
+        Optimize image before validation.
+        """
+        if value:
+            optimized = optimize_image(
+                value,
+                max_width=1920,
+                max_height=1920,
+                quality=85,
+                convert_to_jpeg=True
+            )
+            if optimized:
+                return optimized
+        return value
 
 class EnterpriseToggleActiveSerializer(serializers.ModelSerializer):
     class Meta:

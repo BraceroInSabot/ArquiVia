@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.db import transaction 
 from .models import Attached_Files_Document, Document, Classification, Category, Classification_Status, Classification_Privacity
 from apps.APISetor.models import Sector, SectorUser
+from apps.core.utils import optimize_image
 
 class DocumentCreateSerializer(serializers.ModelSerializer):
     """
@@ -193,6 +194,7 @@ class AttachFileSerializer(serializers.ModelSerializer):
     def validate_file(self, value):
         """
         Validação opcional de tamanho ou tipo de arquivo.
+        Also optimizes images before upload.
         
         Args:
             value (FileField): Arquivo a ser validado.
@@ -203,5 +205,17 @@ class AttachFileSerializer(serializers.ModelSerializer):
         limit_mb = 50
         if value.size > limit_mb * 1024 * 1024:
             raise serializers.ValidationError(f"O arquivo não pode exceder {limit_mb}MB.")
+        
+        # Optimize image if it's an image file
+        optimized = optimize_image(
+            value,
+            max_width=1920,
+            max_height=1920,
+            quality=85,
+            convert_to_jpeg=True
+        )
+        if optimized:
+            return optimized
+        
         return value
     

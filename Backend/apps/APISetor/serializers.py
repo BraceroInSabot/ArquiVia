@@ -3,6 +3,7 @@
 from rest_framework import serializers
 from .models import Sector
 from apps.APIEmpresa.models import Enterprise
+from apps.core.utils import optimize_image
 
 class SectorCreateSerializer(serializers.ModelSerializer):
 
@@ -17,6 +18,22 @@ class SectorCreateSerializer(serializers.ModelSerializer):
         model = Sector
     
         fields = ['name', 'image', 'enterprise_id']
+    
+    def validate_image(self, value):
+        """
+        Optimize image before validation.
+        """
+        if value:
+            optimized = optimize_image(
+                value,
+                max_width=1920,
+                max_height=1920,
+                quality=85,
+                convert_to_jpeg=True
+            )
+            if optimized:
+                return optimized
+        return value
 
     def validate(self, data):
         """
@@ -87,7 +104,22 @@ class SectorUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Sector
         fields = ['name', 'image']
-
+    
+    def validate_image(self, value):
+        """
+        Optimize image before validation.
+        """
+        if value:
+            optimized = optimize_image(
+                value,
+                max_width=1920,
+                max_height=1920,
+                quality=85,
+                convert_to_jpeg=True
+            )
+            if optimized:
+                return optimized
+        return value
 
     def validate_name(self, value):
     

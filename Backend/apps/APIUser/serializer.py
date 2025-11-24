@@ -8,6 +8,7 @@ from django.contrib.auth.password_validation import validate_password
 
 # PROJECT
 from apps.APIUser.utils.validate_user import ValidateAuth
+from apps.core.utils import optimize_image
 
 # Typing
 from django.conf import settings
@@ -30,6 +31,22 @@ class RegistroUsuarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['username', 'name', 'email', 'password', 'cpassword', 'image']
+    
+    def validate_image(self, value):
+        """
+        Optimize image before validation.
+        """
+        if value:
+            optimized = optimize_image(
+                value,
+                max_width=1920,
+                max_height=1920,
+                quality=85,
+                convert_to_jpeg=True
+            )
+            if optimized:
+                return optimized
+        return value
 
     def validate(self, attrs: dict) -> dict | serializers.ValidationError:
         """
@@ -94,6 +111,22 @@ class UserEditSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['name', 'email', 'image']
+    
+    def validate_image(self, value):
+        """
+        Optimize image before validation.
+        """
+        if value:
+            optimized = optimize_image(
+                value,
+                max_width=1920,
+                max_height=1920,
+                quality=85,
+                convert_to_jpeg=True
+            )
+            if optimized:
+                return optimized
+        return value
         
 class ChangePasswordSerializer(serializers.Serializer):
     """

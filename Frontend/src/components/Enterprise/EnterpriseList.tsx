@@ -32,8 +32,8 @@ const EnterpriseList = ({ enterprises, onView, onEdit, onToggleStatus, onDelete 
 
   // --- Lista em Grid (Tailwind) ---
   return (
-    <div className="py-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+    <div className="card bg-base-100 shadow-xl border border-base-300">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 p-8 gap-6">
         {listaSegura.map((enterprise: Enterprise) => (
           <EnterpriseCard
             key={enterprise.enterprise_id}

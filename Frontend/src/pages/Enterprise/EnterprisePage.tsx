@@ -143,10 +143,10 @@ const EnterprisePage = () => {
 
   // --- RENDERIZAÇÃO ---
   return (
-    <div className='page-container'>
-      <div className='container'>
-        <div className="container mt-4 px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
+    <div className='page-container min-h-screen bg-base-100 md:p-8 p-4 font-sans text-neutral'>
+      <div className='container max-w-7xl mx-auto'>
+        <div className="container">
+          <div className="flex flex-col md:flex-row justify-between gap-4 mb-8">
             <div>
               <h1 className="text-3xl font-bold text-secondary">Gestão de Empresas</h1>
               <p className="text-gray-500 mt-1">
@@ -164,7 +164,7 @@ const EnterprisePage = () => {
           </div>
       </div>
         
-        <div className="container p-4">
+        <div className="container">
           {isLoading && (
             <div className="d-flex flex-column justify-content-center align-items-center py-5 text-muted">
               <Loader2 className="animate-spin text-primary-custom mb-3" size={48} />

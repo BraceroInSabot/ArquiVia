@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import LoginForm from "../components/LoginForm";
-import "../assets/css/LoginPage.css"; // CSS Específico
 
 const LoginPage = () => {
   const { user, login } = useAuth();
@@ -16,23 +15,41 @@ const LoginPage = () => {
 
   const goToIndex = () => {
     navigate("/");
-  }
+  };
 
   return (
-    <div className="login-page-container">
-      <div className="login-content">
-        <div className="login-header mb-4 text-center">
-          <h1 className="logo-text text-primary-custom fw-bold" onClick={goToIndex}>ArquiVia</h1>
-          <p className="text-muted">Bem-vindo de volta! Acesse sua conta.</p>
+    <div className="min-h-screen bg-base-100 flex items-center justify-center px-4 py-12">
+      <div className="w-full max-w-md">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 
+            className="text-4xl font-bold text-primary cursor-pointer hover:opacity-80 transition-opacity mb-2"
+            onClick={goToIndex}
+          >
+            ArquiVia
+          </h1>
+          <p className="text-secondary/70">
+            Bem-vindo de volta! Acesse sua conta.
+          </p>
         </div>
         
-        <div className="login-card shadow-sm">
-          <LoginForm login={login} navigate={navigate} />
+        {/* Login Card */}
+        <div className="card bg-white shadow-xl border border-gray-100">
+          <div className="card-body">
+            <LoginForm login={login} navigate={navigate} />
+          </div>
         </div>
 
-        <div className="login-footer text-center mt-4">
-          <p className="text-muted small">
-            Não tem uma conta? <span className="text-primary-custom fw-bold cursor-pointer" onClick={() => navigate('/registrar')}>Cadastre-se</span>
+        {/* Footer */}
+        <div className="text-center mt-6">
+          <p className="text-secondary/70 text-sm">
+            Não tem uma conta?{" "}
+            <span 
+              className="text-primary font-semibold cursor-pointer hover:underline"
+              onClick={() => navigate('/registrar')}
+            >
+              Cadastre-se
+            </span>
           </p>
         </div>
       </div>

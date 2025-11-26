@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, AlertTriangle, Lock, Loader2, AlertCircle } from 'lucide-react'; // Ícones
+import { X, AlertTriangle, Lock, Loader2, AlertCircle } from 'lucide-react'; 
 import toast from 'react-hot-toast';
 
 import userService from '../services/User/api';
 import { useAuth } from '../contexts/AuthContext';
-import '../assets/css/ClassificationModal.css'; // Reutiliza overlay e animações
 
 interface DeactivateAccountModalProps {
   onClose: () => void;
@@ -25,17 +24,22 @@ const DeactivateAccountModal: React.FC<DeactivateAccountModalProps> = ({ onClose
     setError(null);
 
     try {
-      await userService.deactivateAccount(password);
-      
-      toast.success("Sua conta foi desativada com sucesso.");
-      logout(); 
+      const response = await userService.deactivateAccount(password);
+      console.log(response);
+      if (response.data.sucesso === true) {
+        toast.success(response.data.mensagem);
+        logout(); 
+      } else {
+        toast.error(response.data.mensagem);
+        setIsLoading(false);
+      }
 
     } catch (err: any) {
       console.error("Erro ao desativar conta:", err);
       
       if (err.response && err.response.status === 400) {
-        toast.error("Senha incorreta. Por medidas de segurança, você será deslogado.");
-        logout(); 
+        setError("Senha incorreta.");
+        setIsLoading(false);
       } else {
         setError("Ocorreu um erro ao tentar desativar a conta. Tente novamente.");
         setIsLoading(false);
@@ -44,99 +48,79 @@ const DeactivateAccountModal: React.FC<DeactivateAccountModalProps> = ({ onClose
   };
 
   return createPortal(
-    <div className="modal-overlay" onClick={onClose}>
-      <div 
-        className="modal-content p-0 overflow-hidden" 
-        onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: '450px' }}
-      >
-        
-        {/* Cabeçalho com Botão Fechar */}
-        <div className="d-flex justify-content-end p-2">
+    <>
+      {/* Backdrop */}
+      <div className="modal modal-open">
+        <div className="modal-box relative max-w-sm">
             <button 
                 onClick={onClose} 
-                className="btn btn-link text-secondary p-1 text-decoration-none"
+                className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
             >
-                <X size={24} />
+                <X size={20} />
             </button>
-        </div>
 
-        <div className="px-4 pb-4 text-center">
-            
-            {/* Ícone de Alerta */}
-            <div className="mb-3 d-flex justify-content-center">
-                <div className="bg-danger-subtle p-3 rounded-circle text-danger">
-                    <AlertTriangle size={40} />
+            <div className="text-center pt-4">
+                <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-error/10 flex items-center justify-center text-error">
+                    <AlertTriangle size={32} />
                 </div>
-            </div>
-
-            <h4 className="fw-bold text-dark mb-2">Desativar Conta</h4>
-            
-            <p className="text-muted mb-4 small">
-                Tem certeza? Esta ação tornará sua conta inacessível imediatamente. 
-                Para confirmar, por favor digite sua senha atual.
-            </p>
-
-            {/* Erro */}
-            {error && (
-                <div className="alert alert-danger d-flex align-items-center text-start mb-3 py-2" role="alert">
-                    <AlertCircle className="me-2 flex-shrink-0" size={18} />
-                    <div className="small">{error}</div>
-                </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="text-start">
                 
-                <div className="mb-4">
-                    <label htmlFor="confirm_password" className="form-label fw-semibold text-secondary small text-uppercase">
-                        Senha Atual
-                    </label>
-                    <div className="input-group">
-                        <span className="input-group-text bg-light border-end-0 text-muted">
-                            <Lock size={18} />
-                        </span>
-                        <input
-                            type="password"
-                            id="confirm_password"
-                            className="form-control border-start-0 ps-0"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                            placeholder="Digite sua senha..."
-                        />
+                <h3 className="font-bold text-xl text-error mb-2">Desativar Conta</h3>
+                <p className="text-sm text-gray-500 mb-6">
+                    Esta ação tornará sua conta inacessível imediatamente. 
+                    Para confirmar, digite sua senha atual.
+                </p>
+
+                {error && (
+                    <div className="alert alert-error shadow-sm mb-4 text-sm py-2 justify-start">
+                        <AlertCircle size={18} />
+                        <span>{error}</span>
                     </div>
-                </div>
+                )}
 
-                <div className="d-grid gap-2">
-                    <button 
-                        type="submit" 
-                        className="btn btn-danger py-2 fw-bold d-flex align-items-center justify-content-center gap-2"
-                        disabled={isLoading || !password}
-                    >
-                        {isLoading ? (
-                            <>
-                                <Loader2 className="animate-spin" size={18} />
-                                Processando...
-                            </>
-                        ) : (
-                            'Confirmar e Desativar'
-                        )}
-                    </button>
-                    
-                    <button 
-                        type="button" 
-                        className="btn btn-light text-secondary" 
-                        onClick={onClose}
-                        disabled={isLoading}
-                    >
-                        Cancelar
-                    </button>
-                </div>
+                <form onSubmit={handleSubmit} className="text-left space-y-4">
+                    <div className="form-control w-full">
+                        <label className="label">
+                            <span className="label-text font-semibold">Senha Atual</span>
+                        </label>
+                        <label className="input input-bordered flex items-center gap-2 focus-within:input-error">
+                            <Lock size={16} className="text-gray-400" />
+                            <input
+                                type="password"
+                                className="grow"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                                placeholder="••••••••"
+                            />
+                        </label>
+                    </div>
 
-            </form>
+                    <div className="modal-action flex flex-col gap-2 mt-6">
+                        <button 
+                            type="submit" 
+                            className="btn btn-error w-full text-white"
+                            disabled={isLoading || !password}
+                        >
+                            {isLoading ? <Loader2 className="animate-spin" /> : "Confirmar e Desativar"}
+                        </button>
+                        <button 
+                            type="button" 
+                            className="btn btn-ghost w-full"
+                            onClick={onClose}
+                            disabled={isLoading}
+                        >
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
+        {/* Clica fora pra fechar se quiser */}
+        <form method="dialog" className="modal-backdrop">
+            <button onClick={onClose}>close</button>
+        </form>
       </div>
-    </div>,
+    </>,
     document.body
   );
 };

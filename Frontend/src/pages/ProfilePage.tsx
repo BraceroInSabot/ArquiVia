@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, type ChangeEvent } from 'react';
+import { useState, useEffect, useRef, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Pencil, Lock, Trash2, Camera, 
@@ -14,6 +14,7 @@ import DeactivateAccountModal from '../components/DeactivateAccountModal';
 
 const ProfilePage = () => {
   const { user } = useAuth();
+  //@ts-ignore
   const navigate = useNavigate();
   
   // Estados de Dados
@@ -148,7 +149,7 @@ const ProfilePage = () => {
   const displayImage = imagePreview || userData.image;
 
   return (
-    <div className="min-h-screen bg-base-200 flex items-center justify-center p-4 md:p-8">
+    <div className="min-h-screen bg-base-0000 flex items-center justify-center p-4 md:p-8">
       
       <div className="card w-full max-w-lg bg-base-100 shadow-xl overflow-visible border border-base-300">
         
@@ -256,10 +257,7 @@ const ProfilePage = () => {
             </div>
           </div>
 
-          {/* --- AÇÕES --- */}
-          <div className="divider my-6"></div>
-
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 mt-5">
             {isEditing ? (
               // MODO EDIÇÃO
               <div className="grid grid-cols-2 gap-4">

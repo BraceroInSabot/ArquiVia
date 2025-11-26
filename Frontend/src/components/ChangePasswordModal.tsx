@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Lock, Key, Save, X, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'; // Ícones
+import { Lock, Key, Save, X, Loader2, AlertCircle } from 'lucide-react'; 
+import toast from 'react-hot-toast';
 
 import userService from '../services/User/api';
 import { type ChangePasswordPayload } from '../services/core-api';
-import '../assets/css/ClassificationModal.css'; // Reutiliza CSS base
 
 interface ChangePasswordModalProps {
   onClose: () => void;
@@ -19,11 +19,10 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ onClose }) =>
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    //@ts-ignore
+    // @ts-ignore
     setFormData(prev => ({ ...prev, [name]: value }));
     if (error) setError(null);
   };
@@ -31,7 +30,6 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ onClose }) =>
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setSuccessMessage(null);
 
     if (formData.new_password !== formData.c_new_password) {
       setError("A nova senha e a confirmação não conferem.");
@@ -47,11 +45,11 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ onClose }) =>
 
     try {
       await userService.changePassword(formData);
-      setSuccessMessage("Senha alterada com sucesso!");
+      toast.success("Senha alterada com sucesso!");
       
       setTimeout(() => {
         onClose();
-      }, 1500);
+      }, 1000);
 
     } catch (err: any) {
       console.error("Erro ao alterar senha:", err);
@@ -73,146 +71,114 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ onClose }) =>
   };
 
   return createPortal(
-    <div className="modal-overlay" onClick={onClose}>
-      <div 
-        className="modal-content p-0 overflow-hidden" 
-        onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: '450px' }}
-      >
-        
-        {/* Cabeçalho */}
-        <div className="d-flex justify-content-between align-items-center p-3 px-4 border-bottom bg-light">
-            <h4 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-                <Lock size={20} className="text-warning" />
-                Alterar Senha
-            </h4>
+    <div className="modal modal-open">
+      <div className="modal-box max-w-md relative">
+        <button 
+            onClick={onClose} 
+            className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+        >
+            <X size={20} />
+        </button>
+
+        <h3 className="font-bold text-lg flex items-center gap-2 mb-6 text-secondary">
+            <div className="p-2 bg-warning/10 rounded-lg text-warning">
+                <Lock size={20} />
+            </div>
+            Alterar Senha
+        </h3>
+
+        {error && (
+            <div className="alert alert-error shadow-sm mb-4 py-2 text-sm">
+                <AlertCircle size={18} />
+                <span>{error}</span>
+            </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          
+          {/* Senha Atual */}
+          <div className="form-control">
+            <label className="label pt-0">
+                <span className="label-text font-semibold">Senha Atual</span>
+            </label>
+            <label className="input input-bordered flex items-center gap-2 focus-within:input-primary">
+                <Lock size={16} className="text-gray-400" />
+                <input
+                    type="password"
+                    name="old_password"
+                    className="grow"
+                    value={formData.old_password}
+                    onChange={handleChange}
+                    required
+                    placeholder="••••••••"
+                />
+            </label>
+          </div>
+
+          <hr />
+
+          {/* Nova Senha */}
+          <div className="form-control">
+            <label className="label pt-0">
+                <span className="label-text font-semibold">Nova Senha</span>
+            </label>
+            <label className="input input-bordered flex items-center gap-2 focus-within:input-primary">
+                <Key size={16} className="text-gray-400" />
+                <input
+                    type="password"
+                    name="new_password"
+                    className="grow"
+                    value={formData.new_password}
+                    onChange={handleChange}
+                    required
+                    placeholder="••••••••"
+                />
+            </label>
+          </div>
+
+          {/* Confirmar */}
+          <div className="form-control">
+            <label className="label pt-0">
+                <span className="label-text font-semibold">Confirmar Nova Senha</span>
+            </label>
+            <label className="input input-bordered flex items-center gap-2 focus-within:input-primary">
+                <Key size={16} className="text-gray-400" />
+                <input
+                    type="password"
+                    name="c_new_password"
+                    className="grow"
+                    value={formData.c_new_password}
+                    onChange={handleChange}
+                    required
+                    placeholder="••••••••"
+                />
+            </label>
+          </div>
+
+          <div className="modal-action mt-8">
             <button 
-                onClick={onClose} 
-                className="btn btn-link text-secondary p-0 text-decoration-none"
-                title="Fechar"
+                type="button" 
+                className="btn btn-ghost text-gray-500 hover:bg-gray-100" 
+                onClick={onClose}
+                disabled={isLoading}
             >
-                <X size={24} />
+                Cancelar
             </button>
-        </div>
-
-        <div className="p-4">
-            {/* Mensagens de Feedback */}
-            {error && (
-                <div className="alert alert-danger d-flex align-items-center mb-3" role="alert">
-                    <AlertCircle className="me-2 flex-shrink-0" size={20} />
-                    <div>{error}</div>
-                </div>
-            )}
-
-            {successMessage && (
-                <div className="alert alert-success d-flex align-items-center mb-3" role="alert">
-                    <CheckCircle2 className="me-2 flex-shrink-0" size={20} />
-                    <div>{successMessage}</div>
-                </div>
-            )}
-
-            <form onSubmit={handleSubmit}>
-            
-            {/* Senha Atual */}
-            <div className="mb-3">
-                <label htmlFor="old_password" className="form-label fw-semibold text-secondary small text-uppercase">
-                    Senha Atual
-                </label>
-                <div className="input-group">
-                    <span className="input-group-text bg-white border-end-0 text-muted">
-                        <Lock size={18} />
-                    </span>
-                    <input
-                        type="password"
-                        id="old_password"
-                        name="old_password"
-                        className="form-control border-start-0 ps-0"
-                        value={formData.old_password}
-                        onChange={handleChange}
-                        required
-                        placeholder="••••••••"
-                    />
-                </div>
-            </div>
-
-            <hr className="my-4 text-muted opacity-25" />
-
-            {/* Nova Senha */}
-            <div className="mb-3">
-                <label htmlFor="new_password" className="form-label fw-semibold text-secondary small text-uppercase">
-                    Nova Senha
-                </label>
-                <div className="input-group">
-                    <span className="input-group-text bg-white border-end-0 text-muted">
-                        <Key size={18} />
-                    </span>
-                    <input
-                        type="password"
-                        id="new_password"
-                        name="new_password"
-                        className="form-control border-start-0 ps-0"
-                        value={formData.new_password}
-                        onChange={handleChange}
-                        required
-                        placeholder="••••••••"
-                    />
-                </div>
-            </div>
-
-            {/* Confirmar Nova Senha */}
-            <div className="mb-4">
-                <label htmlFor="c_new_password" className="form-label fw-semibold text-secondary small text-uppercase">
-                    Confirmar Nova Senha
-                </label>
-                <div className="input-group">
-                    <span className="input-group-text bg-white border-end-0 text-muted">
-                        <Key size={18} />
-                    </span>
-                    <input
-                        type="password"
-                        id="c_new_password"
-                        name="c_new_password"
-                        className="form-control border-start-0 ps-0"
-                        value={formData.c_new_password}
-                        onChange={handleChange}
-                        required
-                        placeholder="••••••••"
-                    />
-                </div>
-            </div>
-
-            {/* Rodapé / Botões */}
-            <div className="d-grid gap-2">
-                <button 
-                    type="submit" 
-                    className="btn btn-success py-2 fw-bold d-flex align-items-center justify-content-center gap-2"
-                    disabled={isLoading || !formData.old_password || !formData.new_password}
-                >
-                    {isLoading ? (
-                        <>
-                            <Loader2 className="animate-spin" size={20} />
-                            Alterando...
-                        </>
-                    ) : (
-                        <>
-                            <Save size={20} />
-                            Alterar Senha
-                        </>
-                    )}
-                </button>
-                
-                <button 
-                    type="button" 
-                    className="btn btn-light text-secondary" 
-                    onClick={onClose}
-                    disabled={isLoading}
-                >
-                    Cancelar
-                </button>
-            </div>
-            </form>
-        </div>
+            <button 
+                type="submit" 
+                className="btn btn-success text-white px-8"
+                disabled={isLoading || !formData.old_password || !formData.new_password}
+            >
+                {isLoading ? <Loader2 className="animate-spin" /> : <Save size={18} />}
+                Alterar Senha
+            </button>
+          </div>
+        </form>
       </div>
+      
+      <form method="dialog" className="modal-backdrop">
+        <button onClick={onClose}>close</button>
+      </form>
     </div>,
     document.body
   );

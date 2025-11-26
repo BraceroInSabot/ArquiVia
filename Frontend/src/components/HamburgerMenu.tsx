@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Menu as MenuIcon, X, User } from 'lucide-react'; // Ícones
+import { Menu as MenuIcon, X } from 'lucide-react'; // Ícones
 
 import { useAuth } from '../contexts/AuthContext';
 import MenuContent from './Menu'; // Renomeei para evitar confusão com o ícone Menu

@@ -11,10 +11,10 @@ import {
 } from 'lucide-react';
 
 import HistoryViewModal from './HistoryViewModal';
-import AttachedFilesModal from '../components/AttachedFilesModal';
+import AttachedFilesModal from '../components/modal/AttachedFilesModal';
 import documentService from '../services/Document/api';
 import type { DocumentHistory } from '../services/core-api';
-import ConfirmModal from '../components/ConfirmModal'; // Importe o Modal de Confirmação
+import ConfirmModal from '../components/modal/ConfirmModal'; // Importe o Modal de Confirmação
 import toast from 'react-hot-toast';
 
 // Remova a importação do CSS customizado, usaremos só Bootstrap

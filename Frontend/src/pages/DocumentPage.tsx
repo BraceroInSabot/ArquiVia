@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import type { DocumentFilters } from '../services/core-api';
 
-import DocumentFiltersComponent from '../components/DocumentFilters';
-import DocumentListComponent from '../components/DocumentList';
-import CreateDocumentButton from '../components/CreateButtonDocument'; // Ajuste o nome se for CreateButtonDocument
+import DocumentFiltersComponent from '../components/Document/DocumentFilters';
+import DocumentListComponent from '../components/Document/DocumentList';
+import CreateDocumentButton from '../components/button/CreateButtonDocument'; // Ajuste o nome se for CreateButtonDocument
 
 // Reutiliza os estilos globais de página
 import '../assets/css/EnterprisePage.css';

@@ -9,9 +9,9 @@ import sectorService from '../services/Sector/api';
 import type { Sector } from '../services/core-api';
 import { useAuth } from '../contexts/AuthContext'; // Importe o AuthContext
 
-import SectorUsers from '../components/SectorUsers';  
-import SectorCategories from '../components/SectorCategories'; 
-import SectorMetrics from '../components/SectorMetrics'; // Importe o componente real
+import SectorUsers from '../components/Sector/SectorUsers';  
+import SectorCategories from '../components/Sector/SectorCategories'; 
+import SectorMetrics from '../components/Sector/SectorMetrics'; // Importe o componente real
 
 import '../assets/css/EnterprisePage.css'; 
 

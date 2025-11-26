@@ -8,9 +8,9 @@ import enterpriseService from '../services/Enterprise/api';
 import type { Enterprise } from '../services/core-api';
 
 // Componentes
-import EnterpriseList from '../components/EnterpriseList';
-import EnterpriseDetailsModal from '../components/EnterpriseDetailsModal';
-import ConfirmModal, { type ConfirmVariant } from '../components/ConfirmModal'; // 1. Importe o Modal
+import EnterpriseList from '../components/Enterprise/EnterpriseList';
+import EnterpriseDetailsModal from '../components/modal/EnterpriseDetailsModal';
+import ConfirmModal, { type ConfirmVariant } from '../components/modal/ConfirmModal'; // 1. Importe o Modal
 
 import '../assets/css/EnterprisePage.css'; 
 

@@ -5,9 +5,9 @@ import toast from 'react-hot-toast';
 
 import sectorService from '../services/Sector/api';
 import type { Sector, ToggleSectorStatusPayload, RemoveSectorPayload } from '../services/core-api';
-import SectorList from '../components/SectorList';
-import type { SectorGroup } from '../components/SectorList.types';
-import ConfirmModal, { type ConfirmVariant } from '../components/ConfirmModal'; // 1. Importe o Modal
+import SectorList from '../components/Sector/SectorList';
+import type { SectorGroup } from '../components/Sector/SectorList.types';
+import ConfirmModal, { type ConfirmVariant } from '../components/modal/ConfirmModal'; // 1. Importe o Modal
 
 import '../assets/css/EnterprisePage.css'; 
 

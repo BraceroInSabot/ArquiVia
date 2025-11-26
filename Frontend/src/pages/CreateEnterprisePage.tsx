@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react"; // Ícone de voltar
-import CreateEnterpriseForm from "../components/CreateEnterpriseForm";
+import CreateEnterpriseForm from "../components/form/CreateEnterpriseForm";
 import '../assets/css/EnterprisePage.css'; // Reutiliza o CSS da listagem
 
 const CreateEnterprisePage = () => {

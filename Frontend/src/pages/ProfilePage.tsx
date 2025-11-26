@@ -9,8 +9,8 @@ import toast from 'react-hot-toast';
 import userService from '../services/User/api';
 import { useAuth } from '../contexts/AuthContext';
 import type { UserDetails } from '../services/core-api';
-import ChangePasswordModal from '../components/ChangePasswordModal';
-import DeactivateAccountModal from '../components/DeactivateAccountModal';
+import ChangePasswordModal from '../components/modal/ChangePasswordModal';
+import DeactivateAccountModal from '../components/modal/DeactivateAccountModal';
 
 const ProfilePage = () => {
   const { user } = useAuth();

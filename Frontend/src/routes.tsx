@@ -16,7 +16,7 @@ import EditDocumentPage from './pages/EditDocumentPage';
 import RequestResetPassword from './pages/RequestResetPasswordPage';
 import ResetPassword from './pages/ResetPasswordPage';
 import ProfilePage from './pages/ProfilePage';
-import MainLayout from './components/MenuLayout';
+import MainLayout from './components/menu/MenuLayout';
 
 function ArquiVia() {
   return (

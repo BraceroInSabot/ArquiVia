@@ -1,8 +1,9 @@
+// src/components/LogoutButton.tsx
+
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import userService from '../services/User/api'; 
-// O CSS já está sendo carregado pelo componente Pai (Menu), 
-// mas se quiser garantir, pode importar aqui também.
+import { LogOut } from 'lucide-react'; // Ícone opcional
 
 const LogoutButton = () => {
   const { logout } = useAuth();
@@ -20,8 +21,11 @@ const LogoutButton = () => {
   };
 
   return (
-    <button className="logout-btn" onClick={handleLogout}>
-      {/* Se tiver um ícone de porta/sair, pode colocar aqui */}
+    <button 
+        className="btn btn-outline btn-error w-full flex items-center gap-2" 
+        onClick={handleLogout}
+    >
+      <LogOut size={18} />
       Sair da Conta
     </button>
   );

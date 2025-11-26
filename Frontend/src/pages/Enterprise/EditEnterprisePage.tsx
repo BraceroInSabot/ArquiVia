@@ -164,7 +164,15 @@ const EditEnterprisePage = () => {
                             <div className="flex items-center gap-6 p-4 border-2 border-dashed border-base-300 rounded-xl hover:border-primary transition-colors bg-base-100 relative">
                                 {/* Preview */}
                                 <div className="avatar">
-                                    <div className="w-24 rounded bg-base-200 ring ring-base-300 ring-offset-base-100 ring-offset-2 flex items-center justify-center">
+                                    <div style={{display: 'flex !important',
+              justifyContent: 'center !important',
+              textJustify: 'auto',
+              justifyItems: 'center',
+              justifySelf: 'center',
+              justifyTracks: 'center',
+              alignItems: 'center',
+              alignContent: 'center'
+            }} className="w-24 rounded bg-base-200 ring ring-base-300 ring-offset-base-100 ring-offset-2 flex items-center justify-center">
                                         {currentImageUrl ? (
                                             <img src={currentImageUrl} alt="Preview" className="object-cover" />
                                         ) : (

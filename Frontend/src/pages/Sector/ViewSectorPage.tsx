@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Pencil, Loader2, AlertCircle, 
-  Users, FolderTree, BarChart2, History, Layers, Lock
+  Users, FolderTree, BarChart2, History, Layers, Lock, Building2 // Building2 importado
 } from 'lucide-react'; 
 
 import sectorService from '../../services/Sector/api';
@@ -10,7 +10,7 @@ import type { Sector } from '../../services/core-api';
 import { useAuth } from '../../contexts/AuthContext'; 
 
 import SectorUsers from '../../components/Sector/SectorUsers';  
-import SectorCategories from '../../components/Sector/SectorCategories'; // Caminho ajustado para pages/tabs? Verifique.
+import SectorCategories from '../../components/Sector/SectorCategories'; 
 import SectorMetrics from '../../components/Sector/SectorMetrics';
 
 // --- Componentes Locais Estilizados ---
@@ -24,7 +24,7 @@ const SectorLogs = ({ sectorId }: { sectorId: number }) => (
 );
 
 const AccessDenied = () => (
-  <div className="flex flex-col items-center justify-center p-12 bg-base-100 rounded-xl">
+  <div className="flex flex-col items-center justify-center p-12 bg-base-100 rounded-xl border border-base-200">
     <div className="w-16 h-16 bg-error/10 rounded-full flex items-center justify-center mb-4 text-error">
         <Lock size={32} />
     </div>
@@ -45,7 +45,6 @@ const ViewSectorPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabName>('users');
 
-  // --- LÓGICA (INTACTA) ---
   useEffect(() => {
     if (!id) {
       setError('ID do setor não fornecido.');
@@ -76,7 +75,6 @@ const ViewSectorPage = () => {
   
   const canViewMetrics = isOwner || isManager; 
   const canViewLogs = isOwner || isManager;   
-  // --- FIM DA LÓGICA ---
 
   if (isLoading) {
     return (
@@ -100,7 +98,7 @@ const ViewSectorPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-base-100 p-4 md:p-8 font-sans text-neutral">
+    <div className="min-h-screen bg-base-100 p-4 md:p-8 font-sans text-neutral pb-20">
       <div className="max-w-7xl mx-auto">
         
         {/* Cabeçalho de Navegação */}
@@ -112,10 +110,10 @@ const ViewSectorPage = () => {
             >
                 <ArrowLeft size={24} className="text-secondary" />
             </button>
-            <div className="flex-1">
-                <div className="flex items-center gap-3">
-                   <h1 className="text-2xl md:text-3xl font-bold text-secondary">Detalhes do Setor</h1>
-                   <div className="badge badge-ghost font-mono text-xs p-2">ID: {sector.sector_id}</div>
+            <div className="flex-1 overflow-hidden">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                   <h1 className="text-2xl md:text-3xl font-bold text-secondary truncate">{sector.name}</h1>
+                   <div className="badge badge-ghost font-mono text-xs p-2 w-fit">ID: {sector.sector_id}</div>
                 </div>
             </div>
             
@@ -131,8 +129,8 @@ const ViewSectorPage = () => {
         </div>
 
         {/* Hero Card */}
-        <div className="card bg-base-100 shadow-xl mb-8 border border-base-300">
-            <div className="card-body flex-row items-center gap-6 p-6">
+        <div className="card bg-base-100 shadow-xl mb-8 border border-base-300 overflow-hidden">
+            <div className="card-body flex-col md:flex-row items-start md:items-center gap-6 p-6">
                 {/* Imagem */}
                 <div className="avatar">
                     <div style={{display: 'flex !important',
@@ -153,19 +151,22 @@ const ViewSectorPage = () => {
                 </div>
 
                 {/* Informações */}
-                <div className="flex-1 min-w-0">
-                    <h2 className="card-title text-3xl text-primary mb-1">{sector.name}</h2>
-                    <p className="text-gray-500 font-medium mb-3 flex items-center gap-2">
-                        <Building2 size={16} /> {sector.enterprise_name}
+                <div className="flex-1 min-w-0 w-full">
+                    <h2 className="card-title text-2xl md:text-3xl text-primary mb-1 truncate">{sector.name}</h2>
+                    <p className="text-gray-500 font-medium mb-3 flex items-center gap-2 truncate">
+                        <Building2 size={16} className="shrink-0" /> {sector.enterprise_name}
                     </p>
                     
-                    <div className="flex flex-wrap gap-2 mt-2">
-                         <div className="badge badge-lg bg-secondary badge-ghost gap-2 p-3">
-                            <span className="font-bold text-gray-500 text-xs text-white uppercase">Gerente:</span> 
-                            <span className='text-white'>{sector.manager_name}</span>
+                    <div style={{display: 'flex !important',
+              alignItems: 'center',
+              alignContent: 'center'
+            }} className="flex flex-wrap gap-2 mt-2">
+                         <div className="badge badge-lg bg-secondary border-none text-white gap-2 p-3 h-auto py-1">
+                            <span className="font-bold text-white/70 text-xs uppercase">Gerente:</span> 
+                            <span>{sector.manager_name}</span>
                          </div>
-                         <div className="badge badge-lg badge-ghost gap-2 p-3">
-                            <span className="font-bold text-gray-500 text-xs uppercase">Criado em:</span> 
+                         <div className="badge badge-lg badge-ghost gap-2 p-3 h-auto py-1">
+                            <span className="font-bold text-gray-500 text-xs uppercase">Criado:</span> 
                             {sector.creation_date}
                          </div>
                          <div className={`badge badge-lg gap-2 p-3 text-white ${sector.is_active ? 'badge-success' : 'badge-neutral'}`}>
@@ -176,9 +177,9 @@ const ViewSectorPage = () => {
             </div>
         </div>
 
-        {/* Tabs Navigation */}
-        <div className="mb-6 border-b border-base-300">
-            <div role="tablist" className="tabs tabs-bordered tabs-lg">
+        {/* Tabs Navigation - Responsiva com Scroll */}
+        <div className="mb-6 border-b border-base-300 overflow-x-auto no-scrollbar">
+            <div role="tablist" className="tabs tabs-bordered tabs-lg flex-nowrap min-w-max px-1">
                 <a 
                     role="tab" 
                     className={`tab ${activeTab === 'users' ? 'tab-active text-primary font-bold border-primary' : 'text-gray-500'}`}
@@ -229,8 +230,5 @@ const ViewSectorPage = () => {
     </div>
   );
 };
-
-// Ícone extra necessário que não estava importado
-import { Building2 } from 'lucide-react'; 
 
 export default ViewSectorPage;

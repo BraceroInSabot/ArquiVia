@@ -1,9 +1,9 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Lock, Save, Loader2, AlertCircle, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { Save, Loader2, AlertCircle, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 
-import Validate from "../utils/credential_validation";
-import userService from "../services/User/api";
+import Validate from "../../utils/credential_validation";
+import userService from "../../services/User/api";
 
 const ResetPassword = () => {
     const { token } = useParams<{ token: string }>();

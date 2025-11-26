@@ -3,8 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, UploadCloud, Check, Loader2, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-import enterpriseService from '../services/Enterprise/api';
-import '../assets/css/EnterprisePage.css'; // Reutiliza o CSS global de empresas
+import enterpriseService from '../../services/Enterprise/api';
+import '../../assets/css/EnterprisePage.css'; // Reutiliza o CSS global de empresas
 
 const EditEnterprisePage = () => {
   const { id } = useParams<{ id: string }>();

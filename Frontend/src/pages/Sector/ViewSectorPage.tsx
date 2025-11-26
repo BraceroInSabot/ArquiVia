@@ -5,15 +5,15 @@ import {
   Users, FolderTree, BarChart2, History, Layers, Lock
 } from 'lucide-react'; 
 
-import sectorService from '../services/Sector/api';
-import type { Sector } from '../services/core-api';
-import { useAuth } from '../contexts/AuthContext'; // Importe o AuthContext
+import sectorService from '../../services/Sector/api';
+import type { Sector } from '../../services/core-api';
+import { useAuth } from '../../contexts/AuthContext'; // Importe o AuthContext
 
-import SectorUsers from '../components/Sector/SectorUsers';  
-import SectorCategories from '../components/Sector/SectorCategories'; 
-import SectorMetrics from '../components/Sector/SectorMetrics'; // Importe o componente real
+import SectorUsers from '../../components/Sector/SectorUsers';  
+import SectorCategories from '../../components/Sector/SectorCategories'; 
+import SectorMetrics from '../../components/Sector/SectorMetrics'; // Importe o componente real
 
-import '../assets/css/EnterprisePage.css'; 
+import '../../assets/css/EnterprisePage.css'; 
 
 // Componente de Logs (Placeholder)
 const SectorLogs = ({ sectorId }: { sectorId: number }) => (

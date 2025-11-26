@@ -5,8 +5,8 @@ import {
   Loader2, AlertCircle, Layers 
 } from 'lucide-react'; // Ícones
 import toast from 'react-hot-toast';
-import sectorService from '../services/Sector/api';
-import '../assets/css/EnterprisePage.css'; // Reutiliza o CSS global
+import sectorService from '../../services/Sector/api';
+import '../../assets/css/EnterprisePage.css'; // Reutiliza o CSS global
 
 const EditSectorPage = () => {
   const { id } = useParams<{ id: string }>();

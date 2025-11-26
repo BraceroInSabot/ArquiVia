@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, ArrowLeft, Send, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 
-import userService from '../services/User/api';
-import { type RequestPasswordReset } from '../services/core-api';
+import userService from '../../services/User/api';
+import { type RequestPasswordReset } from '../../services/core-api';
 
 const RequestResetPassword = () => {
     const navigate = useNavigate();

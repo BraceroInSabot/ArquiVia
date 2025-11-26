@@ -1,14 +1,14 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
-import RegisterForm from "../components/form/RegisterForm";
+import { useAuth } from "../../contexts/AuthContext";
+import LoginForm from "../../components/form/LoginForm";
 
-const RegisterPage = () => {
-  const { user } = useAuth();
+const LoginPage = () => {
+  const { user, login } = useAuth();
   const navigate = useNavigate();
-  
+
   useEffect(() => {
-    if (user) {
+    if (user) { 
       navigate("/painel");
     }
   }, [user, navigate]);
@@ -23,32 +23,32 @@ const RegisterPage = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 
-            className="text-4xl font-bold text-primary cursor-pointer hover:opacity-80 transition-opacity mb-2 no-underline hover:no-underline"
+            className="text-4xl font-bold text-primary cursor-pointer hover:opacity-80 transition-opacity mb-2"
             onClick={goToIndex}
           >
             ArquiVia
           </h1>
           <p className="text-secondary/70">
-            Crie sua conta para começar.
+            Bem-vindo de volta! Acesse sua conta.
           </p>
         </div>
         
-        {/* Register Card */}
+        {/* Login Card */}
         <div className="card bg-white shadow-xl border border-gray-100">
           <div className="card-body">
-            <RegisterForm />
+            <LoginForm login={login} navigate={navigate} />
           </div>
         </div>
 
         {/* Footer */}
         <div className="text-center mt-6">
           <p className="text-secondary/70 text-sm">
-            Já tem uma conta?{" "}
+            Não tem uma conta?{" "}
             <span 
               className="text-primary font-semibold cursor-pointer hover:underline"
-              onClick={() => navigate('/entrar')}
+              onClick={() => navigate('/registrar')}
             >
-              Faça login
+              Cadastre-se
             </span>
           </p>
         </div>
@@ -57,4 +57,4 @@ const RegisterPage = () => {
   );
 };
 
-export default RegisterPage;
+export default LoginPage;

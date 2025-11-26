@@ -7,7 +7,6 @@ import RecentDocumentsCarousel from '../components/dashboard/RecentDocumentsCaro
 import ReviewPendingWidget from '../components/dashboard/ReviewPendingWidget';
 import ActivityFeedWidget from '../components/dashboard/ActivityFeedWidget';
 
-// Importe o CSS que criaremos
 import '../assets/css/Dashboard.css';
 
 const DashboardPage = () => {

@@ -4,15 +4,15 @@ import { Plus, Loader2, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast'; 
 
 // Imports de Lógica/API
-import enterpriseService from '../services/Enterprise/api';
-import type { Enterprise } from '../services/core-api';
+import enterpriseService from '../../services/Enterprise/api';
+import type { Enterprise } from '../../services/core-api';
 
 // Componentes
-import EnterpriseList from '../components/Enterprise/EnterpriseList';
-import EnterpriseDetailsModal from '../components/modal/EnterpriseDetailsModal';
-import ConfirmModal, { type ConfirmVariant } from '../components/modal/ConfirmModal'; // 1. Importe o Modal
+import EnterpriseList from '../../components/Enterprise/EnterpriseList';
+import EnterpriseDetailsModal from '../../components/modal/EnterpriseDetailsModal';
+import ConfirmModal, { type ConfirmVariant } from '../../components/modal/ConfirmModal'; // 1. Importe o Modal
 
-import '../assets/css/EnterprisePage.css'; 
+import '../../assets/css/EnterprisePage.css'; 
 
 // Interface para o estado do modal de confirmação
 interface ConfirmConfig {

@@ -16,21 +16,21 @@ import Prism from 'prismjs';
 import { useNavigate } from 'react-router-dom';
 
 // Imports de Serviços e Tipos
-import documentService from '../services/Document/api';
+import documentService from '../../services/Document/api';
 
 import {
   addHistoryEntry,
   getHistoryEntries,
   getLatestHistoryEntry,
   type HistoryEntry
-} from '../utils/history_manager';
+} from '../../utils/history_manager';
 
 // Imports de Nós do Lexical
 import { ListNode, ListItemNode } from '@lexical/list';
 import { HeadingNode, QuoteNode } from '@lexical/rich-text';
 import { LinkNode } from '@lexical/link';
-import { ImageNode } from '../components/node/ImageNode';
-import { VideoNode } from '../components/node/VideoNode';
+import { ImageNode } from '../../components/node/ImageNode';
+import { VideoNode } from '../../components/node/VideoNode';
 
 // Imports de Plugins do Lexical
 import { ListPlugin } from '@lexical/react/LexicalListPlugin';
@@ -39,18 +39,18 @@ import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPl
 import { TRANSFORMERS, CODE } from '@lexical/markdown';
 
 // Imports de Plugins Customizados
-import VideoPlugin from '../plugin/VideoPlugin';
-import ImagePlugin from '../plugin/ImagePlugin';
-import FormattingToolbarPlugin from '../plugin/ToolBarPlugin';
-import ActionsPlugin from '../plugin/DownBarPlugin';
+import VideoPlugin from '../../plugin/VideoPlugin';
+import ImagePlugin from '../../plugin/ImagePlugin';
+import FormattingToolbarPlugin from '../../plugin/ToolBarPlugin';
+import ActionsPlugin from '../../plugin/DownBarPlugin';
 
 // Ícones Lucide
 import { ArrowLeft, Loader2, CheckCircle2 } from 'lucide-react';
 
 
 // Import do CSS
-import '../assets/css/EditorTheme.css';
-import '../assets/css/EditDocumentPage.css';
+import '../../assets/css/EditorTheme.css';
+import '../../assets/css/EditDocumentPage.css';
 
 // Configuração Base do Editor
 const baseInitialConfig = {

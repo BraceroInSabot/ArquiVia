@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, UploadCloud, Check, Loader2, AlertCircle, Building2 } from 'lucide-react'; // Ícones
 import toast from 'react-hot-toast';
 
-import { useAuth } from '../contexts/AuthContext';
-import enterpriseService from '../services/Enterprise/api';
-import sectorService from '../services/Sector/api';
-import type { Enterprise } from '../services/core-api';
-import '../assets/css/EnterprisePage.css'; // Reutiliza CSS global
+import { useAuth } from '../../contexts/AuthContext';
+import enterpriseService from '../../services/Enterprise/api';
+import sectorService from '../../services/Sector/api';
+import type { Enterprise } from '../../services/core-api';
+import '../../assets/css/EnterprisePage.css'; // Reutiliza CSS global
 
 const CreateSectorPage = () => {
    const navigate = useNavigate();

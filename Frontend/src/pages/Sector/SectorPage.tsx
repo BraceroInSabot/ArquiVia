@@ -3,13 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { Loader2, AlertCircle, Plus } from 'lucide-react'; 
 import toast from 'react-hot-toast';
 
-import sectorService from '../services/Sector/api';
-import type { Sector, ToggleSectorStatusPayload, RemoveSectorPayload } from '../services/core-api';
-import SectorList from '../components/Sector/SectorList';
-import type { SectorGroup } from '../components/Sector/SectorList.types';
-import ConfirmModal, { type ConfirmVariant } from '../components/modal/ConfirmModal'; // 1. Importe o Modal
+import sectorService from '../../services/Sector/api';
+import type { Sector, ToggleSectorStatusPayload, RemoveSectorPayload } from '../../services/core-api';
+import SectorList from '../../components/Sector/SectorList';
+import type { SectorGroup } from '../../components/Sector/SectorList.types';
+import ConfirmModal, { type ConfirmVariant } from '../../components/modal/ConfirmModal'; // 1. Importe o Modal
 
-import '../assets/css/EnterprisePage.css'; 
+import '../../assets/css/EnterprisePage.css'; 
 
 // Interface para o estado do modal
 interface ConfirmConfig {

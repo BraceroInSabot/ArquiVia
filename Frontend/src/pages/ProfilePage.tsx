@@ -1,38 +1,39 @@
-import { useState, useEffect, useRef, type ChangeEvent } from 'react';
+import React, { useState, useEffect, useRef, type ChangeEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { 
+  Pencil, Lock, Trash2, Camera, 
+  Loader2, AlertCircle, Save, X, User, Mail, AtSign
+} from 'lucide-react';
+import toast from 'react-hot-toast';
+
 import userService from '../services/User/api';
 import { useAuth } from '../contexts/AuthContext';
 import type { UserDetails } from '../services/core-api';
 import ChangePasswordModal from '../components/ChangePasswordModal';
 import DeactivateAccountModal from '../components/DeactivateAccountModal';
-import toast from 'react-hot-toast';
-
-
-// 1. Importar ícones Lucide-React
-import { 
-  Pencil, Lock, Trash2, Camera, 
-  Loader2, AlertCircle, Save
-} from 'lucide-react';
-
-// 2. Importar o CSS customizado
-import '../assets/css/ProfilePage.css';
 
 const ProfilePage = () => {
-  //@ts-ignore
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   
+  // Estados de Dados
   const [profileData, setProfileData] = useState<UserDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Estados de Edição
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
+  // Dados do Formulário
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   
+  // Dados de Imagem
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
+  // Modais
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
   
@@ -46,7 +47,6 @@ const ProfilePage = () => {
       return;
     }
     try {
-      // (Já estava com setIsLoading(true) no estado inicial)
       const response = await userService.getUserDetails(user.data.username);
       setProfileData(response.data);
     } catch (err) {
@@ -109,41 +109,36 @@ const ProfilePage = () => {
       
       await fetchProfile(); 
       setIsEditing(false);
+      toast.success("Perfil atualizado com sucesso!");
     } catch (err) {
+      console.error("Erro ao atualizar:", err);
       toast.error("Erro ao atualizar dados.");
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleChangePassword = () => {
-    setIsPasswordModalOpen(true);
-  };
-  const handleDeactivateAccount = () => {
-    setIsDeactivateModalOpen(true);
-  };
+  const handleChangePassword = () => setIsPasswordModalOpen(true);
+  const handleDeactivateAccount = () => setIsDeactivateModalOpen(true);
   // --- FIM DA LÓGICA ---
-
 
   // --- RENDERIZAÇÃO ---
 
   if (isLoading) {
     return (
-      <div className="profile-container d-flex justify-content-center align-items-center text-center text-muted">
-        <div>
-          <Loader2 size={40} className="animate-spin text-primary-custom" />
-          <p className="mt-2">Carregando perfil...</p>
-        </div>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-base-200 gap-4">
+        <Loader2 size={48} className="animate-spin text-primary" />
+        <p className="text-gray-500 font-medium">Carregando perfil...</p>
       </div>
     );
   }
 
   if (error || !profileData) {
     return (
-      <div className="profile-container d-flex justify-content-center align-items-center">
-        <div className="alert alert-danger d-flex align-items-center">
-          <AlertCircle size={20} className="me-2" />
-          {error || "Perfil não encontrado."}
+      <div className="min-h-screen flex items-center justify-center bg-base-200 p-4">
+        <div className="alert alert-error max-w-md shadow-lg">
+          <AlertCircle size={24} />
+          <span>{error || "Perfil não encontrado."}</span>
         </div>
       </div>
     );
@@ -153,119 +148,153 @@ const ProfilePage = () => {
   const displayImage = imagePreview || userData.image;
 
   return (
-    <div className="profile-container">
-      <div className="card shadow-sm border-0 rounded-3" style={{ maxWidth: '450px', width: '100%' }}>
-        <div className="card-header bg-primary text-white text-center p-4">
-          <h3 className="mb-0">.</h3>
+    <div className="min-h-screen bg-base-200 flex items-center justify-center p-4 md:p-8">
+      
+      <div className="card w-full max-w-lg bg-base-100 shadow-xl overflow-visible border border-base-300">
+        
+        {/* Header com Fundo Colorido */}
+        <div className="h-32 bg-gradient-to-r from-primary to-secondary rounded-t-xl relative">
+           <div className="absolute top-4 left-0 w-full text-center">
+              <h1 className="text-2xl font-bold text-white drop-shadow-md">Meu Perfil</h1>
+           </div>
         </div>
 
-        <div className="card-body p-4">
+        <div className="card-body pt-0 relative">
           
-          <div className="profile-image-wrapper">
-            <div 
-              className={`profile-image-container ${isEditing ? 'editable' : ''}`}
-              onClick={handleImageClick}
-              title={isEditing ? "Clique para alterar a foto" : ""}
-            >
-              {displayImage ? (
-                <img src={displayImage} alt={userData.name} className="profile-image" />
-              ) : (
-                <div className="placeholder-image">
-                  {userData.name.charAt(0).toUpperCase()}
+          {/* --- ÁREA DA IMAGEM (Avatar com Badge/Overlay) --- */}
+          <div className="flex justify-center -mt-16 mb-6">
+             <div 
+                className={`relative group ${isEditing ? 'cursor-pointer' : ''}`}
+                onClick={handleImageClick}
+                title={isEditing ? "Clique para alterar a foto" : ""}
+             >
+                <div className="avatar">
+                  <div className="w-32 h-32 rounded-full ring ring-base-100 ring-offset-base-100 ring-offset-2 bg-base-200">
+                     {displayImage ? (
+                       <img src={displayImage} alt={userData.name} className="object-cover" />
+                     ) : (
+                       <div className="flex items-center justify-center h-full w-full bg-neutral text-neutral-content text-4xl font-bold">
+                          {userData.name.charAt(0).toUpperCase()}
+                       </div>
+                     )}
+                  </div>
                 </div>
-              )}
 
-              {isEditing && (
-                <div className="image-edit-overlay">
-                  <Camera size={24} color="white" />
-                </div>
-              )}
-            </div>
-            
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              onChange={handleFileChange} 
-              style={{ display: 'none' }} 
-              accept="image/png, image/jpeg, image/jpg, image/svg+xml"
-            />
+                {/* Overlay de Edição (Só aparece no hover e se estiver editando) */}
+                {isEditing && (
+                  <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                     <Camera size={32} className="text-white" />
+                  </div>
+                )}
+             </div>
+
+             {/* Input Oculto */}
+             <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handleFileChange} 
+                className="hidden"
+                accept="image/png, image/jpeg, image/jpg, image/svg+xml"
+             />
           </div>
 
-          {/* Form de Edição ou Visualização */}
-          <div className="mt-3">
-            <div className="mb-3">
-              <label className="form-label text-muted small text-uppercase fw-semibold">Nome Completo</label>
+          {/* --- FORMULÁRIO / DADOS --- */}
+          <div className="flex flex-col gap-4">
+            
+            {/* Nome Completo */}
+            <div className="form-control w-full">
+              <label className="label pb-1">
+                <span className="label-text font-bold text-secondary flex items-center gap-2">
+                  <User size={16} /> Nome Completo
+                </span>
+              </label>
               {isEditing ? (
                 <input 
                   type="text" 
-                  className="profile-input form-control form-control-lg"
+                  className="input input-bordered input-primary w-full" 
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
               ) : (
-                <p className="info-value">{userData.name}</p>
+                <div className="px-4 py-3 bg-base-200/50 rounded-lg font-medium text-lg text-neutral border border-transparent">
+                  {userData.name}
+                </div>
               )}
             </div>
 
-            <div className="mb-3">
-              <label className="form-label text-muted small text-uppercase fw-semibold">Usuário (Login)</label>
-              <p className="info-value text-muted">@{userData.username}</p>
+            {/* Usuário (Read-only) */}
+            <div className="form-control w-full">
+              <label className="label pb-1">
+                <span className="label-text font-bold text-secondary flex items-center gap-2">
+                   <AtSign size={16} /> Usuário
+                </span>
+              </label>
+              <div className="px-4 py-3 bg-base-200 rounded-lg text-gray-500 border border-base-200 cursor-not-allowed">
+                @{userData.username}
+              </div>
             </div>
 
-            <div className="mb-4">
-              <label className="form-label text-muted small text-uppercase fw-semibold">E-mail</label>
+            {/* E-mail */}
+            <div className="form-control w-full">
+              <label className="label pb-1">
+                <span className="label-text font-bold text-secondary flex items-center gap-2">
+                   <Mail size={16} /> E-mail
+                </span>
+              </label>
               {isEditing ? (
                 <input 
                   type="email" 
-                  className="profile-input form-control form-control-lg"
+                  className="input input-bordered input-primary w-full" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
               ) : (
-                <p className="info-value">{userData.email}</p>
+                <div className="px-4 py-3 bg-base-200/50 rounded-lg font-medium text-lg text-neutral border border-transparent">
+                  {userData.email}
+                </div>
               )}
             </div>
           </div>
 
+          {/* --- AÇÕES --- */}
+          <div className="divider my-6"></div>
 
-          {/* Botões de Ação */}
-          <div className="profile-actions pt-4 border-top">
+          <div className="flex flex-col gap-3">
             {isEditing ? (
-              // Modo Edição
-              <div className="d-grid gap-2">
+              // MODO EDIÇÃO
+              <div className="grid grid-cols-2 gap-4">
                 <button 
-                  className="btn btn-success d-flex align-items-center justify-content-center gap-2" 
-                  onClick={handleSaveData} 
-                  disabled={isSaving}
-                >
-                  {isSaving ? (
-                    <Loader2 size={18} className="animate-spin" />
-                  ) : (
-                    <Save size={18} />
-                  )}
-                  {isSaving ? "Salvando..." : "Salvar Alterações"}
-                </button>
-                <button 
-                  className="btn btn-secondary" 
+                  className="btn btn-ghost text-secondary" 
                   onClick={handleCancelEdit} 
                   disabled={isSaving}
                 >
-                  Cancelar
+                  <X size={20} /> Cancelar
+                </button>
+                <button 
+                  className="btn btn-success text-white" 
+                  onClick={handleSaveData} 
+                  disabled={isSaving}
+                >
+                  {isSaving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
+                  {isSaving ? "Salvando..." : "Salvar"}
                 </button>
               </div>
             ) : (
-              // Modo Visualização
-              <div className="d-grid gap-2">
-                <button className="btn btn-outline-primary d-flex align-items-center justify-content-center gap-2" onClick={handleEditData}>
-                  <Pencil size={16} /> Editar Dados
+              // MODO VISUALIZAÇÃO
+              <>
+                <button className="btn btn-outline btn-primary w-full" onClick={handleEditData}>
+                  <Pencil size={18} /> Editar Dados
                 </button>
-                <button className="btn btn-outline-secondary d-flex align-items-center justify-content-center gap-2" onClick={handleChangePassword}>
-                  <Lock size={16} /> Alterar Senha
-                </button>
-                <button className="btn btn-outline-danger d-flex align-items-center justify-content-center gap-2" onClick={handleDeactivateAccount}>
-                  <Trash2 size={16} /> Desativar Conta
-                </button>
-              </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
+                  <button className="btn btn-outline btn-secondary w-full" onClick={handleChangePassword}>
+                    <Lock size={18} /> Senha
+                  </button>
+                  <button className="btn btn-outline btn-error w-full" onClick={handleDeactivateAccount}>
+                    <Trash2 size={18} /> Excluir Conta
+                  </button>
+                </div>
+              </>
             )}
           </div>
 
@@ -274,15 +303,11 @@ const ProfilePage = () => {
 
       {/* Modais */}
       {isPasswordModalOpen && (
-        <ChangePasswordModal 
-          onClose={() => setIsPasswordModalOpen(false)} 
-        />
+        <ChangePasswordModal onClose={() => setIsPasswordModalOpen(false)} />
       )}
 
       {isDeactivateModalOpen && (
-        <DeactivateAccountModal 
-          onClose={() => setIsDeactivateModalOpen(false)} 
-        />
+        <DeactivateAccountModal onClose={() => setIsDeactivateModalOpen(false)} />
       )}
     </div>
   );

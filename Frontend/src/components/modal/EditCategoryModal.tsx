@@ -1,11 +1,8 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Save, X, Loader2, AlertCircle, Pencil } from 'lucide-react'; // Ícones
+import { Save, X, Loader2, AlertCircle, Pencil } from 'lucide-react';
 import documentService from '../../services/Document/api';
 import type { Category, UpdateCategoryPayload } from '../../services/core-api';
-
-// Reutiliza o CSS base de modais
-import '../../assets/css/ClassificationModal.css';
 
 interface EditCategoryModalProps {
   sectorId: number;
@@ -59,41 +56,42 @@ const EditCategoryModal: React.FC<EditCategoryModalProps> = ({ sectorId, categor
   };
 
   return createPortal(
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+    <div className="modal modal-open" role="dialog">
+      <div className="modal-box relative max-w-lg">
+        
+        {/* Botão Fechar */}
+        <button 
+            onClick={onClose} 
+            className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+        >
+            <X size={20} />
+        </button>
         
         {/* Cabeçalho */}
-        <div className="d-flex justify-content-between align-items-center mb-4">
-            <h4 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-                <Pencil size={20} className="text-primary-custom" />
-                Editar Categoria
-            </h4>
-            <button 
-                onClick={onClose} 
-                className="btn btn-link text-secondary p-0 text-decoration-none"
-                title="Fechar"
-            >
-                <X size={24} />
-            </button>
-        </div>
+        <h3 className="font-bold text-lg flex items-center gap-2 text-secondary mb-6">
+            <Pencil size={24} className="text-primary" />
+            Editar Categoria
+        </h3>
         
         {/* Erro */}
         {error && (
-            <div className="alert alert-danger d-flex align-items-center mb-3" role="alert">
-                <AlertCircle className="me-2 flex-shrink-0" size={20} />
-                <div style={{ fontSize: '0.9rem' }}>{error}</div>
-            </div>
+          <div className="alert alert-error shadow-sm mb-4 py-2 text-sm justify-start">
+            <AlertCircle size={18} className="shrink-0" />
+            <span>{error}</span>
+          </div>
         )}
 
-        <form onSubmit={handleSave}>
+        <form onSubmit={handleSave} className="space-y-4">
           
-          {/* Campo Nome */}
-          <div className="mb-3">
-            <label htmlFor="cat_name" className="form-label fw-semibold text-secondary">Nome da Categoria</label>
+          {/* Nome */}
+          <div className="form-control w-full">
+            <label htmlFor="cat_name" className="label">
+              <span className="label-text font-semibold text-secondary">Nome da Categoria</span>
+            </label>
             <input 
               type="text" 
               id="cat_name"
-              className="form-control"
+              className="input input-bordered input-primary w-full"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -101,39 +99,42 @@ const EditCategoryModal: React.FC<EditCategoryModalProps> = ({ sectorId, categor
             />
           </div>
 
-          {/* Campo Descrição */}
-          <div className="mb-3">
-            <label htmlFor="cat_desc" className="form-label fw-semibold text-secondary">Descrição <small className="text-muted fw-normal">(Opcional)</small></label>
+          {/* Descrição */}
+          <div className="form-control w-full">
+            <label htmlFor="cat_desc" className="label">
+              <span className="label-text font-semibold text-secondary">Descrição</span>
+              <span className="label-text-alt">(Opcional)</span>
+            </label>
             <textarea
               id="cat_desc"
-              className="form-control"
+              className="textarea textarea-bordered h-24 resize-y"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-              style={{ resize: 'vertical' }}
             />
           </div>
 
           {/* Checkbox Pública */}
-          <div className="mb-4 form-check">
-            <input 
-              type="checkbox" 
-              className="form-check-input"
-              id="cat_public"
-              checked={isPublic}
-              onChange={(e) => setIsPublic(e.target.checked)}
-              style={{ cursor: 'pointer' }}
-            />
-            <label htmlFor="cat_public" className="form-check-label user-select-none" style={{ cursor: 'pointer' }}>
-                Tornar Pública <small className="text-muted d-block">Permite que todos os membros da empresa visualizem.</small>
+          <div className="form-control">
+            <label className="label cursor-pointer justify-start gap-3">
+                <input 
+                    type="checkbox" 
+                    id="cat_public"
+                    checked={isPublic}
+                    onChange={(e) => setIsPublic(e.target.checked)}
+                    className="checkbox checkbox-primary"
+                />
+                <div>
+                    <span className="label-text font-semibold block">Tornar Pública</span>
+                    <span className="label-text-alt text-gray-500">Permite que todos os membros da empresa visualizem.</span>
+                </div>
             </label>
           </div>
 
-          {/* Rodapé / Botões */}
-          <div className="d-flex justify-content-end gap-2 pt-3 border-top">
+          {/* Ações */}
+          <div className="modal-action mt-8">
             <button 
                 type="button" 
-                className="btn btn-light text-secondary"
+                className="btn btn-ghost text-gray-500 hover:bg-gray-100"
                 onClick={onClose}
                 disabled={isSaving}
             >
@@ -141,7 +142,7 @@ const EditCategoryModal: React.FC<EditCategoryModalProps> = ({ sectorId, categor
             </button>
             <button 
               type="submit" 
-              className="btn btn-primary-custom d-flex align-items-center gap-2"
+              className="btn btn-primary text-white px-6"
               disabled={isSaving || !name}
             >
                {isSaving ? (
@@ -159,6 +160,10 @@ const EditCategoryModal: React.FC<EditCategoryModalProps> = ({ sectorId, categor
           </div>
         </form>
       </div>
+
+      <form method="dialog" className="modal-backdrop">
+        <button onClick={onClose}>close</button>
+      </form>
     </div>,
     document.body
   );

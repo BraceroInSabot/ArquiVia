@@ -8,12 +8,9 @@ import { useAuth } from '../../contexts/AuthContext';
 import type { Category } from '../../services/core-api';
 
 // Modais
-import CreateCategoryModal from '../modal/CreateCategoryModal';
-import EditCategoryModal from '../modal/EditCategoryModal'; 
-import ConfirmModal from '../modal/ConfirmModal'; // 1. Importe o Modal Genérico
-
-import '../../assets/css/EnterprisePage.css';
-import '../../assets/css/SectorCategories.css'; 
+import CreateCategoryModal from '../../components/modal/CreateCategoryModal';
+import EditCategoryModal from '../../components/modal/EditCategoryModal'; 
+import ConfirmModal from '../../components/modal/ConfirmModal';
 
 interface SectorCategoriesProps {
   sectorId: number;
@@ -33,12 +30,12 @@ const SectorCategories: React.FC<SectorCategoriesProps> = ({ sectorId }) => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [categoryToEdit, setCategoryToEdit] = useState<Category | null>(null);
 
-  // 2. Novo Estado para o Modal de Exclusão
+  // Estado para o Modal de Exclusão
   const [deleteModalConfig, setDeleteModalConfig] = useState<{ isOpen: boolean; categoryId: number | null }>({
     isOpen: false,
     categoryId: null
   });
-  const [isDeleting, setIsDeleting] = useState(false); // Loading do botão do modal
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchAllData = useCallback(async () => {
     if (!sectorId || !loggedInUser) return;
@@ -56,7 +53,7 @@ const SectorCategories: React.FC<SectorCategoriesProps> = ({ sectorId }) => {
 
       const sectorUsers = usersResponse.data.data;
       if (Array.isArray(sectorUsers)) {
-        //@ts-ignore
+        // @ts-ignore
         const currentUserRole = sectorUsers.find(u => u.user_id === loggedInUser.data.user_id)?.role;
         
         if (currentUserRole) {
@@ -81,17 +78,12 @@ const SectorCategories: React.FC<SectorCategoriesProps> = ({ sectorId }) => {
     fetchAllData();
   }, [fetchAllData]);
 
-  // --- 3. Handler para ABRIR o Modal ---
+  // Handler para abrir o modal de exclusão
   const requestDelete = (categoryId: number) => {
-    setDeleteConfirmation({ isOpen: true, categoryId });
-  };
-  
-  // Helper para atualizar o estado do modal de forma limpa
-  const setDeleteConfirmation = (config: { isOpen: boolean; categoryId: number | null }) => {
-    setDeleteModalConfig(config);
+    setDeleteModalConfig({ isOpen: true, categoryId });
   };
 
-  // --- 4. Handler para EXECUTAR a Exclusão (Passado para o Modal) ---
+  // Handler para confirmar a exclusão
   const handleConfirmDelete = async () => {
     const categoryId = deleteModalConfig.categoryId;
     if (!categoryId) return;
@@ -101,18 +93,15 @@ const SectorCategories: React.FC<SectorCategoriesProps> = ({ sectorId }) => {
     try {
       await documentService.deleteCategory(categoryId, sectorId);
       
-      // Atualiza a lista localmente
       setCategories(prev => prev.filter(cat => cat.category_id !== categoryId));
       toast.success("Categoria excluída com sucesso.");
       
-      // Fecha o modal
-      setDeleteConfirmation({ isOpen: false, categoryId: null });
+      setDeleteModalConfig({ isOpen: false, categoryId: null });
 
     } catch (err: any) {
       const errMsg = err.response?.data?.data?.non_field_errors?.[0] || "Falha ao excluir categoria.";
       toast.error(errMsg);
-      // Fecha o modal mesmo em erro (ou pode manter aberto se preferir)
-      setDeleteConfirmation({ isOpen: false, categoryId: null });
+      setDeleteModalConfig({ isOpen: false, categoryId: null });
     } finally {
       setIsDeleting(false);
     }
@@ -122,8 +111,8 @@ const SectorCategories: React.FC<SectorCategoriesProps> = ({ sectorId }) => {
 
   if (isLoading && !categories.length) {
     return (
-        <div className="d-flex justify-content-center align-items-center py-5 text-muted">
-            <Loader2 className="animate-spin me-2" size={24} />
+        <div className="flex justify-center items-center py-10 text-gray-400">
+            <Loader2 className="animate-spin mr-2" size={24} />
             <span>Carregando categorias...</span>
         </div>
     );
@@ -131,73 +120,79 @@ const SectorCategories: React.FC<SectorCategoriesProps> = ({ sectorId }) => {
 
   if (error && !categories.length) {
     return (
-        <div className="alert alert-danger d-flex align-items-center mt-3" role="alert">
-            <AlertCircle className="me-2" size={20} />
-            <div>{error}</div>
+        <div className="alert alert-error shadow-lg mt-4">
+            <AlertCircle size={20} />
+            <span>{error}</span>
         </div>
     );
   }
 
+  console.log('Categorias carregadas:', categories);
+
   return (
-    <div className="mt-4">
+    <div className="mt-6">
       
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h5 className="fw-bold text-secondary mb-0">Categorias do Setor</h5>
+      {/* Cabeçalho da Seção */}
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="font-bold text-lg text-secondary">Categorias do Setor</h3>
         
         {canEdit && (
             <button 
-            className="btn btn-primary-custom btn-sm d-flex align-items-center gap-2 shadow-sm"
-            onClick={() => setIsCreateModalOpen(true)}
+                className="btn btn-primary btn-sm gap-2 text-white shadow-md hover:shadow-lg"
+                onClick={() => setIsCreateModalOpen(true)}
             >
-            <Plus size={18} />
-            <span>Nova Categoria</span>
+                <Plus size={16} />
+                <span className="hidden sm:inline">Nova Categoria</span>
             </button>
         )}
       </div>
 
       {categories.length === 0 ? (
-        <div className="text-center text-muted py-5 bg-light rounded border border-dashed">
-            <Tag size={48} className="opacity-25 mb-3" />
-            <p className="mb-0">Nenhuma categoria encontrada para este setor.</p>
-            {canEdit && <small>Crie categorias para organizar melhor os documentos.</small>}
+        <div className="flex flex-col items-center justify-center py-10 bg-base-200 rounded-xl border border-dashed border-base-300 text-center">
+            <div className="bg-base-100 p-3 rounded-full mb-3">
+                <Tag size={32} className="text-base-content/30" />
+            </div>
+            <p className="font-medium text-secondary">Nenhuma categoria encontrada.</p>
+            {canEdit && <p className="text-sm text-gray-500 mt-1">Crie categorias para organizar os documentos.</p>}
         </div>
       ) : (
-        <div className="category-grid">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {categories.map((category) => (
-            <div key={category.category_id} className="card h-100 border shadow-sm hover-effect">
-              <div className="card-body d-flex flex-column">
+            <div key={category.category_id} className="card bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-shadow duration-200">
+              <div className="card-body p-5">
                 
-                <div className="d-flex justify-content-between align-items-start mb-2">
-                    <h6 className="fw-bold text-dark mb-0 text-truncate" title={category.category}>
+                <div className="flex justify-between items-start mb-2">
+                    <h4 className="card-title text-base text-secondary line-clamp-1" title={category.category}>
                         {category.category}
-                    </h6>
-                    <span className={`badge ${category.is_public ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'} border`}>
+                    </h4>
+                    <div className={`badge badge-sm ${category.is_public ? 'badge-success text-white' : 'badge-neutral'} gap-1`}>
                         {category.is_public ? 'Pública' : 'Privada'}
-                    </span>
+                    </div>
                 </div>
 
-                <p className="text-muted small flex-grow-1 mb-3" style={{ minHeight: '40px' }}>
-                  {category.description || <span className="fst-italic opacity-50">Sem descrição.</span>}
+                <p className="text-sm text-gray-500 line-clamp-2 min-h-[40px]">
+                  {category.description || <span className="italic opacity-50">Sem descrição.</span>}
                 </p>
                 
                 {canEdit && (
-                    <div className="d-flex justify-content-end gap-2 pt-2 border-top">
-                    <button 
-                        className="btn btn-light btn-sm text-primary"
-                        onClick={() => setCategoryToEdit(category)}
-                        title="Editar Categoria"
-                    >
-                        <Pencil size={16} />
-                    </button>
+                    <div className="card-actions justify-end mt-4 pt-3 border-t border-base-200">
+                        <div className="tooltip tooltip-bottom" data-tip="Editar">
+                            <button 
+                                className="btn btn-square btn-ghost btn-sm text-primary"
+                                onClick={() => setCategoryToEdit(category)}
+                            >
+                                <Pencil size={16} />
+                            </button>
+                        </div>
 
-                    <button 
-                        className="btn btn-light btn-sm text-danger"
-                        // 5. Atualizado para chamar requestDelete
-                        onClick={() => requestDelete(category.category_id)}
-                        title="Excluir Categoria"
-                    >
-                        <Trash2 size={16} />
-                    </button>
+                        <div className="tooltip tooltip-bottom" data-tip="Excluir">
+                            <button 
+                                className="btn btn-square btn-ghost btn-sm text-error"
+                                onClick={() => requestDelete(category.category_id)}
+                            >
+                                <Trash2 size={16} />
+                            </button>
+                        </div>
                     </div>
                 )}
 
@@ -207,7 +202,7 @@ const SectorCategories: React.FC<SectorCategoriesProps> = ({ sectorId }) => {
         </div>
       )}
 
-      {/* Modais de Criação e Edição */}
+      {/* Modais */}
       {isCreateModalOpen && (
         <CreateCategoryModal
           sectorId={sectorId}
@@ -225,10 +220,10 @@ const SectorCategories: React.FC<SectorCategoriesProps> = ({ sectorId }) => {
         />
       )}
 
-      {/* 6. Modal de Confirmação de Exclusão */}
+      {/* Modal de Confirmação Genérico */}
       <ConfirmModal 
         isOpen={deleteModalConfig.isOpen}
-        onClose={() => setDeleteConfirmation({ isOpen: false, categoryId: null })}
+        onClose={() => setDeleteModalConfig({ isOpen: false, categoryId: null })}
         onConfirm={handleConfirmDelete}
         isLoading={isDeleting}
         title="Excluir Categoria"

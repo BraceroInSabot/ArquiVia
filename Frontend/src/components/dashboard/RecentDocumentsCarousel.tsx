@@ -1,7 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-// 1. Importe os ícones necessários para o CTA
-import { FileText, ChevronRight, RefreshCcw, Building } from 'lucide-react';
+import { FileText, ChevronRight, RotateCw, Building } from 'lucide-react'; // Usei RotateCw pois RefreshCcw não existe em todas as versões
 import type { RecentDocument } from '../../services/core-api';
 
 interface CarouselProps {
@@ -11,83 +10,78 @@ interface CarouselProps {
 const RecentDocumentsCarousel: React.FC<CarouselProps> = ({ documents }) => {
   const navigate = useNavigate();
 
-  const getStatusClass = (status: string) => {
-    if (status.toLowerCase() === 'concluído') return 'text-success';
-    if (status.toLowerCase() === 'revisão necessária') return 'text-warning';
-    return 'text-primary'; // Em andamento
+  // Função para formatar data sem toLocaleDateString (como pedido anteriormente)
+  // ou usar new Date(doc.created_at).toLocaleDateString() se preferir.
+  // Vou manter a string original para ser seguro, mas formatada se possível.
+  const formatDate = (dateString: string) => {
+     try {
+         return new Date(dateString).toLocaleDateString();
+     } catch {
+         return dateString;
+     }
+  }
+
+  const getStatusBadge = (status: string) => {
+    const lowerStatus = status.toLowerCase();
+    if (lowerStatus === 'concluído') return 'badge badge-success text-white';
+    if (lowerStatus === 'revisão necessária') return 'badge badge-warning text-white';
+    return 'badge badge-info text-white'; // Em andamento
   };
 
-  // --- 2. Bloco "Estado Vazio" (CTA) ---
-  // Substitui o <h2>oi</h2>
+  // --- Estado Vazio (CTA) ---
   if (documents.length === 0) {
     return (
-      <div 
-        className="text-center p-4 p-md-5 rounded border bg-white shadow-sm custom-cta-card"
-        style={{ borderStyle: 'dashed' }}
-      >
-        <div className="mb-3">
-          <div 
-            className="d-inline-flex bg-light p-3 rounded-circle border"
-          >
-            <Building size={40} className="text-primary-custom opacity-75" />
+      <div className="card bg-base-100 shadow-xl border border-base-200 border-dashed">
+        <div className="card-body items-center text-center py-10">
+          <div className="bg-base-200 p-4 rounded-full mb-4">
+             <Building size={48} className="text-primary opacity-75" />
           </div>
-        </div>
-        
-        <h3 className="fw-bold text-dark mb-2">Comece sua Organização</h3>
-        <p className="text-muted mx-auto mb-4" style={{ maxWidth: '450px' }}>
-          Para criar seu primeiro documento, você precisa configurar uma empresa e um setor.
-        </p>
-        
-        <button 
-            className="btn btn-primary-custom btn-lg d-inline-flex align-items-center gap-2"
-            onClick={() => navigate('/empresas')} // Navega para a criação de empresa
-        >
+          <h3 className="card-title text-2xl font-bold text-secondary">Comece sua Organização</h3>
+          <p className="text-gray-500 max-w-md mb-6">
+            Para criar seu primeiro documento, você precisa configurar uma empresa e um setor.
+          </p>
+          <button 
+            className="btn btn-primary text-white gap-2 rounded-full px-8"
+            onClick={() => navigate('/empresas')}
+          >
             Criar minha Empresa
             <ChevronRight size={20} />
-        </button>
+          </button>
+        </div>
       </div>
     );
   }
 
-  // --- 3. Bloco "Carrossel" (Quando houver documentos) ---
+  // --- Carrossel DaisyUI ---
   return (
-    <div id="recentDocsCarousel" className="carousel slide" data-bs-ride="carousel">
-      
-      {/* O Título agora só aparece se houver documentos */}
-      <div className="d-flex mb-3 fw-bold text-dark align-items-center gap-2 fs-2">
-        <RefreshCcw />
-        Continue de onde parou
+    <div className="w-full">
+      <div className="flex items-center gap-2 mb-4">
+         <RotateCw className="text-secondary" />
+         <h2 className="text-2xl font-bold text-secondary">Continue de onde parou</h2>
       </div>
-      
-      <div className="carousel-inner">
-        {documents.map((doc, index) => (
-          <div 
-            key={doc.document_id} 
-            className={`carousel-item ${index === 0 ? 'active' : ''}`}
-          >
+
+      <div className="carousel w-full gap-4 p-4 bg-neutral/5 rounded-box">
+        {documents.map((doc) => (
+          <div key={doc.document_id} className="carousel-item w-full md:w-1/2 lg:w-1/3">
             <div 
-              className="d-flex flex-column justify-content-center p-4 p-md-5 text-white rounded custom-card-dark cursor-pointer" 
-              onClick={() => navigate(`/documento/editar/${doc.document_id}`)}
-              style={{ minHeight: '200px' }}
+                className="card w-full bg-secondary text-white shadow-xl cursor-pointer hover:scale-[1.02] transition-transform duration-200"
+                onClick={() => navigate(`/documento/editar/${doc.document_id}`)}
             >
-              <FileText size={40} className="mb-3 opacity-50" />
-              <h3 className="fw-bold mb-1">{doc.title}</h3>
-              <p className="mb-0">
-                Criado em: {doc.created_at}
-                <span className={`ms-3 fw-bold ${getStatusClass(doc.status_label)}`}>
-                  ({doc.status_label})
-                </span>
-              </p>
+              <div className="card-body">
+                <FileText size={40} className="opacity-50 mb-2" />
+                <h3 className="card-title text-lg line-clamp-1" title={doc.title}>{doc.title}</h3>
+                <div className="flex flex-col gap-2 mt-2">
+                    <span className="text-xs opacity-70">Criado em: {formatDate(doc.created_at)}</span>
+                    <span className={getStatusBadge(doc.status_label)}>
+                        {doc.status_label}
+                    </span>
+                </div>
+              </div>
             </div>
           </div>
         ))}
       </div>
-      
-      {/* Controles (Removi o 'Prev' para simplificar, já que são só 3 itens) */}
-      <button className="carousel-control-next" type="button" data-bs-target="#recentDocsCarousel" data-bs-slide="next">
-        <ChevronRight size={32} />
-        <span className="visually-hidden">Next</span>
-      </button>
+      <div className="text-xs text-center mt-2 text-gray-400 md:hidden">Deslize para ver mais</div>
     </div>
   );
 };

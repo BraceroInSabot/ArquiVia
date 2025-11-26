@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, UploadCloud, Check, Loader2, AlertCircle } from 'lucide-react';
+import { Save, UploadCloud, Check, Loader2, AlertCircle, Layers } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import enterpriseService from '../../services/Enterprise/api';
-import '../../assets/css/EnterprisePage.css'; // Reutiliza o CSS global de empresas
 
 const EditEnterprisePage = () => {
   const { id } = useParams<{ id: string }>();
@@ -12,7 +11,13 @@ const EditEnterprisePage = () => {
 
   const [name, setName] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [currentImageUrl, setCurrentImageUrl] = useState<string>('');
+  
+  // Dados estáticos para exibição (Read-only)
+  const [staticData, setStaticData] = useState<{ created: string; status: boolean } | null>(null);
+
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -25,11 +30,17 @@ const EditEnterprisePage = () => {
     const fetchEnterpriseData = async () => {
       try {
         const response = await enterpriseService.getEnterpriseById(Number(id));
-        // @ts-ignore
+        // @ts-ignore (Ajuste conforme sua resposta real)
         const enterprise = response.data.data || response.data;
         
         setName(enterprise.name);
-        setImageFile(null); 
+        setCurrentImageUrl(enterprise.image);
+        setImageFile(null);
+        
+        setStaticData({
+            created: enterprise.created_at,
+            status: enterprise.is_active
+        });
         
       } catch (err) {
         setError('Falha ao carregar os dados da empresa.');
@@ -44,7 +55,9 @@ const EditEnterprisePage = () => {
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
-      setImageFile(event.target.files[0]);
+      const file = event.target.files[0];
+      setImageFile(file);
+      setCurrentImageUrl(URL.createObjectURL(file)); // Preview instantâneo
     } else {
       setImageFile(null);
     }
@@ -54,7 +67,7 @@ const EditEnterprisePage = () => {
     event.preventDefault();
     if (!id) return; 
 
-    setLoading(true);
+    setIsSubmitting(true);
     setError(null);
 
     try {
@@ -67,162 +80,158 @@ const EditEnterprisePage = () => {
       await enterpriseService.updateEnterprise(Number(id), formData);
 
       toast.success('Empresa atualizada com sucesso!');
-      
       navigate('/empresas');
 
     } catch (err: any) {
       const errorMessage = err.response?.data?.detail || 'Falha ao atualizar a empresa.';
       setError(errorMessage);
-      console.error('Erro ao atualizar empresa:', err.response?.data);
+      toast.error(errorMessage);
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   // --- Renderização ---
 
-  if (loading && !name) {
+  if (loading) {
     return (
-      <div className="page-container d-flex justify-content-center align-items-center">
-        <div className="text-center text-muted">
-          <Loader2 className="animate-spin text-primary-custom mb-3" size={48} />
-          <p>Carregando dados para edição...</p>
-        </div>
+      <div className="min-h-screen bg-base-200 flex flex-col items-center justify-center text-secondary">
+        <Loader2 className="animate-spin text-primary mb-4" size={48} />
+        <p className="font-medium">Carregando dados...</p>
       </div>
     );
   }
 
   if (error && !name) {
      return (
-        <div className="page-container container py-5">
-            <div className="alert alert-danger d-flex align-items-center" role="alert">
-                <AlertCircle className="me-2" size={20} />
-                <div>{error}</div>
+        <div className="min-h-screen bg-base-200 p-8 flex flex-col items-center justify-center">
+            <div className="alert alert-error shadow-lg max-w-md">
+                <AlertCircle size={24} />
+                <span>{error}</span>
             </div>
-            <button className="btn btn-secondary mt-3" onClick={() => navigate('/empresas')}>Voltar</button>
+            <button className="btn btn-outline mt-4" onClick={() => navigate('/empresas')}>Voltar</button>
         </div>
      );
   }
 
   return (
-    <div className="page-container">
-        <div className="container py-5">
-            
-            {/* Cabeçalho com Botão Voltar */}
-            <div className="d-flex align-items-center mb-4">
-                <button 
-                    onClick={() => navigate('/empresas')} 
-                    className="btn btn-light btn-sm me-3 text-secondary"
-                    title="Cancelar e Voltar"
-                >
-                    <ArrowLeft size={20} />
-                </button>
-                <div>
-                    <h1 className="h3 mb-1 fw-bold text-body-custom">Editar Empresa</h1>
-                    <p className="text-muted mb-0">Atualize as informações da empresa #{id}</p>
-                </div>
-            </div>
+    <div className="min-h-screen bg-base-200 p-4 md:p-8 font-sans text-neutral">
+        <div className="max-w-4xl mx-auto">
 
-            {/* Conteúdo Centralizado */}
-            <div className="row justify-content-center">
-                <div className="col-12 col-lg-8 col-xl-6">
-                    <div className="custom-card p-4">
+            {/* Card Principal */}
+            <div className="card bg-base-100 shadow-xl border border-base-300">
+                <div className="card-body">
+                    
+                    <form onSubmit={handleUpdate} className="flex flex-col gap-6">
                         
-                        <form onSubmit={handleUpdate}>
-                            
-                            {/* Nome */}
-                            <div className="mb-4">
-                                <label htmlFor="name" className="form-label fw-semibold text-secondary">
-                                    Nome da Empresa
-                                </label>
-                                <input
-                                    type="text"
-                                    id="name"
-                                    className="form-control form-control-lg"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    required
-                                />
+                        {/* Informações Estáticas */}
+                        <div className="stats shadow w-full bg-base-200/50 border border-base-300">
+                            <div className="stat">
+                                <div className="stat-title text-xs uppercase font-bold tracking-wider text-gray-500">Criado em</div>
+                                <div className="stat-value text-lg text-secondary">
+                                    {staticData?.created ? new Date(staticData.created).toLocaleDateString() : '-'}
+                                </div>
                             </div>
+                            <div className="stat">
+                                <div className="stat-title text-xs uppercase font-bold tracking-wider text-gray-500">Status</div>
+                                <div className={`stat-value text-lg ${staticData?.status ? 'text-success' : 'text-gray-400'}`}>
+                                    {staticData?.status ? 'Ativo' : 'Inativo'}
+                                </div>
+                            </div>
+                        </div>
 
-                            {/* Imagem (Upload Customizado) */}
-                            <div className="mb-4">
-                                <label htmlFor="image" className="form-label fw-semibold text-secondary">
-                                    Nova Imagem <small className="text-muted fw-normal">(Opcional)</small>
-                                </label>
-                                
-                                <div className="position-relative">
+                        {/* Nome */}
+                        <div className="form-control w-full">
+                            <label className="label">
+                                <span className="label-text font-bold text-secondary">Nome da Empresa</span>
+                            </label>
+                            <input
+                                type="text"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                required
+                                className="input input-bordered input-primary w-full text-lg"
+                            />
+                        </div>
+
+                        {/* Imagem (Upload Customizado) */}
+                        <div className="form-control w-full">
+                            <label className="label">
+                                <span className="label-text font-bold text-secondary">Logo da Empresa</span>
+                                <span className="label-text-alt text-gray-400">(Opcional)</span>
+                            </label>
+
+                            <div className="flex items-center gap-6 p-4 border-2 border-dashed border-base-300 rounded-xl hover:border-primary transition-colors bg-base-100 relative">
+                                {/* Preview */}
+                                <div className="avatar">
+                                    <div className="w-24 rounded bg-base-200 ring ring-base-300 ring-offset-base-100 ring-offset-2 flex items-center justify-center">
+                                        {currentImageUrl ? (
+                                            <img src={currentImageUrl} alt="Preview" className="object-cover" />
+                                        ) : (
+                                            <Layers size={32} className="text-gray-400" />
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Texto e Input Invisível */}
+                                <div className="flex-1">
+                                    <p className="font-medium text-secondary mb-1">
+                                        {imageFile ? imageFile.name : "Clique para alterar a imagem"}
+                                    </p>
+                                    <p className="text-xs text-gray-500">JPG, PNG ou SVG (Máx. 5MB)</p>
+                                    
                                     <input
                                         type="file"
                                         accept="image/jpeg, image/png, image/svg+xml"
-                                        id="image"
-                                        className="form-control"
                                         onChange={handleImageChange}
-                                        style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'pointer' }}
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                                     />
-                                    
-                                    {/* Visual do Input */}
-                                    <div className={`d-flex align-items-center justify-content-center p-4 border rounded-3 bg-light ${imageFile ? 'border-success' : 'border-dashed'}`}>
-                                        <div className="text-center">
-                                            {imageFile ? (
-                                                <>
-                                                    <Check className="text-success mb-2" size={32} />
-                                                    <p className="mb-0 fw-medium text-success">{imageFile.name}</p>
-                                                    <small className="text-muted">Arquivo selecionado para atualização</small>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <UploadCloud className="text-secondary mb-2" size={32} />
-                                                    <p className="mb-0 fw-medium text-dark">Clique para alterar a imagem atual</p>
-                                                    <small className="text-muted">JPG, PNG ou SVG</small>
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
                                 </div>
+
+                                {imageFile && <Check className="text-success" size={24} />}
+                                {!imageFile && <UploadCloud className="text-primary" size={24} />}
                             </div>
+                        </div>
 
-                            {/* Erro no Formulário */}
-                            {error && (
-                                <div className="alert alert-danger d-flex align-items-center mb-3" role="alert">
-                                    <AlertCircle className="me-2" size={20} />
-                                    <div>{error}</div>
-                                </div>
-                            )}
-                            
-                            {/* Botões de Ação */}
-                            <div className="d-grid gap-2">
-                                <button 
-                                    type="submit" 
-                                    className="btn btn-primary-custom py-2 d-flex align-items-center justify-content-center gap-2"
-                                    disabled={loading}
-                                >
-                                    {loading ? (
-                                        <>
-                                            <Loader2 className="animate-spin" size={20} />
-                                            Salvando...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Save size={20} />
-                                            Salvar Alterações
-                                        </>
-                                    )}
-                                </button>
-                                
-                                <button 
-                                    type="button" 
-                                    className="btn btn-light text-secondary" 
-                                    onClick={() => navigate('/empresas')}
-                                    disabled={loading}
-                                >
-                                    Cancelar
-                                </button>
+                        {/* Erro */}
+                        {error && (
+                            <div className="alert alert-error shadow-sm">
+                                <AlertCircle size={20} />
+                                <span>{error}</span>
                             </div>
+                        )}
+                        
+                        {/* Ações */}
+                        <div className="card-actions justify-end mt-4 pt-4 border-t border-base-200">
+                            <button 
+                                type="button" 
+                                className="btn btn-ghost text-secondary hover:bg-base-200" 
+                                onClick={() => navigate('/empresas')}
+                                disabled={isSubmitting}
+                            >
+                                Cancelar
+                            </button>
+                            <button 
+                                type="submit" 
+                                className="btn btn-primary text-white px-8"
+                                disabled={isSubmitting}
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <Loader2 className="animate-spin" size={20} />
+                                        Salvando...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save size={20} />
+                                        Salvar Alterações
+                                    </>
+                                )}
+                            </button>
+                        </div>
 
-                        </form>
+                    </form>
 
-                    </div>
                 </div>
             </div>
         </div>

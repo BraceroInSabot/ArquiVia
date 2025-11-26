@@ -144,26 +144,27 @@ const EnterprisePage = () => {
   // --- RENDERIZAÇÃO ---
   return (
     <div className='page-container'>
-      <div className='container py-5'>
-        
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <div>
-            <h1 className="h3 mb-1 fw-bold text-body-custom">Gestão de Empresas</h1>
-            <p className="text-muted mb-0" style={{ fontSize: '0.95rem' }}>
-              Gerencie as organizações cadastradas no sistema
-            </p>
+      <div className='container'>
+        <div className="container mt-4 px-4">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-secondary">Gestão de Empresas</h1>
+              <p className="text-gray-500 mt-1">
+                Gerencie as organizações cadastradas no sistema
+              </p>
+            </div>
+            
+            <button 
+              onClick={goToCreateEnterprisePage} 
+              className="btn btn-primary text-white gap-2 shadow-md hover:shadow-lg transition-all"
+            >
+              <Plus size={20} strokeWidth={2.5} />
+              <span>Nova Empresa</span>
+            </button>
           </div>
-          
-          <button 
-            onClick={goToCreateEnterprisePage} 
-            className="btn btn-primary-custom d-flex align-items-center gap-2 shadow-sm px-4 py-2"
-          >
-            <Plus size={20} strokeWidth={2.5} />
-            <span>Nova Empresa</span>
-          </button>
-        </div>
+      </div>
         
-        <div className="custom-card p-4">
+        <div className="container p-4">
           {isLoading && (
             <div className="d-flex flex-column justify-content-center align-items-center py-5 text-muted">
               <Loader2 className="animate-spin text-primary-custom mb-3" size={48} />

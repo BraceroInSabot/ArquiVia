@@ -1,6 +1,5 @@
 import type { Enterprise } from '../../services/core-api';
 import { Eye, Pencil, Trash2, Building2 } from 'lucide-react'; // Ícones
-import '../../assets/css/EnterpriseCard.css';
 
 interface EnterpriseCardProps {
   enterprise: Enterprise;
@@ -14,93 +13,91 @@ const EnterpriseCard = ({ enterprise, onView, onEdit, onToggleStatus, onDelete }
   const isActive = enterprise.is_active;
 
   return (
-    <div className="card h-100 border-0 shadow-sm" style={{ transition: 'transform 0.2s ease, box-shadow 0.2s ease' }}>
-      <div className="card-body d-flex flex-column">
+    <div className="card bg-base-100 shadow-md border border-base-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 h-full">
+      <div className="card-body p-5 flex flex-col h-full">
         
-        {/* Topo: Imagem e Informações Principais */}
-        <div className="d-flex align-items-center mb-3">
-          {/* Área da Imagem/Logo */}
-          <div 
-            className="flex-shrink-0 rounded overflow-hidden d-flex align-items-center justify-content-center border"
-            style={{ width: '56px', height: '56px', backgroundColor: '#f8f9fa' }}
-          >
-            {enterprise.image ? (
-              <img
-                src={enterprise.image}
-                alt={enterprise.name}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
-            ) : (
-              <Building2 size={24} className="text-secondary" style={{ opacity: 0.5 }} />
-            )}
-          </div>
-
-          {/* Textos */}
-          <div className="ms-3 overflow-hidden">
-            <h5 className="fw-bold text-dark mb-1 text-truncate" title={enterprise.name}>
-              {enterprise.name}
-            </h5>
-            <span className="badge bg-light text-secondary border fw-normal">
-              ID: {enterprise.enterprise_id}
-            </span>
-          </div>
-        </div>
-
-        {/* Divisor visual */}
-        <hr className="my-3 text-muted" style={{ opacity: 0.1 }} />
-
-        {/* Rodapé: Status e Ações */}
-        {/* ADICIONADO: 'flex-wrap' e 'gap-3' para responsividade */}
-        <div className="d-flex justify-content-between align-items-center mt-auto flex-wrap gap-3">
-          
-          {/* Switch de Status */}
-          <div className="d-flex align-items-center">
-            <div className="form-check form-switch mb-0">
-              <input
-                className="form-check-input"
-                type="checkbox"
-                role="switch"
-                id={`status-switch-${enterprise.enterprise_id}`}
-                checked={isActive}
-                onChange={() => onToggleStatus(enterprise.enterprise_id, isActive)}
-                style={{ cursor: 'pointer' }}
-              />
-              <label 
-                className={`form-check-label small fw-semibold ${isActive ? 'text-success' : 'text-muted'}`} 
-                htmlFor={`status-switch-${enterprise.enterprise_id}`}
-                style={{ cursor: 'pointer' }}
-              >
-                {isActive ? 'Ativa' : 'Inativa'}
-              </label>
+        {/* --- Topo: Imagem e Info --- */}
+        <div className="flex items-center gap-4 mb-2">
+          {/* Avatar / Logo */}
+          <div className="avatar">
+            <div style={{display: 'flex !important',
+              justifyContent: 'center !important',
+              textJustify: 'auto',
+              justifyItems: 'center',
+              justifySelf: 'center',
+              justifyTracks: 'center',
+              alignItems: 'center',
+              alignContent: 'center'
+            }} className="w-14 h-14 rounded-xl bg-base-200 ring-1 ring-base-300 flex items-center justify-center  overflow-hidden">
+              {enterprise.image ? (
+                <img
+                  src={enterprise.image}
+                  alt={enterprise.name}
+                  className="object-cover w-full h-full"
+                />
+              ) : (
+                <Building2 size={24} className="text-gray-400" />
+              )}
             </div>
           </div>
 
-          {/* Grupo de Botões de Ação */}
-          {/* ADICIONADO: 'flex-wrap' para os botões não saírem do card */}
-          <div className="d-flex gap-2 flex-wrap">
-            <button 
-              onClick={() => onView(enterprise.enterprise_id)} 
-              className="btn btn-light btn-sm text-primary-custom"
-              title="Consultar Detalhes"
-            >
-              <Eye size={18} />
-            </button>
-            
-            <button 
-              onClick={() => onEdit(enterprise.enterprise_id)} 
-              className="btn btn-light btn-sm text-primary-custom"
-              title="Editar Empresa"
-            >
-              <Pencil size={18} />
-            </button>
-            
-            <button 
-              onClick={() => onDelete(enterprise.enterprise_id)} 
-              className="btn btn-light btn-sm text-danger"
-              title="Excluir Empresa"
-            >
-              <Trash2 size={18} />
-            </button>
+          {/* Textos */}
+          <div className="flex-1 min-w-0">
+            <h3 className="font-bold text-lg text-secondary truncate" title={enterprise.name}>
+              {enterprise.name}
+            </h3>
+            <div className="badge badge-ghost badge-sm text-xs font-mono text-gray-500">
+              ID: {enterprise.enterprise_id}
+            </div>
+          </div>
+        </div>
+
+        {/* --- Rodapé: Ações e Status --- */}
+        <div className="flex flex-wrap items-center justify-between mt-auto gap-3">
+          
+          {/* Toggle de Status (DaisyUI) */}
+          <div className="form-control">
+            <label className="label cursor-pointer gap-2 p-0">
+              <input 
+                type="checkbox" 
+                className={`toggle toggle-sm ${isActive ? 'toggle-success' : 'toggle-neutral'}`}
+                checked={isActive} 
+                onChange={() => onToggleStatus(enterprise.enterprise_id, isActive)}
+              />
+              <span className={`label-text text-xs font-semibold ${isActive ? 'text-success' : 'text-gray-400'}`}>
+                {isActive ? 'Ativa' : 'Inativa'}
+              </span>
+            </label>
+          </div>
+
+          {/* Botões de Ação */}
+          <div className="flex gap-1">
+            <div className="tooltip tooltip-bottom" data-tip="Consultar">
+              <button 
+                onClick={() => onView(enterprise.enterprise_id)} 
+                className="btn btn-square btn-sm btn-ghost text-primary hover:bg-primary/10"
+              >
+                <Eye size={18} />
+              </button>
+            </div>
+
+            <div className="tooltip tooltip-bottom" data-tip="Editar">
+              <button 
+                onClick={() => onEdit(enterprise.enterprise_id)} 
+                className="btn btn-square btn-sm btn-ghost text-secondary hover:bg-secondary/10"
+              >
+                <Pencil size={18} />
+              </button>
+            </div>
+
+            <div className="tooltip tooltip-bottom" data-tip="Excluir">
+              <button 
+                onClick={() => onDelete(enterprise.enterprise_id)} 
+                className="btn btn-square btn-sm btn-ghost text-error hover:bg-error/10"
+              >
+                <Trash2 size={18} />
+              </button>
+            </div>
           </div>
 
         </div>

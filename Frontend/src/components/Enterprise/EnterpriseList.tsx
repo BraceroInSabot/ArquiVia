@@ -1,4 +1,4 @@
-import type { Enterprise } from '../services/core-api';
+import type { Enterprise } from '../../services/core-api';
 import EnterpriseCard from './EnterpriseCard';
 import { Building2 } from 'lucide-react'; 
 
@@ -12,37 +12,37 @@ interface EnterpriseListProps {
 
 const EnterpriseList = ({ enterprises, onView, onEdit, onToggleStatus, onDelete }: EnterpriseListProps) => {
   
+  // Tratamento de segurança para garantir array
   const listaSegura = Array.isArray(enterprises) ? enterprises : [];
   
-  console.log("Lista processada:", listaSegura);
-
+  // --- Estado Vazio ---
   if (listaSegura.length === 0) {
     return (
-      <div className="d-flex flex-column align-items-center justify-content-center py-5 text-center">
-        <div className="bg-light rounded-circle p-4 mb-3">
-          <Building2 size={48} className="text-secondary" style={{ opacity: 0.5 }} />
+      <div className="flex flex-col items-center justify-center py-16 text-center bg-base-100 rounded-box border border-base-200 border-dashed">
+        <div className="w-20 h-20 bg-base-200 rounded-full flex items-center justify-center mb-4">
+          <Building2 size={40} className="text-gray-400" />
         </div>
-        <h5 className="fw-bold text-body-custom">Nenhuma empresa encontrada</h5>
-        <p className="text-muted mb-0" style={{ maxWidth: '300px' }}>
-          Não há empresas cadastradas no momento ou houve um erro na leitura dos dados.
+        <h3 className="text-xl font-bold text-secondary">Nenhuma empresa encontrada</h3>
+        <p className="text-gray-500 max-w-xs mt-2">
+          Não há empresas cadastradas no momento. Utilize o botão acima para criar uma nova.
         </p>
       </div>
     );
   }
 
+  // --- Lista em Grid (Tailwind) ---
   return (
-    <div className="p-4">
-      <div className="row g-4">
-        {listaSegura.map(enterprise => (
-          <div key={enterprise.enterprise_id} className="col-12 col-md-6 col-xl-4">
-            <EnterpriseCard
-              enterprise={enterprise}
-              onView={onView}
-              onEdit={onEdit}
-              onToggleStatus={onToggleStatus}
-              onDelete={onDelete}
-            />
-          </div>
+    <div className="py-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {listaSegura.map((enterprise: Enterprise) => (
+          <EnterpriseCard
+            key={enterprise.enterprise_id}
+            enterprise={enterprise}
+            onView={onView}
+            onEdit={onEdit}
+            onToggleStatus={onToggleStatus}
+            onDelete={onDelete}
+          />
         ))}
       </div>
     </div>

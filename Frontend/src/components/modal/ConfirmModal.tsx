@@ -2,23 +2,19 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { AlertTriangle, Info, CheckCircle2, Loader2, X } from 'lucide-react';
 
-// Reutiliza o CSS base de modais que já definimos
-import '../../assets/css/ClassificationModal.css'; 
-
 export type ConfirmVariant = 'danger' | 'warning' | 'success' | 'info';
 
 interface ConfirmModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void; // A função que executa a ação
-  isLoading?: boolean;   // Para mostrar o spinner no botão
+  onConfirm: () => void;
+  isLoading?: boolean;
   
-  // Configuração de Texto e Estilo
   title: string;
-  message: string | React.ReactNode; // Aceita string ou JSX (para negritos, etc)
+  message: string | React.ReactNode;
   confirmText?: string;
   cancelText?: string;
-  variant?: ConfirmVariant; // Padrão: 'warning'
+  variant?: ConfirmVariant;
 }
 
 const ConfirmModal: React.FC<ConfirmModalProps> = ({ 
@@ -35,37 +31,33 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   
   if (!isOpen) return null;
 
-  // Configuração Visual baseada na Variante
+  // Configuração Visual baseada na Variante (Tailwind/DaisyUI)
   const getVariantStyles = () => {
     switch (variant) {
       case 'danger':
         return {
           icon: <AlertTriangle size={32} />,
-          bgClass: 'bg-danger-subtle',
-          textClass: 'text-danger',
-          btnClass: 'btn-danger'
+          iconClass: 'text-error bg-error/10',
+          btnClass: 'btn-error text-white'
         };
       case 'success':
         return {
           icon: <CheckCircle2 size={32} />,
-          bgClass: 'bg-success-subtle',
-          textClass: 'text-success',
-          btnClass: 'btn-success'
+          iconClass: 'text-success bg-success/10',
+          btnClass: 'btn-success text-white'
         };
       case 'info':
         return {
           icon: <Info size={32} />,
-          bgClass: 'bg-info-subtle',
-          textClass: 'text-info',
+          iconClass: 'text-info bg-info/10',
           btnClass: 'btn-info text-white'
         };
       case 'warning':
       default:
         return {
           icon: <AlertTriangle size={32} />,
-          bgClass: 'bg-warning-subtle',
-          textClass: 'text-warning',
-          btnClass: 'btn-warning text-dark'
+          iconClass: 'text-warning bg-warning/10',
+          btnClass: 'btn-warning text-white' // Ajuste para melhor contraste dependendo do tema
         };
     }
   };
@@ -73,66 +65,62 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   const styles = getVariantStyles();
 
   return createPortal(
-    <div className="modal-overlay" onClick={!isLoading ? onClose : undefined} style={{ zIndex: 1060 }}>
-      <div 
-        className="modal-content p-0 overflow-hidden" 
-        onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: '400px', borderRadius: '12px' }}
-      >
+    <div className="modal modal-open" role="dialog">
+      <div className="modal-box relative text-center">
         
         {/* Botão Fechar (Topo) */}
-        <div className="d-flex justify-content-end p-2">
-            <button 
-                onClick={onClose} 
-                className="btn btn-link text-secondary p-1 text-decoration-none"
-                disabled={isLoading}
-            >
-                <X size={24} />
-            </button>
-        </div>
+        <button 
+          className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+          onClick={!isLoading ? onClose : undefined}
+          disabled={isLoading}
+        >
+          <X size={20} />
+        </button>
 
-        <div className="px-4 pb-4 text-center">
-            
+        <div className="pt-4">
             {/* Ícone Dinâmico */}
-            <div className={`mb-3 d-inline-flex p-3 rounded-circle ${styles.bgClass} ${styles.textClass}`}>
+            <div className={`mx-auto mb-4 w-16 h-16 rounded-full flex items-center justify-center ${styles.iconClass}`}>
                 {styles.icon}
             </div>
 
-            <h4 className="fw-bold text-dark mb-2">{title}</h4>
+            <h3 className="font-bold text-lg mb-2">{title}</h3>
             
-            <div className="text-muted mb-4 small">
+            <div className="py-2 text-gray-500 text-sm">
                 {message}
             </div>
 
             {/* Botões de Ação */}
-            <div className="d-grid gap-2">
+            <div className="modal-action flex justify-center gap-3 mt-6">
                 <button 
-                    type="button" 
-                    className={`btn ${styles.btnClass} py-2 fw-bold d-flex align-items-center justify-content-center gap-2`}
+                    className="btn btn-ghost" 
+                    onClick={onClose}
+                    disabled={isLoading}
+                >
+                    {cancelText}
+                </button>
+
+                <button 
+                    className={`btn ${styles.btnClass} min-w-[120px]`}
                     onClick={onConfirm}
                     disabled={isLoading}
                 >
                     {isLoading ? (
                         <>
                             <Loader2 className="animate-spin" size={18} />
-                            Processando...
+                            <span className="loading loading-spinner loading-xs hidden"></span> {/* Fallback DaisyUI */}
                         </>
                     ) : (
                         confirmText
                     )}
                 </button>
-                
-                <button 
-                    type="button" 
-                    className="btn btn-light text-secondary" 
-                    onClick={onClose}
-                    disabled={isLoading}
-                >
-                    {cancelText}
-                </button>
             </div>
         </div>
       </div>
+      
+      {/* Backdrop clicável */}
+      <form method="dialog" className="modal-backdrop">
+        <button onClick={!isLoading ? onClose : undefined} disabled={isLoading}>close</button>
+      </form>
     </div>,
     document.body
   );

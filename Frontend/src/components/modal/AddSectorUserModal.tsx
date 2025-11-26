@@ -1,11 +1,8 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, UserPlus, Loader2, AlertCircle } from 'lucide-react'; // Ícones
+import { X, UserPlus, Loader2, AlertCircle, Mail } from 'lucide-react'; 
 import sectorService from '../../services/Sector/api';
 import type { SectorUser, AddSectorUserPayload } from '../../services/core-api';
-
-// Reutiliza o CSS base de modais que já criamos
-import '../../assets/css/ClassificationModal.css'; 
 
 interface ModalProps {
   isOpen: boolean;
@@ -53,58 +50,62 @@ const AddSectorUserModal = ({ isOpen, onClose, sectorId, onUserAdded }: ModalPro
   };
 
   return createPortal(
-    <div className="modal-overlay" onClick={handleClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '450px' }}>
+    <div className="modal modal-open" role="dialog">
+      <div className="modal-box relative">
         
-        {/* Cabeçalho do Modal */}
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <h4 className="mb-0 fw-bold text-dark d-flex align-items-center gap-2">
-            <UserPlus size={24} className="text-primary-custom" />
-            Adicionar Usuário
-          </h4>
-          <button 
+        {/* Botão Fechar Flutuante */}
+        <button 
             onClick={handleClose} 
-            className="btn btn-link text-secondary p-0 text-decoration-none"
-            title="Fechar"
-          >
-            <X size={24} />
-          </button>
-        </div>
+            className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+        >
+            <X size={20} />
+        </button>
         
-        {/* Mensagem de Erro */}
+        {/* Cabeçalho */}
+        <h3 className="font-bold text-lg flex items-center gap-2 text-secondary mb-6">
+            <UserPlus size={24} className="text-primary" />
+            Adicionar Usuário
+        </h3>
+        
+        {/* Erro */}
         {error && (
-          <div className="alert alert-danger d-flex align-items-center mb-3" role="alert">
-            <AlertCircle className="me-2 flex-shrink-0" size={20} />
-            <div style={{ fontSize: '0.9rem' }}>{error}</div>
+          <div className="alert alert-error shadow-sm mb-4 py-2 text-sm">
+            <AlertCircle size={18} />
+            <span>{error}</span>
           </div>
         )}
         
         <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label htmlFor="email" className="form-label fw-semibold text-secondary">
-              Email do Usuário
+          <div className="form-control w-full">
+            <label htmlFor="email" className="label">
+              <span className="label-text font-semibold text-secondary">Email do Usuário</span>
             </label>
-            <input
-              type="email"
-              id="email"
-              className="form-control form-control-lg"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              placeholder="exemplo@email.com"
-              autoFocus
-            />
-            <div className="form-text">
-              O usuário deve estar previamente cadastrado no sistema.
+            
+            <label className="input input-bordered flex items-center gap-2 focus-within:input-primary">
+              <Mail size={18} className="text-gray-400" />
+              <input
+                type="email"
+                id="email"
+                className="grow"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                placeholder="exemplo@email.com"
+                autoFocus
+              />
+            </label>
+            
+            <div className="label">
+              <span className="label-text-alt text-gray-500">O usuário deve estar previamente cadastrado no sistema.</span>
             </div>
           </div>
           
-          {/* Rodapé / Botões */}
-          <div className="d-flex justify-content-end gap-2 pt-2 border-top">
+          {/* Ações */}
+          <div className="modal-action mt-6">
             <button 
               type="button" 
               onClick={handleClose} 
-              className="btn btn-light text-secondary"
+              className="btn btn-ghost text-secondary"
               disabled={isSubmitting}
             >
               Cancelar
@@ -112,7 +113,7 @@ const AddSectorUserModal = ({ isOpen, onClose, sectorId, onUserAdded }: ModalPro
             
             <button 
               type="submit" 
-              className="btn btn-primary-custom d-flex align-items-center gap-2"
+              className="btn btn-primary text-white px-6"
               disabled={isSubmitting}
             >
               {isSubmitting ? (
@@ -127,6 +128,11 @@ const AddSectorUserModal = ({ isOpen, onClose, sectorId, onUserAdded }: ModalPro
           </div>
         </form>
       </div>
+      
+      {/* Backdrop Clicável */}
+      <form method="dialog" className="modal-backdrop">
+        <button onClick={handleClose}>close</button>
+      </form>
     </div>,
     document.body
   );

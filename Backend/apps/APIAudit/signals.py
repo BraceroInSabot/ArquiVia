@@ -9,9 +9,37 @@ from apps.APISetor.models import Sector
 from apps.APIEmpresa.models import Enterprise
 from django.contrib.auth import get_user_model
 
+from django.db.models.fields.files import FieldFile, ImageFieldFile
+from decimal import Decimal
+import datetime
+
 User = get_user_model()
 
 MODELS_TO_AUDIT = [Category, Sector, Enterprise, Classification, User]
+
+def sanitize_data(data):
+    """
+    Percorre o dicionário e converte objetos não serializáveis em JSON
+    (como Imagens, Arquivos, Decimals, UUIDs) em strings ou formatos simples.
+    """
+    clean_data = {}
+    for key, value in data.items():
+        if isinstance(value, FieldFile):
+            clean_data[key] = value.name if value else None
+        
+        elif isinstance(value, ImageFieldFile):
+            clean_data[key] = value.name if value else None
+            
+        elif isinstance(value, Decimal):
+            clean_data[key] = float(value)
+
+        elif isinstance(value, (datetime.date, datetime.datetime)):
+            clean_data[key] = value.isoformat()
+            
+        else:
+            clean_data[key] = value
+            
+    return clean_data
 
 def convert_img_model_to_img_name(instance):
     model_conversion = model_to_dict(instance)
@@ -26,11 +54,13 @@ def get_changes_json(instance, created):
     Gera o JSON para o campo 'changes'.
     """
     model_conversion = convert_img_model_to_img_name(instance)
+    
+    final_state = sanitize_data(model_conversion)
 
     if created:
-        return {"new_state": model_conversion}
+        return {"new_state": final_state}
     
-    return {"current_state": model_conversion}
+    return {"current_state": final_state}
 
 @receiver(post_save)
 def log_save_handler(sender, instance, created, **kwargs):
@@ -43,9 +73,6 @@ def log_save_handler(sender, instance, created, **kwargs):
     user = current_request().user # type: ignore
 
     action_code = '+' if created else '~'
-    print(1, instance, created)
-    print(2, get_changes_json(instance, created))
-    # print(get_changes_json(instance, created)['current_state']['image'].name)
     try:
         AuditLog.objects.create(
             actor=user,
@@ -67,8 +94,10 @@ def log_delete_handler(sender, instance, **kwargs):
         return
 
     user = current_request().user # type: ignore
-
-    model_conversion = convert_img_model_to_img_name(instance)
+    
+    raw_data = model_to_dict(instance)
+    
+    final_state = sanitize_data(raw_data)
 
     AuditLog.objects.create(
         actor=user,
@@ -76,6 +105,6 @@ def log_delete_handler(sender, instance, **kwargs):
         target_model=sender.__name__,
         target_id=instance.pk,
         target_str=str(instance)[:200],
-        changes={"deleted_state": model_conversion}
+        changes={"deleted_state": final_state}
     )
     

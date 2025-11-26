@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('APIAuditDocument', '0001_initial'),
+        ('APIAudit', '0001_initial'),
     ]
 
     operations = [

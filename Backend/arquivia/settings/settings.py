@@ -15,7 +15,7 @@ INSTALLED_APPS =  [
     "apps.APIEmpresa",
     "apps.APISetor",
     "apps.APIDocumento",
-    'apps.APIAuditDocument',
+    'apps.APIAudit',
     'apps.APIDashboard',
 ] + [
     # "django.contrib.admin",

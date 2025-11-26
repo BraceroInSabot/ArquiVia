@@ -8,7 +8,7 @@ from django.db.models import Q
 from apps.core.utils import default_response
 from apps.APIDocumento.models import Document
 from apps.APISetor.models import SectorUser
-from apps.APIAuditDocument.models import AuditLog
+from apps.APIAudit.models import AuditLog
 from apps.APIEmpresa.models import Enterprise
 from apps.APISetor.models import Sector
 from .utils.feed_formating import format_activity_feed

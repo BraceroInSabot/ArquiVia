@@ -69,7 +69,7 @@ ArquiVia/
 ├── Backend/                 # Django backend application
 │   ├── apps/               # Django apps
 │   │   ├── APIDocumento/   # Document management
-│   │   ├── APIAuditDocument/ # Audit logging
+│   │   ├── APIAudit/ # Audit logging
 │   │   ├── APIDashboard/   # Dashboard API
 │   │   ├── APIUser/        # User management
 │   │   ├── APIEmpresa/     # Enterprise management

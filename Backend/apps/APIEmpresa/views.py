@@ -1,4 +1,5 @@
 # DRF
+import json
 from typing import Tuple, Type
 from rest_framework.views import APIView, Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -234,15 +235,11 @@ class ExcludeEnterpriseView(APIView):
             
             return res
         
-        try:
-            enterprise.delete()
-        except:
-            res: HttpResponse = Response()
-            res.status_code = 400
-            res.data = default_response(success=False, message="Houve erros internos. Tente novamente mais tarde.")
-            
-            return res
-            
+        
+        if enterprise.image is None:
+            enterprise.image = json.loads('{}')
+        enterprise.delete()
+        
         res: HttpResponse = Response()
         res.status_code = 200
         res.data = default_response(success=True, message="Empresa excluída permanentemente pelo dono.")

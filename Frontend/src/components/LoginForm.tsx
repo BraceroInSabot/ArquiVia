@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Lock, LogIn, Loader2, AlertCircle } from 'lucide-react';
+import { User, Lock, LogIn, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import userService from '../services/User/api';
 
 interface LoginFormProps {
@@ -10,6 +10,7 @@ interface LoginFormProps {
 const LoginForm: React.FC<LoginFormProps> = ({ login, navigate }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -81,17 +82,32 @@ const LoginForm: React.FC<LoginFormProps> = ({ login, navigate }) => {
             <Lock className="w-5 h-5 text-secondary/60" />
           </span>
         </div>
-        <label className="input-group">
-          <input
-            type="password"
-            id="password"
-            className="input input-bordered w-full focus:outline-none focus:ring-2 focus:ring-primary"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+        <div className="relative">
+          <label className="input-group">
+            <input
+              type={showPassword ? "text" : "password"}
+              id="password"
+              className="input input-bordered w-full pr-12 focus:outline-none focus:ring-2 focus:ring-primary"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={isLoading}
+            />
+          </label>
+          <button
+            type="button"
+            className="absolute right-3 top-1/2 -translate-y-1/2 btn btn-ghost btn-sm h-auto min-h-0 p-1 hover:bg-transparent"
+            onClick={() => setShowPassword(!showPassword)}
             disabled={isLoading}
-          />
-        </label>
+            tabIndex={-1}
+          >
+            {showPassword ? (
+              <EyeOff className="w-5 h-5 text-secondary/60" />
+            ) : (
+              <Eye className="w-5 h-5 text-secondary/60" />
+            )}
+          </button>
+        </div>
         <a 
             href="/solicitar-redefinicao-senha" 
             className="label-text-alt mt-2 text-primary hover:underline text-xs"

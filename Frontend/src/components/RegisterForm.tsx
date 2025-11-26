@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, UserCheck, AtSign, Lock, FileImage, Loader2, AlertCircle, Save } from 'lucide-react';
+import { User, UserCheck, AtSign, Lock, FileImage, Loader2, AlertCircle, Save, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import Validate from '../utils/credential_validation';
@@ -13,6 +13,8 @@ const RegisterForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [cpassword, setCpassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   
@@ -178,18 +180,33 @@ const RegisterForm = () => {
             <Lock className="w-5 h-5 text-secondary/60" />
           </span>
         </label>
-        <label className="input-group">
-          <input
-            type="password"
-            id="password"
-            className="input input-bordered w-full focus:outline-none focus:ring-2 focus:ring-primary"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
+        <div className="relative">
+          <label className="input-group">
+            <input
+              type={showPassword ? "text" : "password"}
+              id="password"
+              className="input input-bordered w-full pr-12 focus:outline-none focus:ring-2 focus:ring-primary"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              disabled={isLoading}
+            />
+          </label>
+          <button
+            type="button"
+            className="absolute right-3 top-1/2 -translate-y-1/2 btn btn-ghost btn-sm h-auto min-h-0 p-1 hover:bg-transparent"
+            onClick={() => setShowPassword(!showPassword)}
             disabled={isLoading}
-          />
-        </label>
+            tabIndex={-1}
+          >
+            {showPassword ? (
+              <EyeOff className="w-5 h-5 text-secondary/60" />
+            ) : (
+              <Eye className="w-5 h-5 text-secondary/60" />
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Confirm Password Field */}
@@ -202,18 +219,33 @@ const RegisterForm = () => {
             <Lock className="w-5 h-5 text-secondary/60" />
           </span>
         </label>
-        <label className="input-group">
-          <input
-            type="password"
-            id="cpassword"
-            className="input input-bordered w-full focus:outline-none focus:ring-2 focus:ring-primary"
-            placeholder="••••••••"
-            value={cpassword}
-            onChange={(e) => setCpassword(e.target.value)}
-            required
+        <div className="relative">
+          <label className="input-group">
+            <input
+              type={showConfirmPassword ? "text" : "password"}
+              id="cpassword"
+              className="input input-bordered w-full pr-12 focus:outline-none focus:ring-2 focus:ring-primary"
+              placeholder="••••••••"
+              value={cpassword}
+              onChange={(e) => setCpassword(e.target.value)}
+              required
+              disabled={isLoading}
+            />
+          </label>
+          <button
+            type="button"
+            className="absolute right-3 top-1/2 -translate-y-1/2 btn btn-ghost btn-sm h-auto min-h-0 p-1 hover:bg-transparent"
+            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
             disabled={isLoading}
-          />
-        </label>
+            tabIndex={-1}
+          >
+            {showConfirmPassword ? (
+              <EyeOff className="w-5 h-5 text-secondary/60" />
+            ) : (
+              <Eye className="w-5 h-5 text-secondary/60" />
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Image Upload Field */}

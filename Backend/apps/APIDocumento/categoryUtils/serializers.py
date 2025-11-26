@@ -80,12 +80,24 @@ class CreateCategorySerializer(ModelSerializer):
         """        
         sector = validated_data.pop('category_sector')
         enterprise = sector.enterprise
+        is_public = validated_data.get('is_public', False)
+        
+        if is_public == 'True':
+            is_public = True
+        else:
+            is_public = False
+        
+        print(validated_data)
         
         category = Category.objects.create(
             category_enterprise=enterprise,
             category_sector=sector,
             **validated_data
             )
+        
+        if is_public:
+            category.is_public = True
+            category.save()
     
         return category
 
@@ -115,7 +127,8 @@ class CategoryListSerializer(serializers.ModelSerializer):
             'category',
             'description',
             'sector_name',
-            'enterprise_name'
+            'enterprise_name',
+            'is_public',
         ]
         
 class CategoryDetailSerializer(serializers.ModelSerializer):

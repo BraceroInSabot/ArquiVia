@@ -23,7 +23,7 @@ const RecentDocumentsCarousel: React.FC<CarouselProps> = ({ documents }) => {
 
   const getStatusBadge = (status: string) => {
     const lowerStatus = status.toLowerCase();
-    if (lowerStatus === 'concluído') return 'badge badge-success text-white';
+    if (lowerStatus === 'concluído') return 'badge badge-success text-white text-bold';
     if (lowerStatus === 'revisão necessária') return 'badge badge-warning text-white';
     return 'badge badge-info text-white'; // Em andamento
   };
@@ -60,15 +60,15 @@ const RecentDocumentsCarousel: React.FC<CarouselProps> = ({ documents }) => {
          <h2 className="text-2xl font-bold text-secondary">Continue de onde parou</h2>
       </div>
 
-      <div className="carousel w-full gap-4 p-4 bg-neutral/5 rounded-box">
+      <div className="carousel w-full gap-2 rounded-box">
         {documents.map((doc) => (
-          <div key={doc.document_id} className="carousel-item w-full md:w-1/2 lg:w-1/3">
+          <div key={doc.document_id} className="carousel-item w-full md:w-1/3 lg:w-1/3">
             <div 
-                className="card w-full bg-secondary text-white shadow-xl cursor-pointer hover:scale-[1.02] transition-transform duration-200"
+                className="card w-full bg-primary text-white cursor-pointer hover:scale-[1.02] transition-transform duration-200"
                 onClick={() => navigate(`/documento/editar/${doc.document_id}`)}
             >
               <div className="card-body">
-                <FileText size={40} className="opacity-50 mb-2" />
+                <FileText size={40} className=" mb-2" />
                 <h3 className="card-title text-lg line-clamp-1" title={doc.title}>{doc.title}</h3>
                 <div className="flex flex-col gap-2 mt-2">
                     <span className="text-xs opacity-70">Criado em: {formatDate(doc.created_at)}</span>

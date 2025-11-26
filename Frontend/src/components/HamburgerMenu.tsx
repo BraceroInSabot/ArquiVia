@@ -101,7 +101,7 @@ const HamburgerMenu = () => {
             {/* --- BACKDROP (Fundo Escuro) --- */}
             {/* Aparece suavemente quando isOpen é true */}
             <div 
-                className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] transition-opacity duration-300 ${
+                className={`fixed inset-0 bg-black/50 -sm z-[60] transition-opacity duration-300 ${
                     isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
                 }`}
                 onClick={() => setIsOpen(false)}

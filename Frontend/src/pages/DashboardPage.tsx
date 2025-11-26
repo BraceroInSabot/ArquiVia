@@ -50,7 +50,7 @@ const DashboardPage = () => {
   }
 
   return (
-    <div className="container py-4" style={{ backgroundColor: '#f8f9fa', minHeight: 'calc(100vh - 60px)' }}>
+    <div className=" w-full py-4 p-4" style={{ backgroundColor: '#f8f9fa', minHeight: 'calc(100vh - 60px)' }}>
       
       {/* 1. Componente Superior (Full Width) - Carrossel */}
       <div className="row mb-4">
@@ -63,12 +63,12 @@ const DashboardPage = () => {
       <div className="row g-4">
         
         {/* 2a. Bottom-Left (Revisão Pendente) */}
-        <div className="col-12 col-lg-6">
+        <div className="mt-4 col-12 col-lg-6">
           <ReviewPendingWidget documents={data.review_pending_documents} />
         </div>
 
         {/* 2b. Bottom-Right (Atividades) */}
-        <div className="col-12 col-lg-6">
+        <div className="mt-4 col-12 col-lg-6">
           <ActivityFeedWidget feed={data.activity_feed} />
         </div>
 

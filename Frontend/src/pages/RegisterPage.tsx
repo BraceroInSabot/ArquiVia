@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import RegisterForm from "../components/RegisterForm";
-import '../assets/css/LoginPage.css'; // Reutiliza o CSS do Login
 
 const RegisterPage = () => {
   const { user } = useAuth();
@@ -14,27 +13,39 @@ const RegisterPage = () => {
     }
   }, [user, navigate]);
 
+  const goToIndex = () => {
+    navigate("/");
+  };
+
   return (
-    <div className="login-page-container">
-      <div className="login-content">
-        
-        {/* Cabeçalho */}
-        <div className="login-header mb-4 text-center">
-          <h1 className="logo-text text-primary-custom fw-bold">ArquiVia</h1>
-          <p className="text-muted">Crie sua conta para começar.</p>
+    <div className="min-h-screen bg-base-100 flex items-center justify-center px-4 py-12">
+      <div className="w-full max-w-md">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 
+            className="text-4xl font-bold text-primary cursor-pointer hover:opacity-80 transition-opacity mb-2 no-underline hover:no-underline"
+            onClick={goToIndex}
+          >
+            ArquiVia
+          </h1>
+          <p className="text-secondary/70">
+            Crie sua conta para começar.
+          </p>
         </div>
         
-        {/* Card do Formulário */}
-        <div className="login-card shadow-sm">
-          <RegisterForm />
+        {/* Register Card */}
+        <div className="card bg-white shadow-xl border border-gray-100">
+          <div className="card-body">
+            <RegisterForm />
+          </div>
         </div>
 
-        {/* Rodapé */}
-        <div className="login-footer text-center mt-4">
-          <p className="text-muted small">
-            Já tem uma conta?{' '}
+        {/* Footer */}
+        <div className="text-center mt-6">
+          <p className="text-secondary/70 text-sm">
+            Já tem uma conta?{" "}
             <span 
-              className="text-primary-custom fw-bold cursor-pointer" 
+              className="text-primary font-semibold cursor-pointer hover:underline"
               onClick={() => navigate('/entrar')}
             >
               Faça login

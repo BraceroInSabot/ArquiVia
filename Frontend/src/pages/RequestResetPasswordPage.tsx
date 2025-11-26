@@ -1,12 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, ArrowLeft, Send, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'; // Ícones
+import { Mail, ArrowLeft, Send, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 
 import userService from '../services/User/api';
 import { type RequestPasswordReset } from '../services/core-api';
-
-// Reutiliza o CSS da página de Login para manter consistência (fundo, centralização)
-import '../assets/css/LoginPage.css'; 
 
 const RequestResetPassword = () => {
     const navigate = useNavigate();
@@ -15,8 +12,12 @@ const RequestResetPassword = () => {
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
 
+    const goToIndex = () => {
+        navigate("/");
+    };
+
     const handleSendEmail = async (e: React.FormEvent) => {
-        e.preventDefault(); // Evita recarregamento da página
+        e.preventDefault();
         
         if (!email) {
             setError("Por favor, digite seu e-mail.");
@@ -28,10 +29,8 @@ const RequestResetPassword = () => {
         setSuccess(null);
 
         try {
-            // Chama o serviço
             const response = await userService.requestPasswordReset({ email } as RequestPasswordReset);
 
-            // Se chegou aqui sem cair no catch, assumimos sucesso ou verificamos response
             if (response) {
                 setSuccess('E-mail enviado! Verifique sua caixa de entrada (e spam) para redefinir sua senha.');
             } else {
@@ -39,7 +38,6 @@ const RequestResetPassword = () => {
             }
         } catch (err: any) {
             console.error(err);
-            // Mensagem genérica ou vinda do backend
             setError("Erro ao solicitar redefinição. Verifique se o e-mail está correto.");
         } finally {
             setIsLoading(false);
@@ -47,104 +45,120 @@ const RequestResetPassword = () => {
     };
 
     return (
-        <div className="login-page-container">
-            <div className="login-content" style={{ maxWidth: '450px' }}>
-                
-                {/* Cabeçalho */}
-                <div className="login-header mb-4 text-center">
-                    <h1 className="logo-text text-primary-custom fw-bold">Recuperar Senha</h1>
-                    <p className="text-muted">Informe seu e-mail para receber o link de redefinição.</p>
+        <div className="min-h-screen bg-base-100 flex items-center justify-center px-4 py-12">
+            <div className="w-full max-w-md">
+                {/* Header */}
+                <div className="text-center mb-8">
+                    <h1 
+                        className="text-4xl font-bold text-primary cursor-pointer hover:opacity-80 transition-opacity mb-2 no-underline hover:no-underline"
+                        onClick={goToIndex}
+                    >
+                        ArquiVia
+                    </h1>
+                    <h2 className="text-2xl font-bold text-secondary mb-2">Recuperar Senha</h2>
+                    <p className="text-secondary/70">
+                        Informe seu e-mail para receber o link de redefinição.
+                    </p>
                 </div>
 
-                <div className="login-card shadow-sm p-4">
-                    
-                    {/* Estado de Sucesso */}
-                    {success ? (
-                        <div className="text-center py-3">
-                            <div className="mb-3 text-success">
-                                <CheckCircle2 size={48} className="mx-auto" />
-                            </div>
-                            <h5 className="fw-bold text-dark">Verifique seu e-mail</h5>
-                            <p className="text-muted small mb-4">{success}</p>
-                            
-                            <button 
-                                onClick={() => navigate('/entrar')} 
-                                className="btn btn-outline-secondary w-100"
-                            >
-                                Voltar para o Login
-                            </button>
-                        </div>
-                    ) : (
-                        /* Estado de Formulário */
-                        <form onSubmit={handleSendEmail}>
-                            
-                            {/* Alerta de Erro */}
-                            {error && (
-                                <div className="alert alert-danger d-flex align-items-center p-2 small mb-3" role="alert">
-                                    <AlertCircle className="me-2 flex-shrink-0" size={16} />
-                                    <div>{error}</div>
+                {/* Card */}
+                <div className="card bg-white shadow-xl border border-gray-100">
+                    <div className="card-body">
+                        {/* Success State */}
+                        {success ? (
+                            <div className="text-center py-4">
+                                <div className="mb-4 flex justify-center">
+                                    <div className="rounded-full bg-success/10 p-4">
+                                        <CheckCircle2 className="w-12 h-12 text-success" />
+                                    </div>
                                 </div>
-                            )}
-
-                            <div className="mb-4">
-                                <label htmlFor="email" className="form-label small fw-bold text-secondary text-uppercase">
-                                    E-mail Cadastrado
-                                </label>
-                                <div className="input-group">
-                                    <span className="input-group-text bg-light border-end-0 text-muted">
-                                        <Mail size={18} />
-                                    </span>
-                                    <input 
-                                        type="email" 
-                                        id="email"
-                                        name="email" 
-                                        className="form-control border-start-0 ps-0 bg-light"
-                                        placeholder="exemplo@email.com"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        required
-                                        autoFocus
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="d-grid gap-2">
+                                <h3 className="text-xl font-bold text-secondary mb-3">
+                                    Verifique seu e-mail
+                                </h3>
+                                <p className="text-secondary/70 text-sm mb-6">
+                                    {success}
+                                </p>
                                 <button 
-                                    type="submit" 
-                                    className="btn btn-primary-custom py-2 fw-bold d-flex align-items-center justify-content-center gap-2"
-                                    disabled={isLoading}
+                                    onClick={() => navigate('/entrar')} 
+                                    className="btn btn-primary text-white w-full font-semibold"
                                 >
-                                    {isLoading ? (
-                                        <>
-                                            <Loader2 className="animate-spin" size={20} />
-                                            Enviando...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Send size={18} />
-                                            Enviar Link
-                                        </>
-                                    )}
+                                    Voltar para o Login
                                 </button>
                             </div>
-                        </form>
-                    )}
+                        ) : (
+                            /* Form State */
+                            <form onSubmit={handleSendEmail} className="space-y-4">
+                                {/* Error Alert */}
+                                {error && (
+                                    <div className="alert alert-error shadow-lg">
+                                        <AlertCircle className="w-5 h-5" />
+                                        <span className="text-sm">{error}</span>
+                                    </div>
+                                )}
+
+                                {/* Email Field */}
+                                <div className="form-control">
+                                    <label className="label" htmlFor="email">
+                                        <span className="label-text font-semibold text-secondary text-xs uppercase tracking-wide">
+                                            E-mail Cadastrado
+                                        </span>
+                                        <span className="bg-base-000 border-r-0">
+                                            <Mail className="w-5 h-5 text-secondary/60" />
+                                        </span>
+                                    </label>
+                                    <label className="input-group">
+                                        <input 
+                                            type="email" 
+                                            id="email"
+                                            name="email" 
+                                            className="input input-bordered w-full focus:outline-none focus:ring-2 focus:ring-primary"
+                                            placeholder="exemplo@email.com"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            required
+                                            autoFocus
+                                            disabled={isLoading}
+                                        />
+                                    </label>
+                                </div>
+
+                                {/* Submit Button */}
+                                <div className="form-control mt-6">
+                                    <button 
+                                        type="submit" 
+                                        className="btn btn-primary text-white w-full font-semibold"
+                                        disabled={isLoading}
+                                    >
+                                        {isLoading ? (
+                                            <>
+                                                <Loader2 className="w-5 h-5 animate-spin" />
+                                                Enviando...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Send className="w-5 h-5" />
+                                                Enviar Link
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </form>
+                        )}
+                    </div>
                 </div>
 
-                {/* Rodapé / Voltar */}
+                {/* Footer / Back Button */}
                 {!success && (
-                    <div className="text-center mt-4">
+                    <div className="text-center mt-6">
                         <button 
                             onClick={() => navigate('/entrar')} 
-                            className="btn btn-link text-decoration-none text-muted d-flex align-items-center justify-content-center gap-2 mx-auto"
-                            style={{ fontSize: '0.9rem' }}
+                            className="btn btn-ghost text-secondary hover:text-primary gap-2"
                         >
-                            <ArrowLeft size={16} />
+                            <ArrowLeft className="w-4 h-4" />
                             Voltar para o Login
                         </button>
                     </div>
                 )}
-
             </div>
         </div>
     );

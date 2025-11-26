@@ -1,42 +1,50 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Lock, Save, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'; // Ícones
+import { Lock, Save, Loader2, AlertCircle, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 
 import Validate from "../utils/credential_validation";
 import userService from "../services/User/api";
-
-// Reutiliza o CSS da página de Login
-import '../assets/css/LoginPage.css'; 
 
 const ResetPassword = () => {
     const { token } = useParams<{ token: string }>();
     const [p1, setP1] = useState('');
     const [p2, setP2] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
     const [canSubmit, setCanSubmit] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false); // Estado de loading para o botão
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const navigate = useNavigate();
 
-    // Lógica de validação do token (INTACTA)
+    const goToIndex = () => {
+        navigate("/");
+    };
+
+    // Lógica de validação do token
     useEffect(() => {
         if (!token) {
             navigate('/entrar');
+            return;
         }
 
         const validateToken = async () => {
-            const response = await userService.validateToken(token as string);
-            if (!response.data.sucesso) {
+            try {
+                const response = await userService.validateToken(token as string);
+                if (!response.data.sucesso) {
+                    navigate('/entrar');
+                }
+            } catch (err) {
                 navigate('/entrar');
             }
-        }
+        };
         validateToken();
-    }, []);
+    }, [token, navigate]);
 
-    // Lógica de validação das senhas (INTACTA)
+    // Lógica de validação das senhas
     const validatePasswords = (currentP1: string, currentP2: string) => {
         if (currentP1 && currentP2) {
             const validation = Validate.password(currentP1, currentP2);
@@ -48,11 +56,12 @@ const ResetPassword = () => {
                 setCanSubmit(true);
             }
         } else {
+            setError('');
             setCanSubmit(false);
         }
-    }
+    };
 
-    // Lógica de envio (Atualizada com try/catch e loading)
+    // Lógica de envio
     const handleResetPassword = async (e: React.FormEvent) => {
         e.preventDefault();
         
@@ -61,7 +70,7 @@ const ResetPassword = () => {
         setSuccess('');
 
         try {
-            const response = await userService.resetPasswordByToken(token as string, p1)
+            const response = await userService.resetPasswordByToken(token as string, p1);
 
             if (response.data.sucesso) {
                 setSuccess("Senha redefinida com sucesso! Redirecionando para a tela de login...");
@@ -76,109 +85,158 @@ const ResetPassword = () => {
         } finally {
             setIsSubmitting(false);
         }
-    }
+    };
     
     return (
-        <div className="login-page-container">
-            <div className="login-content" style={{ maxWidth: '450px' }}>
-
-                <div className="login-header mb-4 text-center">
-                    <h1 className="logo-text text-primary-custom fw-bold">ArquiVia</h1>
-                    <p className="text-muted">Defina sua nova senha de acesso.</p>
+        <div className="min-h-screen bg-base-100 flex items-center justify-center px-4 py-12">
+            <div className="w-full max-w-md">
+                {/* Header */}
+                <div className="text-center mb-8">
+                    <h1 
+                        className="text-4xl font-bold text-primary cursor-pointer hover:opacity-80 transition-opacity mb-2 no-underline hover:no-underline"
+                        onClick={goToIndex}
+                    >
+                        ArquiVia
+                    </h1>
+                    <h2 className="text-2xl font-bold text-secondary mb-2">Redefinir Senha</h2>
+                    <p className="text-secondary/70">
+                        Defina sua nova senha de acesso.
+                    </p>
                 </div>
 
-                <div className="login-card shadow-sm p-4">
-                    <form onSubmit={handleResetPassword}>
-
-                        {/* Mensagem de Erro */}
-                        {error && (
-                            <div className="alert alert-danger d-flex align-items-center p-2 small mb-3" role="alert">
-                                <AlertCircle className="me-2 flex-shrink-0" size={16} />
-                                <div>{error}</div>
-                            </div>
-                        )}
-                        
-                        {/* Mensagem de Sucesso */}
-                        {success && (
-                            <div className="alert alert-success d-flex align-items-center p-2 small mb-3" role="alert">
-                                <CheckCircle2 className="me-2 flex-shrink-0" size={16} />
-                                <div>{success}</div>
-                            </div>
-                        )}
-
-                        {/* Oculta o formulário se o sucesso for exibido */}
-                        {!success && (
-                            <>
-                                <div className="mb-3">
-                                    <label htmlFor="new-password" className="form-label small fw-bold text-secondary text-uppercase">
-                                        Nova Senha
-                                    </label>
-                                    <div className="input-group">
-                                        <span className="input-group-text bg-light border-end-0 text-muted">
-                                            <Lock size={18} />
-                                        </span>
-                                        <input 
-                                            type="password" 
-                                            name="new-password" 
-                                            id="new-password"
-                                            className="form-control border-start-0 ps-0 bg-light"
-                                            value={p1} 
-                                            onChange={(e) => {
-                                                const newP1 = e.target.value;
-                                                setP1(newP1);
-                                                validatePasswords(newP1, p2);
-                                            }}
-                                        />
-                                    </div>
+                {/* Card */}
+                <div className="card bg-white shadow-xl border border-gray-100">
+                    <div className="card-body">
+                        <form onSubmit={handleResetPassword} className="space-y-4">
+                            {/* Error Alert */}
+                            {error && (
+                                <div className="alert alert-error shadow-lg">
+                                    <AlertCircle className="w-5 h-5" />
+                                    <span className="text-sm">{error}</span>
                                 </div>
-                                
-                                <div className="mb-4">
-                                    <label htmlFor="confirm-new-password" className="form-label small fw-bold text-secondary text-uppercase">
-                                        Confirmar Nova Senha
-                                    </label>
-                                    <div className="input-group">
-                                        <span className="input-group-text bg-light border-end-0 text-muted">
-                                            <Lock size={18} />
-                                        </span>
-                                        <input 
-                                            type="password" 
-                                            name="confirm-new-password" 
-                                            id="confirm-new-password"
-                                            className="form-control border-start-0 ps-0 bg-light"
-                                            value={p2} 
-                                            onChange={(e) => {
-                                                const newP2 = e.target.value;
-                                                setP2(newP2);
-                                                validatePasswords(p1, newP2);
-                                            }}
-                                        />
-                                    </div>
+                            )}
+                            
+                            {/* Success Alert */}
+                            {success && (
+                                <div className="alert alert-success shadow-lg">
+                                    <CheckCircle2 className="w-5 h-5" />
+                                    <span className="text-sm">{success}</span>
                                 </div>
+                            )}
 
-                                <button 
-                                    type="submit"
-                                    className="btn btn-primary-custom w-100 py-2 d-flex align-items-center justify-content-center gap-2 fw-bold"
-                                    disabled={!canSubmit || isSubmitting} 
-                                >
-                                    {isSubmitting ? (
-                                        <>
-                                            <Loader2 className="animate-spin" size={20} />
-                                            Salvando...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Save size={20} />
-                                            Redefinir Senha
-                                        </>
-                                    )}
-                                </button>
-                            </>
-                        )}
-                    </form>
+                            {/* Form Fields - Only show if not success */}
+                            {!success && (
+                                <>
+                                    {/* New Password Field */}
+                                    <div className="form-control">
+                                        <label className="label" htmlFor="new-password">
+                                            <span className="label-text font-semibold text-secondary text-xs uppercase tracking-wide">
+                                                Nova Senha
+                                            </span>
+                                        </label>
+                                        <div className="relative">
+                                            <label className="input-group">
+                                                <input
+                                                    type={showPassword ? "text" : "password"}
+                                                    name="new-password" 
+                                                    id="new-password"
+                                                    className="input input-bordered w-full pr-12 focus:outline-none focus:ring-2 focus:ring-primary"
+                                                    placeholder="••••••••"
+                                                    value={p1} 
+                                                    onChange={(e) => {
+                                                        const newP1 = e.target.value;
+                                                        setP1(newP1);
+                                                        validatePasswords(newP1, p2);
+                                                    }}
+                                                    required
+                                                    disabled={isSubmitting}
+                                                />
+                                            </label>
+                                            <button
+                                                type="button"
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 btn btn-ghost btn-sm h-auto min-h-0 p-1 hover:bg-transparent"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                disabled={isSubmitting}
+                                                tabIndex={-1}
+                                            >
+                                                {showPassword ? (
+                                                    <EyeOff className="w-5 h-5 text-secondary/60" />
+                                                ) : (
+                                                    <Eye className="w-5 h-5 text-secondary/60" />
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Confirm Password Field */}
+                                    <div className="form-control">
+                                        <label className="label" htmlFor="confirm-new-password">
+                                            <span className="label-text font-semibold text-secondary text-xs uppercase tracking-wide">
+                                                Confirmar Nova Senha
+                                            </span>
+                                        </label>
+                                        <div className="relative">
+                                            <label className="input-group">
+                                                <input
+                                                    type={showConfirmPassword ? "text" : "password"}
+                                                    name="confirm-new-password" 
+                                                    id="confirm-new-password"
+                                                    className="input input-bordered w-full pr-12 focus:outline-none focus:ring-2 focus:ring-primary"
+                                                    placeholder="••••••••"
+                                                    value={p2} 
+                                                    onChange={(e) => {
+                                                        const newP2 = e.target.value;
+                                                        setP2(newP2);
+                                                        validatePasswords(p1, newP2);
+                                                    }}
+                                                    required
+                                                    disabled={isSubmitting}
+                                                />
+                                            </label>
+                                            <button
+                                                type="button"
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 btn btn-ghost btn-sm h-auto min-h-0 p-1 hover:bg-transparent"
+                                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                disabled={isSubmitting}
+                                                tabIndex={-1}
+                                            >
+                                                {showConfirmPassword ? (
+                                                    <EyeOff className="w-5 h-5 text-secondary/60" />
+                                                ) : (
+                                                    <Eye className="w-5 h-5 text-secondary/60" />
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Submit Button */}
+                                    <div className="form-control mt-6">
+                                        <button 
+                                            type="submit"
+                                            className="btn btn-primary text-white w-full font-semibold"
+                                            disabled={!canSubmit || isSubmitting} 
+                                        >
+                                            {isSubmitting ? (
+                                                <>
+                                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                                    Salvando...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Save className="w-5 h-5" />
+                                                    Redefinir Senha
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
-    )
-}
+    );
+};
 
 export default ResetPassword;

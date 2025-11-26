@@ -1,51 +1,48 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import sectorService from '../../services/Sector/api';
-import type { SectorDashboardData } from '../../services/core-api';
 import { 
   Loader2, AlertTriangle, FileText, FileWarning, 
-  CheckCircle2, Archive, Eye, Users 
+  CheckCircle2, Archive, Eye, Users, TrendingUp 
 } from 'lucide-react';
 
-// Importe o CSS que criaremos
-import '../../assets/css/SectorMetrics.css';
+import sectorService from '../../services/Sector/api';
+import type { SectorDashboardData } from '../../services/core-api';
+
+// Não precisamos mais de CSS externo
+// import '../../assets/css/SectorMetrics.css';
 
 interface SectorMetricsProps {
   sectorId: number;
 }
 
-// Helper para formatar o tempo (ex: "há 5 dias")
+// Helper para formatar o tempo
 const timeAgo = (dateString: string): string => {
-  const date = new Date(dateString);
-  const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
-  let interval = seconds / 31536000;
-  if (interval > 1) return Math.floor(interval) + " anos";
-  interval = seconds / 2592000;
-  if (interval > 1) return Math.floor(interval) + " meses";
-  interval = seconds / 86400;
-  if (interval > 1) return Math.floor(interval) + " dias";
-  interval = seconds / 3600;
-  if (interval > 1) return Math.floor(interval) + " horas";
-  interval = seconds / 60;
-  if (interval > 1) return Math.floor(interval) + " min";
-  return "agora";
+  try {
+    const date = new Date(dateString);
+    const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
+    let interval = seconds / 31536000;
+    if (interval > 1) return Math.floor(interval) + " anos";
+    interval = seconds / 2592000;
+    if (interval > 1) return Math.floor(interval) + " meses";
+    interval = seconds / 86400;
+    if (interval > 1) return Math.floor(interval) + " dias";
+    interval = seconds / 3600;
+    if (interval > 1) return Math.floor(interval) + " horas";
+    interval = seconds / 60;
+    if (interval > 1) return Math.floor(interval) + " min";
+    return "agora";
+  } catch { return ""; }
 };
 
-// Componente interno para os 5 cards de KPI
-const KpiCard: React.FC<{ title: string, value: number, icon: React.ReactNode, colorClass: string }> = 
+// Componente interno para um item de KPI (usando DaisyUI Stat)
+const KpiStat: React.FC<{ title: string, value: number, icon: React.ReactNode, colorClass: string }> = 
   ({ title, value, icon, colorClass }) => (
-  <div className="col">
-    <div className={`card card-kpi border-0 shadow-sm h-100 ${colorClass}`}>
-      <div className="card-body">
-        <div className="d-flex justify-content-between align-items-center">
-          <div className="kpi-icon">{icon}</div>
-          <div className="text-end">
-            <h3 className="kpi-value fw-bold mb-0">{value}</h3>
-            <span className="kpi-title text-muted text-uppercase small">{title}</span>
-          </div>
-        </div>
-      </div>
+  <div className="stat bg-base-100 shadow p-4 rounded-xl border border-base-200">
+    <div className={`stat-figure ${colorClass} opacity-80`}>
+      {icon}
     </div>
+    <div className="stat-title text-xs font-bold uppercase tracking-wider text-gray-400">{title}</div>
+    <div className={`stat-value text-2xl ${colorClass}`}>{value}</div>
   </div>
 );
 
@@ -66,7 +63,6 @@ const SectorMetrics: React.FC<SectorMetricsProps> = ({ sectorId }) => {
         setData(response.data.data);
       } catch (err: any) {
         console.error("Erro ao buscar dashboard gerencial:", err);
-        // Trata erro de permissão (403 Forbidden)
         if (err.response && err.response.status === 403) {
           setError("Você não tem permissão de Gerente ou Proprietário para ver este dashboard.");
         } else {
@@ -82,18 +78,18 @@ const SectorMetrics: React.FC<SectorMetricsProps> = ({ sectorId }) => {
 
   if (isLoading) {
     return (
-      <div className="d-flex justify-content-center align-items-center py-5 text-muted">
-        <Loader2 className="animate-spin me-2" size={24} />
-        <span>Carregando métricas gerenciais...</span>
+      <div className="flex flex-col items-center justify-center py-10 text-gray-400">
+        <Loader2 className="animate-spin mb-2" size={32} />
+        <span>Carregando métricas...</span>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="alert alert-danger d-flex align-items-center" role="alert">
-        <AlertTriangle className="me-2" size={20} />
-        <div>{error}</div>
+      <div className="alert alert-error shadow-lg my-6">
+        <AlertTriangle size={24} />
+        <span>{error}</span>
       </div>
     );
   }
@@ -103,85 +99,116 @@ const SectorMetrics: React.FC<SectorMetricsProps> = ({ sectorId }) => {
   const { kpis, insights } = data;
 
   return (
-    <div className="sector-metrics-container mt-4">
+    <div className="mt-6">
       
-      {/* --- 1. LINHA DE KPIs --- */}
-      <h5 className="fw-bold text-secondary mb-3">Métricas de Volume</h5>
-      <div className="row row-cols-1 row-cols-md-3 row-cols-xl-5 g-3 mb-5">
-        <KpiCard title="Total de Documentos" value={kpis.total_documentos} icon={<FileText size={24} />} colorClass="text-primary" />
-        <KpiCard title="Pendentes" value={kpis.pendentes} icon={<FileWarning size={24} />} colorClass="text-warning" />
-        <KpiCard title="Concluídos" value={kpis.concluidos} icon={<CheckCircle2 size={24} />} colorClass="text-success" />
-        <KpiCard title="Arquivados" value={kpis.arquivados} icon={<Archive size={24} />} colorClass="text-secondary" />
-        <KpiCard title="Públicos" value={kpis.publicos} icon={<Eye size={24} />} colorClass="text-info" />
+      {/* --- 1. KPIs (Grid de Stats) --- */}
+      <h3 className="font-bold text-lg text-secondary mb-4 flex items-center gap-2">
+        <TrendingUp size={20} /> Métricas de Volume
+      </h3>
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+        <KpiStat title="Total Docs" value={kpis.total_documentos} icon={<FileText size={32} />} colorClass="text-primary" />
+        <KpiStat title="Pendentes" value={kpis.pendentes} icon={<FileWarning size={32} />} colorClass="text-warning" />
+        <KpiStat title="Concluídos" value={kpis.concluidos} icon={<CheckCircle2 size={32} />} colorClass="text-success" />
+        <KpiStat title="Arquivados" value={kpis.arquivados} icon={<Archive size={32} />} colorClass="text-neutral" />
+        <KpiStat title="Públicos" value={kpis.publicos} icon={<Eye size={32} />} colorClass="text-info" />
       </div>
 
-      {/* --- 2. LINHA DE INSIGHTS --- */}
-      <h5 className="fw-bold text-secondary mb-3">Insights de Fluxo</h5>
-      <div className="row g-4">
+      {/* --- 2. INSIGHTS (Grid de Cards) --- */}
+      <h3 className="font-bold text-lg text-secondary mb-4 flex items-center gap-2">
+        <AlertTriangle size={20} /> Insights de Fluxo
+      </h3>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Coluna Esquerda (Gargalos e Colaboradores) */}
-        <div className="col-lg-8">
-          {/* Gargalos */}
-          <div className="card shadow-sm border-0 mb-4">
-            <div className="card-header bg-white d-flex align-items-center">
-              <FileWarning size={18} className="me-2 text-danger" />
-              <h6 className="fw-bold text-dark mb-0">Gargalos Pendentes (Mais Antigos)</h6>
+        {/* Coluna Esquerda: Gargalos */}
+        <div className="card bg-base-100 shadow-xl border border-base-200 lg:col-span-2">
+          <div className="card-body p-0">
+            <div className="p-4 border-b border-base-200 bg-base-100 rounded-t-xl flex justify-between items-center">
+               <div className="flex items-center gap-2 font-bold text-secondary">
+                  <FileWarning size={20} className="text-error" />
+                  Gargalos Pendentes (Mais Antigos)
+               </div>
             </div>
-            <ul className="list-group list-group-flush">
-              {insights.gargalos_pendentes.length > 0 ? (
-                insights.gargalos_pendentes.map(doc => (
-                  <li 
-                    key={doc.document_id} 
-                    className="list-group-item list-group-item-action d-flex justify-content-between align-items-center cursor-pointer"
-                    onClick={() => navigate(`/documento/editar/${doc.document_id}`)}
-                  >
-                    <span className="fw-medium text-dark text-truncate" style={{maxWidth: '400px'}}>{doc.title}</span>
-                    <span className="text-danger small fw-bold">{timeAgo(doc.created_at)}</span>
-                  </li>
-                ))
-              ) : (
-                <li className="list-group-item text-muted text-center small p-4">
-                  Nenhum gargalo encontrado.
-                </li>
-              )}
-            </ul>
-          </div>
-          
-          {/* Top Colaboradores */}
-          <div className="card shadow-sm border-0">
-            <div className="card-header bg-white d-flex align-items-center">
-              <Users size={18} className="me-2 text-primary-custom" />
-              <h6 className="fw-bold text-dark mb-0">Top Colaboradores (Atividade)</h6>
+
+            <div className="overflow-x-auto">
+              <table className="table table-zebra w-full">
+                <tbody>
+                  {insights.gargalos_pendentes.length > 0 ? (
+                    insights.gargalos_pendentes.map(doc => (
+                      <tr key={doc.document_id} className="hover cursor-pointer" onClick={() => navigate(`/documento/editar/${doc.document_id}`)}>
+                        <td>
+                            <div className="font-medium text-secondary truncate max-w-xs" title={doc.title}>
+                                {doc.title}
+                            </div>
+                        </td>
+                        <td className="text-right">
+                            <span className="badge badge-error badge-outline font-bold gap-1">
+                                🕒 {timeAgo(doc.created_at)}
+                            </span>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                        <td colSpan={2} className="text-center text-gray-400 py-6">Nenhum gargalo encontrado.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
-            <ul className="list-group list-group-flush">
-              {insights.top_colaboradores.length > 0 ? (
-                insights.top_colaboradores.map((colab, index) => (
-                  <li key={index} className="list-group-item d-flex align-items-center gap-3">
-                    <span className="fw-bold text-primary-custom" style={{width: '20px'}}>{index + 1}</span>
-                    <span className="fw-medium text-dark flex-grow-1">{colab.history_user__name}</span>
-                    <span className="badge bg-light text-dark border">{colab.activity_count} atividades</span>
-                  </li>
-                ))
-              ) : (
-                <li className="list-group-item text-muted text-center small p-4">
-                  Sem dados de colaboração.
-                </li>
-              )}
-            </ul>
           </div>
         </div>
 
-        {/* Coluna Direita (Alertas) */}
-        <div className="col-lg-4">
-          <div className="alert alert-warning d-flex align-items-center h-100" role="alert">
-            <AlertTriangle className="me-3 flex-shrink-0" size={32} />
-            <div>
-              <h5 className="alert-heading fw-bold">Alerta de Risco</h5>
-              <p className="mb-0">
-                <strong>{insights.alerta_exclusoes_7dias}</strong> documentos foram excluídos nos últimos 7 dias.
-              </p>
+        {/* Coluna Direita: Alertas */}
+        <div className="flex flex-col gap-6">
+            
+            {/* Card de Alerta */}
+            <div className="card bg-warning/10 border border-warning/20 shadow-sm">
+                <div className="card-body flex flex-row items-center gap-4 p-5">
+                    <div className="p-3 bg-warning text-white rounded-full">
+                        <AlertTriangle size={24} />
+                    </div>
+                    <div>
+                        <h4 className="font-bold text-warning-content/80">Risco de Perda</h4>
+                        <p className="text-sm text-gray-600">
+                            <strong className="text-lg">{insights.alerta_exclusoes_7dias}</strong> documentos excluídos nos últimos 7 dias.
+                        </p>
+                    </div>
+                </div>
             </div>
-          </div>
+
+            {/* Card de Top Colaboradores */}
+            <div className="card bg-base-100 shadow-xl border border-base-200 flex-grow">
+                <div className="card-body p-0">
+                    <div className="p-4 border-b border-base-200 bg-base-100 rounded-t-xl font-bold text-secondary flex items-center gap-2">
+                        <Users size={20} className="text-primary" />
+                        Top Colaboradores
+                    </div>
+                    <ul className="menu w-full p-2">
+                        {insights.top_colaboradores.length > 0 ? (
+                            insights.top_colaboradores.map((colab, index) => (
+                                <li key={index}>
+                                    <a className="flex justify-between items-center active:bg-base-200 hover:bg-base-200 cursor-default">
+                                        <div className="flex items-center gap-3">
+                                            <span className={`font-bold w-6 text-center ${index === 0 ? 'text-warning text-lg' : 'text-gray-400'}`}>
+                                                {index + 1}
+                                            </span>
+                                            <span className="font-medium text-secondary">{colab.history_user__name}</span>
+                                        </div>
+                                        <span className="badge badge-ghost">{colab.activity_count} ações</span>
+                                    </a>
+                                </li>
+                            ))
+                        ) : (
+                            <li className="disabled">
+                                <a className="justify-center text-gray-400 italic">Sem dados.</a>
+                            </li>
+                        )}
+                    </ul>
+                </div>
+            </div>
+
         </div>
         
       </div>

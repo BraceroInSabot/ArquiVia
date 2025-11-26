@@ -1,7 +1,7 @@
 import type { SectorGroup } from './SectorList.types';
 import SectorCard from './SectorCard';
 import type { ToggleSectorStatusPayload } from '../../services/core-api';
-import { Layers, Building } from 'lucide-react'; // Ícones
+import { Layers, Building } from 'lucide-react'; 
 
 interface SectorListProps {
   groups: SectorGroup[];
@@ -13,15 +13,15 @@ interface SectorListProps {
 
 const SectorList = ({ groups, onViewSector, onEditSector, onDeleteSector, onDeactivateOrActivate }: SectorListProps) => {
   
-  // Empty State (Nenhum setor encontrado)
+  // --- Estado Vazio ---
   if (groups.length === 0) {
     return (
-      <div className="d-flex flex-column align-items-center justify-content-center py-5 text-center">
-        <div className="bg-light rounded-circle p-4 mb-3">
-          <Layers size={48} className="text-secondary" style={{ opacity: 0.5 }} />
+      <div className="flex flex-col items-center justify-center py-16 text-center bg-base-100 rounded-box border border-base-200 border-dashed">
+        <div className="w-20 h-20 bg-base-200 rounded-full flex items-center justify-center mb-4">
+          <Layers size={40} className="text-gray-400" />
         </div>
-        <h5 className="fw-bold text-body-custom">Nenhum setor encontrado</h5>
-        <p className="text-muted mb-0" style={{ maxWidth: '350px' }}>
+        <h3 className="text-xl font-bold text-secondary">Nenhum setor encontrado</h3>
+        <p className="text-gray-500 max-w-sm mt-2">
           Não encontramos setores vinculados às suas empresas. Comece criando um novo setor.
         </p>
       </div>
@@ -29,33 +29,32 @@ const SectorList = ({ groups, onViewSector, onEditSector, onDeleteSector, onDeac
   }
 
   return (
-    <div className="p-4">
+    <div className="flex flex-col gap-12 py-6">
       {groups.map((group, index) => (
-        <div key={group.enterpriseName} className={`mb-5 ${index !== groups.length - 1 ? 'border-bottom pb-5' : ''}`}>
+        <div key={group.enterpriseName} className={`${index !== groups.length - 1 ? 'border-b border-base-200 pb-10' : ''}`}>
           
-          {/* Cabeçalho do Grupo (Nome da Empresa) */}
-          <div className="d-flex align-items-center mb-4">
-            <div className="bg-light p-2 rounded me-3 text-primary-custom">
+          {/* Cabeçalho do Grupo (Empresa) */}
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 bg-primary/10 rounded-lg text-primary">
               <Building size={24} />
             </div>
-            <h4 className="fw-bold text-dark mb-0">{group.enterpriseName}</h4>
-            <span className="badge bg-light text-secondary ms-3 border">
+            <h2 className="text-2xl font-bold text-secondary">{group.enterpriseName}</h2>
+            <div className="badge badge-secondary ml-2 mt-1 font-mono">
               {group.sectors.length} {group.sectors.length === 1 ? 'setor' : 'setores'}
-            </span>
+            </div>
           </div>
           
-          {/* Grid de Cards de Setor */}
-          <div className="row g-4">
+          {/* Grid de Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {group.sectors.map(sector => (
-              <div key={sector.sector_id} className="col-12 col-md-6 col-xl-4">
-                <SectorCard
-                  sector={sector}
-                  onView={onViewSector}
-                  onEdit={onEditSector}
-                  onDelete={onDeleteSector}
-                  onDeactivateOrActivate={onDeactivateOrActivate}
-                />
-              </div>
+              <SectorCard
+                key={sector.sector_id}
+                sector={sector}
+                onView={onViewSector}
+                onEdit={onEditSector}
+                onDelete={onDeleteSector}
+                onDeactivateOrActivate={onDeactivateOrActivate}
+              />
             ))}
           </div>
           

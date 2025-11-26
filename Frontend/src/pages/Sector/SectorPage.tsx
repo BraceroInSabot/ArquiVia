@@ -5,19 +5,17 @@ import toast from 'react-hot-toast';
 
 import sectorService from '../../services/Sector/api';
 import type { Sector, ToggleSectorStatusPayload, RemoveSectorPayload } from '../../services/core-api';
-import SectorList from '../../components/Sector/SectorList';
-import type { SectorGroup } from '../../components/Sector/SectorList.types';
-import ConfirmModal, { type ConfirmVariant } from '../../components/modal/ConfirmModal'; // 1. Importe o Modal
-
-import '../../assets/css/EnterprisePage.css'; 
+import SectorList from '../../components/Sector/SectorList'; // Certifique-se do caminho
+import type { SectorGroup } from '../../components/Sector/SectorList.types'; // Certifique-se do caminho
+import ConfirmModal, { type ConfirmVariant } from '../../components/modal/ConfirmModal';
 
 // Interface para o estado do modal
 interface ConfirmConfig {
   isOpen: boolean;
   type: 'toggle' | 'delete' | null;
-  sectorId: number | null; // Mudado de 'id' para 'sectorId' para clareza
-  sectorName?: string;     // Para mostrar no texto
-  currentStatus?: boolean; // Apenas para toggle
+  sectorId: number | null;
+  sectorName?: string;
+  currentStatus?: boolean;
   title: string;
   message: string;
   variant: ConfirmVariant;
@@ -31,7 +29,7 @@ const SectorPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 2. Estados para o Modal e Loading de Ação
+  // Estados para o Modal e Loading de Ação
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [confirmConfig, setConfirmConfig] = useState<ConfirmConfig>({
     isOpen: false, type: null, sectorId: null, title: '', message: '', variant: 'warning', confirmText: ''
@@ -74,12 +72,10 @@ const SectorPage = () => {
   const handleViewSector = (id: number) => navigate(`/setor/${id}`);
   const handleEditSector = (id: number) => navigate(`/setor/editar/${id}`);
 
-  // --- 3. HANDLERS DE ABERTURA DE MODAL ---
+  // --- HANDLERS DE ABERTURA DE MODAL ---
 
   const handleDeleteSector = (id: number) => {
-    // Encontra o setor para mostrar o nome (opcional, mas bom para UX)
     const sector = sectors.find(s => s.sector_id === id);
-    
     setConfirmConfig({
       isOpen: true,
       type: 'delete',
@@ -92,7 +88,6 @@ const SectorPage = () => {
   };
 
   const handleDeactivateOrActivate = (sector_id: ToggleSectorStatusPayload) => {
-    // Encontra o setor para saber o status atual
     // @ts-ignore
     const sector = sectors.find(s => s.sector_id === sector_id);
     if (!sector) return;
@@ -113,7 +108,7 @@ const SectorPage = () => {
     });
   };
 
-  // --- 4. LÓGICA DE EXECUÇÃO (CHAMADA PELO MODAL) ---
+  // --- LÓGICA DE EXECUÇÃO ---
 
   const handleConfirmAction = async () => {
     const { sectorId, type } = confirmConfig;
@@ -124,25 +119,17 @@ const SectorPage = () => {
     try {
       if (type === 'delete') {
         await sectorService.deleteSector(sectorId as unknown as RemoveSectorPayload);
-        
         toast.success(`Setor removido com sucesso.`);
-        // Remove da lista localmente para não precisar de reload
         setSectors(prev => prev.filter(s => s.sector_id !== sectorId));
       } 
       else if (type === 'toggle') {
         await sectorService.toggleSectorStatus(sectorId as unknown as ToggleSectorStatusPayload);
-        
-        // Atualiza o estado localmente
         setSectors(prev => prev.map(s => 
            s.sector_id === sectorId ? { ...s, is_active: !s.is_active } : s
         ));
-        
-        // Mensagem baseada na ação que ACABOU de acontecer (inverso do status antigo)
         const actionDone = !confirmConfig.currentStatus ? "ativado" : "desativado";
         toast.success(`Setor ${actionDone} com sucesso.`);
       }
-
-      // Fecha o modal
       setConfirmConfig(prev => ({ ...prev, isOpen: false }));
 
     } catch (err) {
@@ -154,55 +141,60 @@ const SectorPage = () => {
     }
   };
 
-
   return (
-    <div className="page-container">
-      <div className="container py-5">
+    <div className="min-h-screen bg-base-000 p-4 md:p-8 font-sans text-neutral">
+      <div className="max-w-7xl mx-auto">
         
-        <div className="d-flex justify-content-between align-items-center mb-4">
+        {/* Cabeçalho */}
+        <div className="flex flex-col md:flex-row justify-between gap-4 mb-8">
           <div>
-            <h1 className="h3 mb-1 fw-bold text-body-custom">Listagem de Setores</h1>
-            <p className="text-muted mb-0">Gerencie os setores e departamentos vinculados às empresas</p>
+            <h1 className="text-3xl font-bold text-secondary">Listagem de Setores</h1>
+            <p className="text-sm text-gray-500 mt-1">Gerencie os setores e departamentos vinculados às empresas</p>
           </div>
           
           <button 
             onClick={goToCreateSector} 
-            className="btn btn-primary-custom d-flex align-items-center gap-2 shadow-sm px-4 py-2"
+            className="btn btn-primary text-white gap-2 shadow-md hover:shadow-lg transition-all"
           >
             <Plus size={20} strokeWidth={2.5} />
             <span>Novo Setor</span>
           </button>
         </div>
 
-        <div className="custom-card p-4">
-            
-            {isLoading && (
-                <div className="d-flex flex-column justify-content-center align-items-center py-5 text-muted">
-                    <Loader2 className="animate-spin text-primary-custom mb-3" size={48} />
-                    <span>Carregando setores...</span>
-                </div>
-            )}
-            
-            {error && (
-                <div className="alert alert-danger d-flex align-items-center" role="alert">
-                    <AlertCircle className="me-2" size={20} />
-                    <div>{error}</div>
-                </div>
-            )}
+        {/* Conteúdo Principal */}
+        <div className="card bg-base-100 shadow-xl border border-base-300">
+            <div className="card-body">
+                
+                {/* Loading */}
+                {isLoading && (
+                    <div className="flex flex-col items-center justify-center py-10 text-gray-400">
+                        <Loader2 className="animate-spin text-primary mb-2" size={40} />
+                        <span>Carregando setores...</span>
+                    </div>
+                )}
+                
+                {/* Erro */}
+                {error && (
+                    <div className="alert alert-error shadow-sm mb-4">
+                        <AlertCircle size={20} />
+                        <span>{error}</span>
+                    </div>
+                )}
 
-            {!isLoading && !error && (
-                <SectorList 
-                    groups={groupedAndSortedSectors} 
-                    onViewSector={handleViewSector}
-                    onEditSector={handleEditSector}
-                    // Passamos os handlers que abrem o modal
-                    onDeleteSector={handleDeleteSector}
-                    onDeactivateOrActivate={handleDeactivateOrActivate}
-                />
-            )}
+                {/* Lista */}
+                {!isLoading && !error && (
+                    <SectorList 
+                        groups={groupedAndSortedSectors} 
+                        onViewSector={handleViewSector}
+                        onEditSector={handleEditSector}
+                        onDeleteSector={handleDeleteSector}
+                        onDeactivateOrActivate={handleDeactivateOrActivate}
+                    />
+                )}
+            </div>
         </div>
 
-        {/* 5. Renderiza o Modal de Confirmação */}
+        {/* Modal de Confirmação */}
         <ConfirmModal 
           isOpen={confirmConfig.isOpen}
           onClose={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}

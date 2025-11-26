@@ -7,31 +7,29 @@ import {
 
 import sectorService from '../../services/Sector/api';
 import type { Sector } from '../../services/core-api';
-import { useAuth } from '../../contexts/AuthContext'; // Importe o AuthContext
+import { useAuth } from '../../contexts/AuthContext'; 
 
 import SectorUsers from '../../components/Sector/SectorUsers';  
-import SectorCategories from '../../components/Sector/SectorCategories'; 
-import SectorMetrics from '../../components/Sector/SectorMetrics'; // Importe o componente real
+import SectorCategories from '../../components/Sector/SectorCategories'; // Caminho ajustado para pages/tabs? Verifique.
+import SectorMetrics from '../../components/Sector/SectorMetrics';
 
-import '../../assets/css/EnterprisePage.css'; 
+// --- Componentes Locais Estilizados ---
 
-// Componente de Logs (Placeholder)
 const SectorLogs = ({ sectorId }: { sectorId: number }) => (
-  <div className="p-4 text-center bg-light rounded border border-dashed">
-    <History size={48} className="text-secondary opacity-25 mb-3" />
-    <h5 className="text-muted">Logs de Atividade</h5>
-    <p className="text-muted small">O histórico de ações do setor {sectorId} aparecerá aqui.</p>
+  <div className="flex flex-col items-center justify-center p-10 bg-base-200/50 rounded-xl border-2 border-dashed border-base-300">
+    <History size={48} className="text-base-300 mb-4" />
+    <h5 className="text-lg font-bold text-secondary">Logs de Atividade</h5>
+    <p className="text-sm text-gray-500">O histórico de ações do setor {sectorId} aparecerá aqui.</p>
   </div>
 );
 
-// Componente de Acesso Negado (Bonito)
 const AccessDenied = () => (
-  <div className="p-5 text-center">
-    <div className="bg-danger-subtle p-3 rounded-circle d-inline-block mb-3">
-        <Lock size={32} className="text-danger" />
+  <div className="flex flex-col items-center justify-center p-12 bg-base-100 rounded-xl">
+    <div className="w-16 h-16 bg-error/10 rounded-full flex items-center justify-center mb-4 text-error">
+        <Lock size={32} />
     </div>
-    <h5 className="fw-bold text-dark">Acesso Restrito</h5>
-    <p className="text-muted mb-0">Você não tem permissão para visualizar esta seção.</p>
+    <h5 className="text-xl font-bold text-secondary">Acesso Restrito</h5>
+    <p className="text-gray-500">Você não tem permissão para visualizar esta seção.</p>
   </div>
 );
 
@@ -40,14 +38,14 @@ type TabName = 'users' | 'metrics' | 'logs' | 'categories';
 const ViewSectorPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth(); // Pega o usuário logado
+  const { user } = useAuth();
 
   const [sector, setSector] = useState<Sector>({} as Sector);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabName>('users');
 
-  // --- LÓGICA ---
+  // --- LÓGICA (INTACTA) ---
   useEffect(() => {
     if (!id) {
       setError('ID do setor não fornecido.');
@@ -72,161 +70,167 @@ const ViewSectorPage = () => {
     navigate(`/setor/editar/${sector.sector_id}`);
   };
 
-  // --- VERIFICAÇÃO DE PERMISSÕES ---
-  // Nota: Esta é uma verificação básica no front-end. 
-  // O ideal é que o backend também bloqueie o acesso aos dados.
-  
   const currentUserId = user?.data.user_id;
   const isOwner = currentUserId === sector.owner_id;
   const isManager = currentUserId === sector.manager_id;
-  // (Para verificar 'Admin' vs 'Membro', precisaríamos da lista de usuários do setor.
-  //  Como não temos aqui no pai, assumimos que se não é Dono nem Gerente, é Membro/Admin).
   
-  const canViewMetrics = isOwner || isManager; // Só Dono e Gerente veem métricas
-  const canViewLogs = isOwner || isManager;    // Só Dono e Gerente veem logs
-
-  // --- RENDERIZAÇÃO ---
+  const canViewMetrics = isOwner || isManager; 
+  const canViewLogs = isOwner || isManager;   
+  // --- FIM DA LÓGICA ---
 
   if (isLoading) {
     return (
-        <div className="page-container d-flex justify-content-center align-items-center">
-            <div className="text-center text-muted">
-                <Loader2 className="animate-spin text-primary-custom mb-3" size={48} />
-                <p>Carregando setor...</p>
-            </div>
+        <div className="min-h-screen bg-base-200 flex flex-col items-center justify-center text-secondary">
+            <Loader2 className="animate-spin text-primary mb-4" size={48} />
+            <p className="font-medium">Carregando setor...</p>
         </div>
     );
   }
 
   if (error) {
     return (
-        <div className="page-container container py-5">
-            <div className="alert alert-danger d-flex align-items-center" role="alert">
-                <AlertCircle className="me-2" size={20} />
-                <div>{error}</div>
+        <div className="min-h-screen bg-base-200 p-8 flex flex-col items-center justify-center">
+            <div className="alert alert-error shadow-lg max-w-md">
+                <AlertCircle size={24} />
+                <span>{error}</span>
             </div>
-            <button className="btn btn-secondary mt-3" onClick={() => navigate(-1)}>Voltar</button>
+            <button className="btn btn-outline mt-4" onClick={() => navigate(-1)}>Voltar</button>
         </div>
     );
   }
 
   return (
-    <div className="page-container">
-      <div className="container py-5">
+    <div className="min-h-screen bg-base-100 p-4 md:p-8 font-sans text-neutral">
+      <div className="max-w-7xl mx-auto">
         
-        {/* Cabeçalho */}
-        <div className="d-flex align-items-center mb-4">
+        {/* Cabeçalho de Navegação */}
+        <div className="flex items-center gap-4 mb-6">
             <button 
                 onClick={() => navigate(-1)} 
-                className="btn btn-light btn-sm me-3 text-secondary"
+                className="btn btn-circle btn-ghost btn-sm"
                 title="Voltar"
             >
-                <ArrowLeft size={20} />
+                <ArrowLeft size={24} className="text-secondary" />
             </button>
-            <div>
-                <h1 className="h3 mb-1 fw-bold text-body-custom">Detalhes do Setor: {sector.name}</h1>
-                <span className="badge bg-light text-secondary border">ID: {sector.sector_id}</span>
+            <div className="flex-1">
+                <div className="flex items-center gap-3">
+                   <h1 className="text-2xl md:text-3xl font-bold text-secondary">Detalhes do Setor</h1>
+                   <div className="badge badge-ghost font-mono text-xs p-2">ID: {sector.sector_id}</div>
+                </div>
             </div>
             
-            <div className="ms-auto">
-                {(isOwner || isManager) && (
-                    <button 
-                        onClick={goToEditSectorPage}
-                        className="btn btn-outline-primary btn-sm d-flex align-items-center gap-2"
+            {(isOwner || isManager) && (
+                <button 
+                    onClick={goToEditSectorPage}
+                    className="btn btn-outline btn-sm gap-2"
+                >
+                    <Pencil size={16} />
+                    <span className="hidden sm:inline">Editar</span>
+                </button>
+            )}
+        </div>
+
+        {/* Hero Card */}
+        <div className="card bg-base-100 shadow-xl mb-8 border border-base-300">
+            <div className="card-body flex-row items-center gap-6 p-6">
+                {/* Imagem */}
+                <div className="avatar">
+                    <div style={{display: 'flex !important',
+              justifyContent: 'center !important',
+              textJustify: 'auto',
+              justifyItems: 'center',
+              justifySelf: 'center',
+              justifyTracks: 'center',
+              alignItems: 'center',
+              alignContent: 'center'
+            }} className="w-24 h-24 rounded-xl ring ring-base-300 ring-offset-base-100 ring-offset-2 bg-base-200 flex items-center justify-center overflow-hidden">
+                        {sector.image ? (
+                            <img src={sector.image} alt={sector.name} className="object-cover w-full h-full" />
+                        ) : (
+                            <Layers size={40} className="text-gray-400" />
+                        )}
+                    </div>
+                </div>
+
+                {/* Informações */}
+                <div className="flex-1 min-w-0">
+                    <h2 className="card-title text-3xl text-primary mb-1">{sector.name}</h2>
+                    <p className="text-gray-500 font-medium mb-3 flex items-center gap-2">
+                        <Building2 size={16} /> {sector.enterprise_name}
+                    </p>
+                    
+                    <div className="flex flex-wrap gap-2 mt-2">
+                         <div className="badge badge-lg bg-secondary badge-ghost gap-2 p-3">
+                            <span className="font-bold text-gray-500 text-xs text-white uppercase">Gerente:</span> 
+                            <span className='text-white'>{sector.manager_name}</span>
+                         </div>
+                         <div className="badge badge-lg badge-ghost gap-2 p-3">
+                            <span className="font-bold text-gray-500 text-xs uppercase">Criado em:</span> 
+                            {sector.creation_date}
+                         </div>
+                         <div className={`badge badge-lg gap-2 p-3 text-white ${sector.is_active ? 'badge-success' : 'badge-neutral'}`}>
+                            {sector.is_active ? 'Ativo' : 'Inativo'}
+                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {/* Tabs Navigation */}
+        <div className="mb-6 border-b border-base-300">
+            <div role="tablist" className="tabs tabs-bordered tabs-lg">
+                <a 
+                    role="tab" 
+                    className={`tab ${activeTab === 'users' ? 'tab-active text-primary font-bold border-primary' : 'text-gray-500'}`}
+                    onClick={() => setActiveTab('users')}
+                >
+                    <Users size={18} className="mr-2" /> Usuários
+                </a>
+                <a 
+                    role="tab" 
+                    className={`tab ${activeTab === 'categories' ? 'tab-active text-primary font-bold border-primary' : 'text-gray-500'}`}
+                    onClick={() => setActiveTab('categories')}
+                >
+                    <FolderTree size={18} className="mr-2" /> Categorias
+                </a>
+                
+                {canViewMetrics && (
+                    <a 
+                        role="tab" 
+                        className={`tab ${activeTab === 'metrics' ? 'tab-active text-primary font-bold border-primary' : 'text-gray-500'}`}
+                        onClick={() => setActiveTab('metrics')}
                     >
-                        <Pencil size={16} />
-                        <span className="d-none d-sm-inline">Editar</span>
-                    </button>
+                        <BarChart2 size={18} className="mr-2" /> Métricas
+                    </a>
+                )}
+
+                {canViewLogs && (
+                    <a 
+                        role="tab" 
+                        className={`tab ${activeTab === 'logs' ? 'tab-active text-primary font-bold border-primary' : 'text-gray-500'}`}
+                        onClick={() => setActiveTab('logs')}
+                    >
+                        <History size={18} className="mr-2" /> Registros
+                    </a>
                 )}
             </div>
         </div>
 
-        {/* Hero Card */}
-        <div className="custom-card p-4 mb-4">
-            <div className="row align-items-center">
-                <div className="col-auto">
-                    <div className="rounded-circle overflow-hidden border d-flex align-items-center justify-content-center bg-light" style={{ width: '100px', height: '100px' }}>
-                        {sector.image ? (
-                            <img src={sector.image} alt={sector.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        ) : (
-                            <Layers size={40} className="text-secondary opacity-50" />
-                        )}
-                    </div>
-                </div>
-                <div className="col">
-                    <h2 className="h4 fw-bold text-dark mb-1">{sector.name}</h2>
-                    <p className="text-muted mb-2">{sector.enterprise_name}</p>
-                    <div className="d-flex flex-wrap gap-3 text-sm text-secondary">
-                        <div><span className="fw-semibold">Gerente:</span> {sector.manager_name}</div>
-                        <div className="vr opacity-25 d-none d-sm-block"></div>
-                        <div><span className="fw-semibold">Criado em:</span> {sector.creation_date}</div>
-                        <div className="vr opacity-25 d-none d-sm-block"></div>
-                        <div><span className={`badge ${sector.is_active ? 'bg-success' : 'bg-secondary'}`}>{sector.is_active ? 'Ativo' : 'Inativo'}</span></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="custom-card">
-            <div className="card-header bg-white border-bottom-0 pt-3 px-3">
-                <ul className="nav nav-tabs card-header-tabs">
-                    <li className="nav-item">
-                        <button 
-                            className={`nav-link d-flex align-items-center gap-2 ${activeTab === 'users' ? 'active fw-bold text-primary-custom' : 'text-secondary'}`}
-                            onClick={() => setActiveTab('users')}
-                        >
-                            <Users size={18} /> Usuários
-                        </button>
-                    </li>
-                    <li className="nav-item">
-                        <button 
-                            className={`nav-link d-flex align-items-center gap-2 ${activeTab === 'categories' ? 'active fw-bold text-primary-custom' : 'text-secondary'}`}
-                            onClick={() => setActiveTab('categories')}
-                        >
-                            <FolderTree size={18} /> Categorias
-                        </button>
-                    </li>
-                    
-                    {/* Aba Métricas (Condicional) */}
-                    {canViewMetrics && (
-                        <li className="nav-item">
-                            <button 
-                                className={`nav-link d-flex align-items-center gap-2 ${activeTab === 'metrics' ? 'active fw-bold text-primary-custom' : 'text-secondary'}`}
-                                onClick={() => setActiveTab('metrics')}
-                            >
-                                <BarChart2 size={18} /> Métricas
-                            </button>
-                        </li>
-                    )}
-
-                    {/* Aba Logs (Condicional) */}
-                    {canViewLogs && (
-                        <li className="nav-item">
-                            <button 
-                                className={`nav-link d-flex align-items-center gap-2 ${activeTab === 'logs' ? 'active fw-bold text-primary-custom' : 'text-secondary'}`}
-                                onClick={() => setActiveTab('logs')}
-                            >
-                                <History size={18} /> Registros
-                            </button>
-                        </li>
-                    )}
-                </ul>
-            </div>
-
-            <div className="card-body p-4">
-                {activeTab === 'users' && sector.sector_id && <SectorUsers sectorId={sector.sector_id} />}
-                {activeTab === 'categories' && <SectorCategories sectorId={sector.sector_id} />}
-                
-                {/* Renderiza o conteúdo ou AccessDenied se tentar forçar */}
-                {activeTab === 'metrics' && (canViewMetrics ? <SectorMetrics sectorId={sector.sector_id} /> : <AccessDenied />)}
-                {activeTab === 'logs' && (canViewLogs ? <SectorLogs sectorId={sector.sector_id} /> : <AccessDenied />)}
-            </div>
+        {/* Tab Content */}
+        <div className="min-h-[300px]">
+            {activeTab === 'users' && sector.sector_id && <SectorUsers sectorId={sector.sector_id} />}
+            {activeTab === 'categories' && <SectorCategories sectorId={sector.sector_id} />}
+            
+            {activeTab === 'metrics' && (canViewMetrics ? <SectorMetrics sectorId={sector.sector_id} /> : <AccessDenied />)}
+            {activeTab === 'logs' && (canViewLogs ? <SectorLogs sectorId={sector.sector_id} /> : <AccessDenied />)}
         </div>
 
       </div>
     </div>
   );
 };
+
+// Ícone extra necessário que não estava importado
+import { Building2 } from 'lucide-react'; 
 
 export default ViewSectorPage;

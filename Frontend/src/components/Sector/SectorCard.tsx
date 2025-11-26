@@ -1,8 +1,5 @@
 import type { Sector, ToggleSectorStatusPayload } from '../../services/core-api';
-import { Eye, Pencil, Trash2, Power, FileText, Layers } from 'lucide-react'; // Ícones
-
-// Reutiliza o CSS de EnterpriseCard (ou crie um SectorCard.css idêntico se preferir separar)
-import '../../assets/css/EnterpriseCard.css'; 
+import { Eye, Pencil, Trash2, Power, FileText, Layers } from 'lucide-react';
 
 interface SectorCardProps {
   sector: Sector;
@@ -21,115 +18,113 @@ const SectorCard = ({ sector, onView, onEdit, onDelete, onDeactivateOrActivate }
 
   const canView = isSectorActive || isOwner || isManager;
 
-  // Helper para cor do badge de hierarquia
   const getHierarchyBadgeClass = (level: string) => {
     switch (level) {
-      case 'Proprietário': return 'bg-warning text-dark';
-      case 'Gestor': return 'bg-primary text-white';
-      case 'Administrador': return 'bg-info text-white';
-      default: return 'bg-secondary text-white';
+      case 'Proprietário': return 'badge-accent text-white';
+      case 'Gestor': return 'badge-primary text-white';
+      case 'Administrador': return 'badge-info text-white';
+      default: return 'badge-ghost text-base-content/70';
     }
   };
 
   if (!canView) return null;
 
   return (
-    <div className="card h-100 border-0 shadow-sm" style={{ transition: 'transform 0.2s ease, box-shadow 0.2s ease' }}>
-      <div className="card-body d-flex flex-column">
+    <div className="card bg-base-100 shadow-md border border-base-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 h-full">
+      <div className="card-body p-5 flex flex-col h-full">
         
-        {/* Cabeçalho: Imagem e Nome */}
-        <div className="d-flex align-items-center mb-3">
-          {/* Container da Imagem com Indicador de Status */}
-          <div className="position-relative flex-shrink-0">
-            <div 
-              className="rounded-circle overflow-hidden border d-flex align-items-center justify-content-center bg-light"
-              style={{ width: '48px', height: '48px' }}
-            >
-              {sector.image ? (
-                <img 
-                  src={sector.image} 
-                  alt={sector.name} 
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                />
-              ) : (
-                <Layers size={24} className="text-secondary opacity-50" />
-              )}
-            </div>
-            {/* Bolinha de Status */}
+        {/* --- Topo: Imagem e Info --- */}
+        <div className="flex items-center gap-4 mb-2">
+          {/* Avatar com Indicador */}
+          <div className="avatar indicator">
             <span 
-              className={`position-absolute top-0 start-100 translate-middle p-1 border border-light rounded-circle ${isSectorActive ? 'bg-success' : 'bg-secondary'}`}
-              style={{ width: '12px', height: '12px' }}
+              className={`indicator-item badge badge-xs ${isSectorActive ? 'badge-success' : 'badge-neutral'} border-2 border-base-100`}
               title={isSectorActive ? "Ativo" : "Inativo"}
             ></span>
+            <div style={{display: 'flex !important',
+              justifyContent: 'center !important',
+              textJustify: 'auto',
+              justifyItems: 'center',
+              justifySelf: 'center',
+              justifyTracks: 'center',
+              alignItems: 'center',
+              alignContent: 'center'
+            }} className="w-14 h-14 rounded-xl bg-base-200 ring-1 ring-base-300 flex items-center justify-center overflow-hidden">
+              {sector.image ? (
+                <img src={sector.image} alt={sector.name} className="object-cover w-full h-full" />
+              ) : (
+                <Layers size={24} className="text-gray-400" />
+              )}
+            </div>
           </div>
 
-          {/* Informações de Texto */}
-          <div className="ms-3 overflow-hidden">
-            <h5 className="fw-bold text-dark mb-1 text-truncate" title={sector.name}>
+          {/* Textos */}
+          <div className="flex-1 min-w-0">
+            <h3 className="font-bold text-lg text-secondary truncate" title={sector.name}>
               {sector.name}
-            </h5>
-            <span className={`badge ${getHierarchyBadgeClass(sector.hierarchy_level)} fw-normal`}>
+            </h3>
+            <div className={`badge badge-sm ${getHierarchyBadgeClass(sector.hierarchy_level)} font-medium mt-1`}>
               {sector.hierarchy_level}
-            </span>
+            </div>
           </div>
         </div>
 
-        <hr className="my-3 text-muted" style={{ opacity: 0.1 }} />
-
-        {/* Barra de Ações (Rodapé) */}
-        {/* 'mt-auto' joga para o fundo, 'flex-wrap' permite quebra de linha */}
-        <div className="d-flex justify-content-end align-items-center mt-auto flex-wrap gap-2">
+        {/* --- Rodapé: Ações --- */}
+        <div className="flex flex-wrap items-center justify-end mt-auto gap-2">
           
-          {/* Botão Documentos (Sempre visível se o card renderiza) */}
-          <button className="btn btn-light btn-sm text-secondary" title="Ver Documentos">
-            <FileText size={18} />
-          </button>
+          {/* Botão Documentos */}
+          <div className="tooltip tooltip-bottom" data-tip="Documentos">
+            <button className="btn btn-square btn-sm btn-ghost text-base-content/60">
+              <FileText size={18} />
+            </button>
+          </div>
 
           {canView && (
-            <button 
-              onClick={() => onView(sector.sector_id)} 
-              className="btn btn-light btn-sm text-primary-custom"
-              title="Consultar Detalhes"
-            >
-              <Eye size={18} />
-            </button>
+            <div className="tooltip tooltip-bottom" data-tip="Detalhes">
+                <button 
+                  onClick={() => onView(sector.sector_id)} 
+                  className="btn btn-square btn-sm btn-ghost text-primary hover:bg-primary/10"
+                >
+                  <Eye size={18} />
+                </button>
+            </div>
           )}
 
-          {/* Ações de Edição (Proprietário, Gestor, Admin) */}
           {(isOwner || isManager || isAdmin) && (
-            <button 
-              onClick={() => onEdit(sector.sector_id)} 
-              className="btn btn-light btn-sm text-primary-custom"
-              title="Editar Setor"
-            >
-              <Pencil size={18} />
-            </button>
+            <div className="tooltip tooltip-bottom" data-tip="Editar">
+                <button 
+                  onClick={() => onEdit(sector.sector_id)} 
+                  className="btn btn-square btn-sm btn-ghost text-secondary hover:bg-secondary/10"
+                >
+                  <Pencil size={18} />
+                </button>
+            </div>
           )}
 
-          {/* Ações Administrativas (Apenas Proprietário) */}
           {isOwner && (
             <>
-              {/* Divisor Vertical (só aparece se não quebrar linha) */}
-              <div className="vr mx-1 bg-secondary opacity-25 d-none d-sm-block"></div> 
+              <div className="w-px h-6 bg-base-300 mx-1"></div> {/* Divisor Vertical */}
               
-              <button 
-                onClick={() => 
-                  //@ts-ignore
-                  onDeactivateOrActivate(sector.sector_id as ToggleSectorStatusPayload)
-                } 
-                className={`btn btn-sm ${!sector.is_active ? 'btn-light text-warning' : 'btn-light text-success'}`}
-                title={sector.is_active ? 'Desativar' : 'Ativar'}
-              >
-                <Power size={18} />
-              </button>
+              <div className="tooltip tooltip-bottom" data-tip={sector.is_active ? 'Desativar' : 'Ativar'}>
+                <button 
+                    onClick={() => 
+                    //@ts-ignore
+                    onDeactivateOrActivate(sector.sector_id as ToggleSectorStatusPayload)
+                    } 
+                    className={`btn btn-square btn-sm btn-ghost ${!sector.is_active ? 'text-warning hover:bg-warning/10' : 'text-success hover:bg-success/10'}`}
+                >
+                    <Power size={18} />
+                </button>
+              </div>
 
-              <button 
-                onClick={() => onDelete(sector.sector_id)} 
-                className="btn btn-light btn-sm text-danger"
-                title="Remover Setor"
-              >
-                <Trash2 size={18} />
-              </button>
+              <div className="tooltip tooltip-bottom" data-tip="Excluir">
+                <button 
+                    onClick={() => onDelete(sector.sector_id)} 
+                    className="btn btn-square btn-sm btn-ghost text-error hover:bg-error/10"
+                >
+                    <Trash2 size={18} />
+                </button>
+              </div>
             </>
           )}
         </div>

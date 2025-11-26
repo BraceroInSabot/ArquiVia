@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, UploadCloud, Check, Loader2, AlertCircle, Building2 } from 'lucide-react'; // Ícones
+import { ArrowLeft, Save, UploadCloud, Check, Loader2, AlertCircle, Building2, Layout } from 'lucide-react'; 
 import toast from 'react-hot-toast';
 
 import { useAuth } from '../../contexts/AuthContext';
 import enterpriseService from '../../services/Enterprise/api';
 import sectorService from '../../services/Sector/api';
 import type { Enterprise } from '../../services/core-api';
-import '../../assets/css/EnterprisePage.css'; // Reutiliza CSS global
 
 const CreateSectorPage = () => {
    const navigate = useNavigate();
@@ -23,7 +22,6 @@ const CreateSectorPage = () => {
    const [isSubmitting, setIsSubmitting] = useState(false); 
    const [error, setError] = useState<string | null>(null);
 
-   // --- LÓGICA (INTACTA) ---
    useEffect(() => {
       const fetchDataForForm = async () => {
          if (!user) {
@@ -39,9 +37,9 @@ const CreateSectorPage = () => {
             const userId = user.data.user_id; 
             const allEnterprises = enterprisesResponse.data; 
             
-            // @ts-ignore (Ajuste se necessário conforme sua API real)
+            // @ts-ignore
             const userOwnedEnterprises = (Array.isArray(allEnterprises.data) ? allEnterprises.data : allEnterprises).filter(
-               (e: any) => e.owner === userId || e.owner_id === userId // Verifica ambos os campos possíveis
+               (e: any) => e.owner === userId || e.owner_id === userId
             );
 
             setOwnedEnterprises(userOwnedEnterprises);
@@ -96,166 +94,154 @@ const CreateSectorPage = () => {
          setIsSubmitting(false);
       }
    };
-   // --- FIM DA LÓGICA ---
-
-
-   // --- RENDERIZAÇÃO ---
 
    if (isLoading) {
       return (
-          <div className="page-container d-flex justify-content-center align-items-center">
-              <div className="text-center text-muted">
-                  <Loader2 className="animate-spin text-primary-custom mb-3" size={48} />
-                  <p>Carregando dados...</p>
-              </div>
+          <div className="min-h-screen bg-base-200 flex flex-col items-center justify-center text-secondary">
+              <Loader2 className="animate-spin text-primary mb-4" size={48} />
+              <p className="font-medium">Carregando dados...</p>
           </div>
       );
    }
 
    return (
-      <div className="page-container">
-        <div className="container py-5">
+      <div className="min-h-screen bg-base-200 p-4 md:p-8 font-sans text-neutral">
+        <div className="max-w-4xl mx-auto">
           
           {/* Cabeçalho */}
-          <div className="d-flex align-items-center mb-4">
+          <div className="flex items-center gap-4 mb-8">
             <button 
               onClick={() => navigate('/setores')} 
-              className="btn btn-light btn-sm me-3 text-secondary"
+              className="btn btn-circle btn-ghost"
               title="Voltar"
             >
-              <ArrowLeft size={20} />
+              <ArrowLeft size={24} className="text-secondary" />
             </button>
             <div>
-              <h1 className="h3 mb-1 fw-bold text-body-custom">Novo Setor</h1>
-              <p className="text-muted mb-0">Adicione um novo setor a uma de suas empresas</p>
+              <h1 className="text-3xl font-bold text-secondary">Novo Setor</h1>
+              <p className="text-sm text-gray-500">Adicione um novo setor a uma de suas empresas</p>
             </div>
           </div>
 
           {/* Card Centralizado */}
-          <div className="row justify-content-center">
-            <div className="col-12 col-lg-8 col-xl-6">
-              <div className="custom-card p-4">
-                
-                <form onSubmit={handleSubmit}>
-                  
-                  {/* Mensagem de Erro */}
-                  {error && (
-                    <div className="alert alert-danger d-flex align-items-center mb-4" role="alert">
-                      <AlertCircle className="me-2" size={20} />
-                      <div>{error}</div>
-                    </div>
-                  )}
+          <div className="card bg-base-100 shadow-xl border border-base-300 max-w-2xl mx-auto">
+            <div className="card-body p-8">
+              
+              {/* Erro */}
+              {error && (
+                <div className="alert alert-error shadow-sm mb-6">
+                  <AlertCircle size={20} />
+                  <span>{error}</span>
+                </div>
+              )}
+              
+              <form onSubmit={handleSubmit} className="flex flex-col gap-6">
 
-                  {/* Seleção de Empresa */}
-                  <div className="mb-4">
-                    <label htmlFor="enterprise" className="form-label fw-semibold text-secondary">
-                        Empresa Vinculada
-                    </label>
-                    <div className="input-group">
-                        <span className="input-group-text bg-light border-end-0">
-                            <Building2 size={18} className="text-muted" />
-                        </span>
-                        <select
-                           id="enterprise"
-                           className="form-select form-select-lg border-start-0 ps-0 bg-light"
-                           value={selectedEnterpriseId}
-                           onChange={(e) => setSelectedEnterpriseId(e.target.value)}
-                           required
-                           disabled={ownedEnterprises.length === 0}
-                        >
-                           <option value="">Selecione uma empresa...</option>
-                           {ownedEnterprises.length > 0 ? (
-                              ownedEnterprises.map((enterprise) => (
-                                 <option key={enterprise.enterprise_id} value={enterprise.enterprise_id}>
-                                    {enterprise.name}
-                                 </option>
-                              ))
-                           ) : (
-                              <option disabled>Nenhuma empresa encontrada</option>
-                           )}
-                        </select>
-                    </div>
-                    {ownedEnterprises.length === 0 && (
-                        <div className="form-text text-warning mt-2">
-                            Você precisa ser dono de uma empresa para criar setores.
-                        </div>
-                    )}
+                {/* Seleção de Empresa */}
+                <div className="form-control w-full">
+                  <label className="label">
+                      <span className="label-text font-bold text-secondary">Empresa Vinculada</span>
+                  </label>
+                  <div className="relative">
+                      <select
+                         className="select select-bordered select-primary w-full pl-10 text-lg"
+                         value={selectedEnterpriseId}
+                         onChange={(e) => setSelectedEnterpriseId(e.target.value)}
+                         required
+                         disabled={ownedEnterprises.length === 0}
+                      >
+                         <option value="" disabled>Selecione uma empresa...</option>
+                         {ownedEnterprises.length > 0 ? (
+                            ownedEnterprises.map((enterprise) => (
+                               <option key={enterprise.enterprise_id} value={enterprise.enterprise_id}>
+                                  {enterprise.name}
+                               </option>
+                            ))
+                         ) : (
+                            <option disabled>Nenhuma empresa encontrada</option>
+                         )}
+                      </select>
+                      <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={20} />
                   </div>
+                  {ownedEnterprises.length === 0 && (
+                      <div className="label">
+                          <span className="label-text-alt text-warning">Você precisa ser dono de uma empresa para criar setores.</span>
+                      </div>
+                  )}
+                </div>
 
-                  {/* Nome do Setor */}
-                  <div className="mb-4">
-                    <label htmlFor="name" className="form-label fw-semibold text-secondary">
-                        Nome do Setor
-                    </label>
+                {/* Nome do Setor */}
+                <div className="form-control w-full">
+                  <label className="label">
+                      <span className="label-text font-bold text-secondary">Nome do Setor</span>
+                  </label>
+                  <div className="relative">
                     <input
                        type="text"
-                       id="name"
-                       className="form-control form-control-lg"
+                       className="input input-bordered input-primary w-full pl-10 text-lg"
                        value={name}
                        onChange={(e) => setName(e.target.value)}
                        required
                        placeholder="Ex: Recursos Humanos"
                     />
+                    <Layout className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                   </div>
+                </div>
 
-                  {/* Imagem do Setor (Upload) */}
-                  <div className="mb-4">
-                    <label htmlFor="image" className="form-label fw-semibold text-secondary">
-                        Ícone ou Imagem <small className="text-muted fw-normal">(Opcional)</small>
-                    </label>
-                    
-                    <div className="position-relative">
-                        <input
-                            type="file"
-                            id="image"
-                            className="form-control"
-                            accept="image/jpeg, image/png, image/svg+xml"
-                            onChange={handleImageChange}
-                            style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'pointer' }}
-                        />
-                        
-                        <div className={`d-flex align-items-center justify-content-center p-4 border rounded-3 bg-light ${imageFile ? 'border-success' : 'border-dashed'}`}>
-                            <div className="text-center">
-                                {imageFile ? (
-                                    <>
-                                        <Check className="text-success mb-2" size={32} />
-                                        <p className="mb-0 fw-medium text-success">{imageFile.name}</p>
-                                        <small className="text-muted">Clique para trocar</small>
-                                    </>
-                                ) : (
-                                    <>
-                                        <UploadCloud className="text-secondary mb-2" size={32} />
-                                        <p className="mb-0 fw-medium text-dark">Clique ou arraste para fazer upload</p>
-                                        <small className="text-muted">JPG, PNG ou SVG</small>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    </div>
+                {/* Imagem do Setor (Upload) */}
+                <div className="form-control w-full">
+                  <label className="label">
+                      <span className="label-text font-bold text-secondary">Ícone ou Imagem</span>
+                      <span className="label-text-alt text-gray-400">(Opcional)</span>
+                  </label>
+                  
+                  <div className={`relative flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl transition-colors cursor-pointer group ${imageFile ? 'border-success bg-success/5' : 'border-base-300 hover:border-primary bg-base-100'}`}>
+                      <input
+                          type="file"
+                          accept="image/jpeg, image/png, image/svg+xml"
+                          onChange={handleImageChange}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                      />
+                      
+                      {imageFile ? (
+                          <>
+                              <Check className="text-success mb-2" size={32} />
+                              <p className="font-bold text-success">{imageFile.name}</p>
+                              <span className="text-xs text-gray-500 mt-1">Clique para trocar</span>
+                          </>
+                      ) : (
+                          <>
+                              <UploadCloud className="text-primary mb-2 group-hover:scale-110 transition-transform" size={32} />
+                              <p className="font-bold text-secondary group-hover:text-primary transition-colors">Clique ou arraste para fazer upload</p>
+                              <span className="text-xs text-gray-500 mt-1">JPG, PNG ou SVG</span>
+                          </>
+                      )}
                   </div>
+                </div>
 
-                  {/* Botão Salvar */}
-                  <button 
-                     type="submit" 
-                     className="btn btn-primary-custom w-100 py-2 d-flex align-items-center justify-content-center gap-2"
-                     disabled={isLoading || isSubmitting || ownedEnterprises.length === 0}
-                  >
-                     {isSubmitting ? (
-                        <>
-                           <Loader2 className="animate-spin" size={20} />
-                           Criando Setor...
-                        </>
-                     ) : (
-                        <>
-                           <Save size={20} />
-                           Criar Setor
-                        </>
-                     )}
-                  </button>
+                {/* Botão Salvar */}
+                <div className="card-actions justify-end mt-4 pt-4 border-t border-base-200">
+                    <button 
+                       type="submit" 
+                       className="btn btn-primary text-white px-8 w-full md:w-auto"
+                       disabled={isLoading || isSubmitting || ownedEnterprises.length === 0}
+                    >
+                       {isSubmitting ? (
+                          <>
+                             <Loader2 className="animate-spin" size={20} />
+                             Criando...
+                          </>
+                       ) : (
+                          <>
+                             <Save size={20} />
+                             Criar Setor
+                          </>
+                       )}
+                    </button>
+                </div>
 
-                </form>
+              </form>
 
-              </div>
             </div>
           </div>
         </div>

@@ -13,6 +13,8 @@ import 'prismjs/components/prism-python';
 //@ts-ignore
 import Prism from "prismjs";
 
+import './assets/css/Global.css'
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>

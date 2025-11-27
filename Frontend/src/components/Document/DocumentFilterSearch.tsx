@@ -1,33 +1,35 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { UserSearch, Filter, FunnelX, X as XIcon, Loader2, Tag, User } from 'lucide-react';
 import { STATUS_OPTIONS, PRIVACITY_OPTIONS } from '../../types/classification';
-// 1. Importe o serviço de USUÁRIO
-import documentService from '../../services/Document/api';
-import userService from '../../services/User/api'; // <-- Importe o userService
 import type { DocumentFilters, AvailableCategorySearch, AvailableUser } from '../../services/core-api';
-
-import '../../assets/css/ClassificationModal.css';
-import '../../assets/css/DocumentFilters.css'; 
+import documentService from '../../services/Document/api';
+import userService from '../../services/User/api';
 
 interface DocumentFilterSearchProps {
   currentFilters: DocumentFilters; 
   onAdvancedChange: (filters: Partial<DocumentFilters>) => void;
   onApply: () => void;
+  availableCategories: AvailableCategorySearch[];
+  availableReviewers: AvailableUser[];
+  isLoading: boolean;
 }
 
 const DocumentFilterSearch: React.FC<DocumentFilterSearchProps> = ({
   currentFilters,
   onAdvancedChange,
-  onApply
+  onApply,
+  isLoading
 }) => {
 
   // --- Lógica de Categorias (Existente) ---
   const [availableCategories, setAvailableCategories] = useState<AvailableCategorySearch[]>([]);
+  //@ts-ignore
   const [isLoadingCats, setIsLoadingCats] = useState(true);
   const [categorySearchTerm, setCategorySearchTerm] = useState('');
 
   // --- 2. NOVA LÓGICA DE REVISORES ---
   const [availableReviewers, setAvailableReviewers] = useState<AvailableUser[]>([]);
+  //@ts-ignore
   const [isLoadingReviewers, setIsLoadingReviewers] = useState(true);
   const [showReviewerDropdown, setShowReviewerDropdown] = useState(false);
 
@@ -44,18 +46,15 @@ const DocumentFilterSearch: React.FC<DocumentFilterSearchProps> = ({
       .catch(err => console.error("Falha ao carregar lista de usuários:", err))
       .finally(() => setIsLoadingReviewers(false));
   }, []); // Roda na montagem
-
-  // 3. Filtra localmente os resultados para o autocomplete de revisor
+  
   const reviewerSearchResults = useMemo(() => {
     const searchTerm = currentFilters.reviewer || '';
-    if (!searchTerm) return []; // Não mostra dropdown se o campo estiver vazio
-    
+    if (!searchTerm) return []; 
     return availableReviewers.filter(user =>
       user.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [currentFilters.reviewer, availableReviewers]);
 
-  // --- (Lógica de autocomplete de Categoria - existente) ---
   const selectedCategoryNames = useMemo(() => {
     return currentFilters.categories ? currentFilters.categories.split(';').map(c => c.trim()).filter(Boolean) : [];
   }, [currentFilters.categories]);
@@ -69,27 +68,25 @@ const DocumentFilterSearch: React.FC<DocumentFilterSearchProps> = ({
     });
   }, [categorySearchTerm, availableCategories, selectedCategoryNames]);
 
-  // --- Handlers ---
+  // Handlers
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     onAdvancedChange({ [e.target.name]: e.target.value });
   };
   
-  // 4. Handler para o input de REVISOR (mostra o dropdown)
   const handleReviewerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onAdvancedChange({ [e.target.name]: e.target.value });
-    setShowReviewerDropdown(true); // Mostra o dropdown ao digitar
+    setShowReviewerDropdown(true);
   };
 
-  // 5. Handler para selecionar um revisor do dropdown
   const handleSelectReviewer = (user: AvailableUser) => {
-    onAdvancedChange({ reviewer: user.name }); // Define o nome no input
-    setShowReviewerDropdown(false); // Esconde o dropdown
+    onAdvancedChange({ reviewer: user.name });
+    setShowReviewerDropdown(false);
   };
 
   const handleClearFilters = () => {
     onAdvancedChange({
       reviewer: '',
-      isReviewed: '',
+      isReviewed: '', // String vazia
       statusId: '',
       privacityId: '',
       categories: ''
@@ -108,131 +105,150 @@ const DocumentFilterSearch: React.FC<DocumentFilterSearchProps> = ({
   };
 
   return (
-    <div className="p-3">
-      {/* 1ª Linha (Status, Privacidade, Revisão) */}
-      <div className="row g-3">
-        {/* ... (Selects de Revisado, Status, Privacidade - Sem mudanças) ... */}
-        <div className="col-md-4">
-          <label htmlFor="filter-reviewed" className="form-label fw-semibold text-secondary small">Está Revisado?</label>
-          <select id="filter-reviewed" name="isReviewed" className="form-select" value={currentFilters.isReviewed || ''} onChange={handleChange}>
+    <div className="flex flex-col gap-6">
+      
+      {/* --- 1ª LINHA: SELECTS --- */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        
+        <div className="form-control w-full">
+          <label className="label pt-0 pb-1">
+            <span className="label-text font-bold text-secondary text-xs uppercase">Status Revisão</span>
+          </label>
+          <select name="isReviewed" className="select select-bordered select-sm w-full" value={currentFilters.isReviewed || ''} onChange={handleChange}>
             <option value="">Todos</option>
             <option value="true">Sim, Revisados</option>
             <option value="false">Não, Pendentes</option>
           </select>
         </div>
-        <div className="col-md-4">
-          <label htmlFor="filter-status" className="form-label fw-semibold text-secondary small">Status</label>
-          <select id="filter-status" name="statusId" className="form-select" value={currentFilters.statusId || ''} onChange={handleChange}>
-            <option value="">Todos os Status</option>
+
+        <div className="form-control w-full">
+          <label className="label pt-0 pb-1">
+            <span className="label-text font-bold text-secondary text-xs uppercase">Classificação</span>
+          </label>
+          <select name="statusId" className="select select-bordered select-sm w-full" value={currentFilters.statusId || ''} onChange={handleChange}>
+            <option value="">Todas as Classificações</option>
             {STATUS_OPTIONS.map(opt => <option key={opt.id} value={opt.id}>{opt.name}</option>)}
           </select>
         </div>
-        <div className="col-md-4">
-          <label htmlFor="filter-privacity" className="form-label fw-semibold text-secondary small">Privacidade</label>
-          <select id="filter-privacity" name="privacityId" className="form-select" value={currentFilters.privacityId || ''} onChange={handleChange}>
-            <option value="">Público e Privado</option>
+
+        <div className="form-control w-full">
+          <label className="label pt-0 pb-1">
+            <span className="label-text font-bold text-secondary text-xs uppercase">Privacidade</span>
+          </label>
+          <select name="privacityId" className="select select-bordered select-sm w-full" value={currentFilters.privacityId || ''} onChange={handleChange}>
+            <option value="">Todas</option>
             {PRIVACITY_OPTIONS.map(opt => <option key={opt.id} value={opt.id}>{opt.name}</option>)}
           </select>
         </div>
+
       </div>
 
-      {/* 2ª Linha (Revisor e Categorias) */}
-      <div className="row g-3 mt-3">
+      {/* --- 2ª LINHA: AUTOCOMPLETE (Revisor e Categorias) --- */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         
-        {/* --- CAMPO REVISOR (ATUALIZADO) --- */}
-        <div className="col-md-6">
-          <label htmlFor="filter-reviewer" className="form-label fw-semibold text-secondary small">Revisado Por:</label>
-          <div className="input-group position-relative">
-            <span className="input-group-text bg-light border-end-0 text-muted"><UserSearch size={18} /></span>
+        {/* CAMPO REVISOR */}
+        <div className="form-control relative">
+          <label className="label pt-0 pb-1">
+            <span className="label-text font-bold text-secondary text-xs uppercase">Revisado Por</span>
+          </label>
+          <div className="join w-full">
+            <div className="join-item bg-base-200 px-3 flex items-center border border-base-300 border-r-0 rounded-l-lg">
+                <UserSearch size={16} className="text-gray-500" />
+            </div>
             <input 
               type="text" 
               name="reviewer"
-              className="form-control border-start-0 ps-0" 
-              placeholder={isLoadingReviewers ? "Carregando usuários..." : "Digite o nome..."}
+              className="input input-bordered input-sm w-full join-item focus:outline-none"
+              placeholder={isLoading ? "Carregando..." : "Digite o nome..."}
               value={currentFilters.reviewer || ''}
               onChange={handleReviewerChange}
               onFocus={() => setShowReviewerDropdown(true)}
-              onBlur={() => setTimeout(() => setShowReviewerDropdown(false), 150)} // Delay para permitir o clique
-              disabled={isLoadingReviewers}
+              onBlur={() => setTimeout(() => setShowReviewerDropdown(false), 200)}
+              disabled={isLoading}
             />
-
-            {/* Dropdown de Autocomplete do Revisor */}
-            {showReviewerDropdown && (currentFilters.reviewer?.length || 0) > 0 && (
-              <ul className="search-results-list">
-                {reviewerSearchResults.length > 0 ? (
-                  reviewerSearchResults.slice(0, 5).map(user => (
-                    <li 
-                      key={user.user_id} 
-                      className="search-result-item"
-                      onClick={() => handleSelectReviewer(user)}
-                    >
-                      <User size={14} className="me-2 text-muted" /> {user.name}
-                    </li>
-                  ))
-                ) : (
-                  <li className="search-result-item text-muted fst-italic">Nenhum usuário encontrado.</li>
-                )}
-              </ul>
-            )}
           </div>
+
+          {/* Dropdown Autocomplete Revisor */}
+          {showReviewerDropdown && (currentFilters.reviewer?.length || 0) > 0 && (
+            <ul className="menu bg-base-100 w-full rounded-box border border-base-200 shadow-lg absolute top-full left-0 mt-1 z-20 max-h-40 overflow-y-auto p-1">
+              {reviewerSearchResults.length > 0 ? (
+                reviewerSearchResults.slice(0, 5).map(user => (
+                  <li key={user.user_id}>
+                    <a onClick={() => handleSelectReviewer(user)} className="py-2 text-sm">
+                      <User size={14} className="text-gray-400" /> {user.name}
+                    </a>
+                  </li>
+                ))
+              ) : (
+                <li className="disabled"><a className="text-xs text-gray-400 italic">Nenhum usuário encontrado.</a></li>
+              )}
+            </ul>
+          )}
         </div>
 
-        {/* --- CAMPO CATEGORIAS (TAG INPUT) --- */}
-        <div className="col-md-6">
-          <label htmlFor="filter-categories" className="form-label fw-semibold text-secondary small">Categorias</label>
-          <div className="position-relative">
-            <div className="tag-input-container">
-              {selectedCategoryNames.map(name => (
-                <span key={name} className="tag-pill">
-                  {name}
-                  <button type="button" className="remove-tag-btn" onClick={() => handleRemoveCategory(name)}>
-                    <XIcon size={14} />
-                  </button>
-                </span>
-              ))}
-              <input 
-                type="text"
-                id="filter-categories-input"
-                className="tag-input"
-                value={categorySearchTerm}
-                onChange={(e) => setCategorySearchTerm(e.target.value)}
-                placeholder={selectedCategoryNames.length === 0 ? "Adicionar categoria..." : "Adicionar..."}
-                disabled={isLoadingCats}
-              />
-            </div>
-            
-            {/* Dropdown de Autocomplete de Categoria */}
-            {categorySearchTerm && (
-              <ul className="search-results-list">
-                {isLoadingCats ? (
-                  <li className="search-result-item text-muted"><Loader2 size={16} className="animate-spin" /></li>
-                ) : categorySearchResults.length > 0 ? (
-                  categorySearchResults.slice(0, 5).map(cat => (
-                    <li 
-                      key={cat.category_id} 
-                      className="search-result-item"
-                      onClick={() => handleAddCategory(cat)}
-                      title={`${cat.enterprise_name} > ${cat.sector_name}`}
-                    >
-                      <Tag size={14} className="me-2 text-muted" /> {cat.category}
-                    </li>
-                  ))
-                ) : (
-                  <li className="search-result-item text-muted fst-italic">Nenhuma categoria encontrada.</li>
-                )}
-              </ul>
-            )}
+        {/* CAMPO CATEGORIAS (Tags + Input) */}
+        <div className="form-control relative">
+          <label className="label pt-0 pb-1">
+            <span className="label-text font-bold text-secondary text-xs uppercase">Categorias</span>
+          </label>
+          
+          <div className="flex flex-wrap items-center gap-2 p-2 border border-base-300 rounded-lg bg-base-100 min-h-[3rem] focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+            {selectedCategoryNames.map(name => (
+              <span key={name} className="badge badge-primary badge-md gap-1 text-white">
+                {name}
+                <XIcon 
+                    size={14} 
+                    className="cursor-pointer hover:text-red-200" 
+                    onClick={() => handleRemoveCategory(name)}
+                />
+              </span>
+            ))}
+            <input 
+              type="text"
+              className="input input-ghost input-sm h-6 p-0 focus:bg-transparent focus:text-base-content placeholder:text-gray-400 flex-grow min-w-[120px]"
+              value={categorySearchTerm}
+              onChange={(e) => setCategorySearchTerm(e.target.value)}
+              placeholder={selectedCategoryNames.length === 0 ? "Adicionar categoria..." : ""}
+              disabled={isLoading}
+            />
           </div>
+
+          {/* Dropdown Autocomplete Categoria */}
+          {categorySearchTerm && (
+            <ul className="menu bg-base-100 w-full rounded-box border border-base-200 shadow-lg absolute top-full left-0 mt-1 z-20 max-h-40 overflow-y-auto p-1">
+              {isLoading ? (
+                <li className="disabled"><a><Loader2 size={16} className="animate-spin" /> Carregando...</a></li>
+              ) : categorySearchResults.length > 0 ? (
+                categorySearchResults.slice(0, 5).map(cat => (
+                  <li key={cat.category_id}>
+                    <a onClick={() => handleAddCategory(cat)} className="py-2 text-sm flex justify-between">
+                      <span><Tag size={14} className="inline mr-2 text-gray-400" /> {cat.category}</span>
+                      <span className="text-xs text-gray-400 font-normal">{cat.enterprise_name}</span>
+                    </a>
+                  </li>
+                ))
+              ) : (
+                <li className="disabled"><a className="text-xs text-gray-400 italic">Nenhuma categoria encontrada.</a></li>
+              )}
+            </ul>
+          )}
         </div>
+
       </div>
 
-      {/* Botões de Ação */}
-      <div className="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-        <button type="button" className="btn btn-light d-flex align-items-center gap-2" onClick={handleClearFilters}>
+      {/* AÇÕES */}
+      <div className="flex justify-end gap-3 mt-2 pt-4 border-t border-base-200">
+        <button 
+          className="btn btn-sm btn-ghost text-gray-500 hover:bg-base-200 gap-2"
+          onClick={handleClearFilters}
+        >
           <FunnelX size={16}/>
-          Limpar Filtros
+          Limpar
         </button>
-        <button type="button" className="btn btn-primary-custom d-flex align-items-center gap-2" onClick={onApply}>
+        <button 
+          className="btn btn-sm btn-primary text-white gap-2 shadow-sm"
+          onClick={onApply}
+        >
           <Filter size={16} />
           Aplicar Filtros
         </button>

@@ -1,5 +1,5 @@
 import React, { type ChangeEvent } from 'react';
-import { Shield, UserCheck } from 'lucide-react'; // Ícones
+import { Shield, UserCheck } from 'lucide-react';
 import { type ClassificationFormData, STATUS_OPTIONS, PRIVACITY_OPTIONS } from '../../types/classification';
 
 interface ClassificationFormProps {
@@ -21,56 +21,60 @@ const ClassificationForm: React.FC<ClassificationFormProps> = ({
   onTakeReview,
 }) => {
   return (
-    <form onSubmit={(e) => e.preventDefault()}>
+    <form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-5">
       
-      {/* Checkbox Revisado */}
-      <div className="mb-3 p-3 bg-light rounded border d-flex align-items-center">
-        <div className="form-check form-switch mb-0">
-            <input
-                className="form-check-input"
-                type="checkbox"
-                role="switch"
-                id="is_reviewed"
-                name="is_reviewed"
-                checked={formData.is_reviewed}
-                onChange={onFormChange}
-                style={{ cursor: 'pointer' }}
-            />
-            <label className="form-check-label fw-bold text-dark ms-2" htmlFor="is_reviewed" style={{ cursor: 'pointer' }}>
-                Documento Revisado
-            </label>
-        </div>
+      {/* Toggle de Revisão */}
+      <div className="form-control">
+        <label className="label cursor-pointer justify-start gap-4 p-4 border border-base-300 rounded-xl bg-base-100 hover:border-primary/50 transition-all shadow-sm">
+          <input
+            type="checkbox"
+            name="is_reviewed"
+            className="toggle toggle-success"
+            checked={formData.is_reviewed}
+            onChange={onFormChange}
+          />
+          <div className="flex flex-col">
+            <span className={`label-text font-bold text-base ${formData.is_reviewed ? 'text-secondary' : 'text-gray-500'}`}>
+                {formData.is_reviewed ? 'Documento Revisado' : 'Marcar como Revisado'}
+            </span>
+            <span className="label-text-alt text-xs text-gray-400">
+                Habilita a atribuição de um revisor responsável.
+            </span>
+          </div>
+        </label>
       </div>
       
-      <div className="row g-3 mb-3">
-          {/* Status */}
-          <div className="col-md-6">
-            <label htmlFor="classification_status" className="form-label fw-semibold text-secondary small text-uppercase">Status</label>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Select Status */}
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text font-semibold text-secondary text-xs uppercase tracking-wide">Status</span>
+            </label>
             <select 
-                id="classification_status" 
                 name="classification_status"
-                className="form-select"
+                className="select select-bordered w-full focus:select-primary text-base-content"
                 value={formData.classification_status || "null"}
                 onChange={onFormChange}
             >
-                <option value="null" className="text-muted">Selecione...</option>
+                <option value="null" disabled>Selecione...</option>
                 {STATUS_OPTIONS.map(opt => (
                 <option key={opt.id} value={opt.id}>{opt.name}</option>
                 ))}
             </select>
           </div>
 
-          {/* Privacidade */}
-          <div className="col-md-6">
-            <label htmlFor="privacity" className="form-label fw-semibold text-secondary small text-uppercase">Privacidade</label>
+          {/* Select Privacidade */}
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text font-semibold text-secondary text-xs uppercase tracking-wide">Privacidade</span>
+            </label>
             <select 
-                id="privacity" 
                 name="privacity"
-                className="form-select"
+                className="select select-bordered w-full focus:select-primary text-base-content"
                 value={formData.privacity || "null"}
                 onChange={onFormChange}
             >
-                <option value="null" className="text-muted">Selecione...</option>
+                <option value="null" disabled>Selecione...</option>
                 {PRIVACITY_OPTIONS.map(opt => (
                 <option key={opt.id} value={opt.id}>{opt.name}</option>
                 ))}
@@ -78,34 +82,35 @@ const ClassificationForm: React.FC<ClassificationFormProps> = ({
           </div>
       </div>
 
-      {/* Revisor */}
-      <div className="mb-4">
-        <label className="form-label fw-semibold text-secondary small text-uppercase">Revisor Responsável</label>
-        <div className="d-flex justify-content-between align-items-center p-2 border rounded bg-white">
-            <div className="d-flex align-items-center gap-2">
-                <div className={`p-1 rounded-circle ${formData.is_reviewed ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'}`}>
-                    {formData.is_reviewed ? <UserCheck size={25} /> : <Shield size={25} />}
+      {/* Card de Revisor */}
+      <div className="form-control w-full">
+        <label className="label">
+            <span className="label-text font-semibold text-secondary text-xs uppercase tracking-wide">Revisor Responsável</span>
+        </label>
+        
+        <div className="flex justify-between items-center p-3 border border-base-300 rounded-lg bg-base-100">
+            <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-full ${formData.is_reviewed ? 'bg-success/10 text-success' : 'bg-base-200 text-base-content/30'}`}>
+                    {formData.is_reviewed ? <UserCheck size={20} /> : <Shield size={20} />}
                 </div>
-                <span className="info-value fw-semibold small">
+                <span className={`font-medium text-sm truncate max-w-[180px] ${formData.is_reviewed ? 'text-secondary' : 'text-gray-400 italic'}`}>
                     {formData.is_reviewed ? reviewerName : "Sem revisor informado"}
                 </span>
             </div>
           
-          {formData.is_reviewed && !isCurrentUserTheReviewer && (
-            <button 
-              type="button" 
-              className="take-review-btn" 
-              onClick={onTakeReview}
-              title="Assumir a revisão deste documento"
-            >
-              Assumir Revisão
-            </button>
-          )}
+            {formData.is_reviewed && !isCurrentUserTheReviewer && (
+                <button 
+                type="button" 
+                className="btn btn-xs btn-outline btn-primary"
+                onClick={onTakeReview}
+                title="Assumir a revisão deste documento"
+                >
+                Assumir
+                </button>
+            )}
         </div>
       </div>
 
-      {/* Botão Salvar (Escondido aqui pois agora está no footer do modal pai, mas mantido se necessário lógica local) */}
-      {/* A lógica de renderização do botão está no componente Pai para unificar o footer */}
     </form>
   );
 };

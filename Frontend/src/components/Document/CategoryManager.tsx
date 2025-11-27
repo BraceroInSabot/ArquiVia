@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { Search, X, Tag, Loader2 } from 'lucide-react'; // Ícones
 import type { Category } from '../../services/core-api';
 import documentService from '../../services/Document/api';
-import '../../assets/css/ClassificationModal.css';
+
+// Não precisamos mais importar CSS externo
+// import '../../assets/css/ClassificationModal.css';
 
 interface CategoryManagerProps {
   documentId: number;
@@ -15,13 +18,9 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({
   onCategoryChange
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  
-  // --- LÓGICA DE BUSCA (REFEITA) ---
-  // 1. Armazena a lista completa de categorias disponíveis (da API)
   const [availableCategories, setAvailableCategories] = useState<Category[]>([]);
   const [isLoadingSearch, setIsLoadingSearch] = useState(false);
 
-  // 2. Busca todas as categorias disponíveis UMA VEZ quando o modal abre
   useEffect(() => {
     setIsLoadingSearch(true);
     documentService.listDiponibleCategories(documentId)
@@ -30,104 +29,95 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({
       })
       .catch(err => console.error("Erro ao buscar categorias disponíveis:", err))
       .finally(() => setIsLoadingSearch(false));
-  }, [documentId]); // Roda uma vez
+  }, [documentId]);
 
-  // 3. Filtra localmente (useMemo para performance)
   const searchResults = useMemo(() => {
-    // Não mostra nada se a busca estiver vazia
-    if (!searchTerm) {
-      return [];
-    }
+    if (!searchTerm) return [];
 
-    // Filtra a lista local 'availableCategories'
     return availableCategories.filter(availableCat => {
-      // Condição 1: O texto deve bater (case-insensitive)
       const matchesSearch = availableCat.category.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      // Condição 2: Não pode já estar na lista 'linkedCategories'
       const isAlreadyLinked = linkedCategories.some(
         linkedCat => linkedCat.category_id === availableCat.category_id
       );
-
       return matchesSearch && !isAlreadyLinked;
     });
   }, [searchTerm, availableCategories, linkedCategories]);
 
-  // --- FIM DA LÓGICA DE BUSCA ---
-
-  // Adiciona uma categoria à lista local
   const handleAddCategory = (categoryToAdd: Category) => {
-    // Atualiza o estado no componente PAI
     onCategoryChange([...linkedCategories, categoryToAdd]);
-    
-    // Limpa a busca
     setSearchTerm('');
   };
 
-  // Remove uma categoria da lista local (clicando no 'X')
   const handleRemoveCategory = (categoryIdToRemove: number) => {
     const newList = linkedCategories.filter(c => c.category_id !== categoryIdToRemove);
-    onCategoryChange(newList); // Atualiza o estado no PAI
+    onCategoryChange(newList);
   };
 
   return (
-    <div className="category-manager">
-      <h5 className="section-title">Categorias</h5>
+    <div className="mt-4">
       
-      {/* --- CAMPO DE BUSCA (AGORA FUNCIONAL) --- */}
-      <div className="category-search-container">
-        <input
-          type="text"
-          placeholder="Buscar categorias para adicionar..."
-          className="category-search-input form-control mb-2"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          // Habilitado (removemos 'disabled={true}')
-        />
+      {/* Título da Seção */}
+      <h5 className="font-bold text-sm text-gray-500 uppercase mb-3 flex items-center gap-2">
+        <Tag size={16} /> Categorias
+      </h5>
+      
+      {/* Campo de Busca */}
+      <div className="form-control w-full relative mb-4">
+        <div className="input-group w-full">
+            {/* Ícone Search dentro do input (simulado com join ou absolute) */}
+            <label className="input input-bordered flex items-center gap-2 w-full focus-within:input-primary">
+                <Search size={18} className="text-gray-400" />
+                <input 
+                    type="text" 
+                    className="grow" 
+                    placeholder="Buscar categorias para adicionar..." 
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </label>
+        </div>
         
-        {/* Container de Resultados (só aparece se houver busca) */}
+        {/* Dropdown de Resultados (Absoluto) */}
         {(isLoadingSearch || searchResults.length > 0 || (searchTerm && !isLoadingSearch)) && (
-          <ul className="search-results-list">
+          <ul className="menu bg-base-100 w-full rounded-box border border-base-200 shadow-lg absolute top-full left-0 mt-1 z-20 max-h-40 overflow-y-auto p-1">
             {isLoadingSearch ? (
-              <li className="search-result-item loading">Buscando...</li>
+              <li className="disabled">
+                <a><Loader2 size={16} className="animate-spin" /> Buscando...</a>
+              </li>
             ) : searchResults.length > 0 ? (
               searchResults.map(cat => (
-                <li 
-                  key={cat.category_id} 
-                  className="search-result-item"
-                  onClick={() => handleAddCategory(cat)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  {cat.category}
+                <li key={cat.category_id}>
+                  <a onClick={() => handleAddCategory(cat)} className="flex justify-between items-center">
+                    <span>{cat.category}</span>
+                  </a>
                 </li>
               ))
             ) : (
-              <li className="search-result-item loading">Nenhum resultado.</li>
+              <li className="disabled"><a className="italic text-gray-400">Nenhuma categoria encontrada.</a></li>
             )}
           </ul>
         )}
       </div>
 
-      {/* --- CATEGORIAS VINCULADAS (Pills) --- */}
-      <div className="category-pill-container">
+      {/* Lista de Categorias Vinculadas (Pills) */}
+      <div className="flex flex-wrap gap-2 p-3 bg-base-100 border border-base-200 rounded-lg min-h-[3rem]">
         {linkedCategories.length === 0 ? (
-          <p className="category-empty-text">Este documento não possui categorias.</p>
+          <p className="text-gray-400 text-sm italic w-full text-center py-1">Este documento não possui categorias.</p>
         ) : (
           linkedCategories.map(category => (
-            <span key={category.category_id} className="category-pill">
+            <div key={category.category_id} className="badge badge-primary badge-lg gap-2 text-white pl-3 pr-1 py-3">
               {category.category}
-              {/* Botão de Remover ('X') */}
               <button 
-                className="remove-pill-btn" 
-                title="Remover Categoria"
                 onClick={() => handleRemoveCategory(category.category_id)}
+                className="btn btn-circle btn-xs btn-ghost text-white hover:bg-white/20"
               >
-                &times;
-              </button> 
-            </span>
+                <X size={14} />
+              </button>
+            </div>
           ))
         )}
       </div>
+
     </div>
   );
 };

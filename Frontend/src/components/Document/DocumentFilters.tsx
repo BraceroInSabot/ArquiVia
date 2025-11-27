@@ -1,19 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { Funnel, Search } from 'lucide-react';
-import type { DocumentFilters } from '../../services/core-api';
+import type { DocumentFilters, AvailableCategorySearch, AvailableUser } from '../../services/core-api';
 import DocumentFilterSearch from './DocumentFilterSearch';
-
-import '../../assets/css/DocumentFilters.css'; 
-import '../../assets/css/EnterprisePage.css'; 
 
 interface DocumentFiltersProps {
   defaultFilters: DocumentFilters;
   onFilterChange: (filters: DocumentFilters) => void;
+  availableCategories: AvailableCategorySearch[];
+  availableReviewers: AvailableUser[];
+  isLoading: boolean;
 }
 
 const DocumentFiltersComponent: React.FC<DocumentFiltersProps> = ({ 
   defaultFilters, 
-  onFilterChange 
+  onFilterChange,
+  availableCategories,
+  availableReviewers,
+  isLoading
 }) => {
   const [filters, setFilters] = useState<DocumentFilters>(defaultFilters);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -25,7 +28,6 @@ const DocumentFiltersComponent: React.FC<DocumentFiltersProps> = ({
   const handleFilterUpdate = (filterUpdate: Partial<DocumentFilters>) => {
     const newFilters = { ...filters, ...filterUpdate };
     setFilters(newFilters);
-
     if (filterUpdate.searchTerm !== undefined) {
       onFilterChange(newFilters);
     }
@@ -45,58 +47,69 @@ const DocumentFiltersComponent: React.FC<DocumentFiltersProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="w-100">
-      <div className="d-flex gap-2">
+    <div className="w-full">
+      <form onSubmit={handleSubmit} className="flex flex-wrap gap-4 items-center mb-4">
+        
+        {/* Botão Filtros Avançados */}
         <button 
           type="button" 
-          className={`btn ${isFilterOpen ? 'btn-primary-custom' : 'btn-outline-secondary'} shadow-sm`}
-          onClick={() => setIsFilterOpen(prev => !prev)}
+          className={`btn ${isFilterOpen ? 'btn-primary text-white' : 'btn-outline btn-secondary'} gap-2 shadow-sm`}
+          onClick={() => setIsFilterOpen(!isFilterOpen)}
           title="Filtros avançados"
+          disabled={isLoading}
         >
           <Funnel size={20} />
+          <span className="hidden sm:inline">Filtros</span>
         </button>
-        
+
+        {/* Dropdown de Agrupamento */}
         <select
           name="groupBy"
-          className="form-select shadow-sm"
+          className="select select-bordered w-full max-w-xs flex-1 focus:border-primary focus:ring-primary"
           value={filters.groupBy || 'none'}
           onChange={(e) => handleFilterUpdate({ groupBy: e.target.value as any })}
-          style={{ maxWidth: '200px' }}
+          disabled={isLoading}
         >
           <option value="none">Não agrupar</option>
-          <option value="enterprise">Agrupar por Empresa</option>
-          <option value="sector">Agrupar por Setor</option>
-          <option value="both">Agrupar por Empresa e Setor</option>
+          <option value="enterprise">Por Empresa</option>
+          <option value="sector">Por Setor</option>
+          <option value="both">Empresa e Setor</option>
         </select>
-        
-        <div className="position-relative flex-grow-1">
+
+        {/* Barra de Busca Principal */}
+        <div className="relative flex-grow min-w-[200px]">
           <input
             type="text"
             name="q"
-            className="form-control form-control-lg ps-3 pe-5"
-            placeholder="Pesquisar por título ou conteúdo..."
+            className="input input-bordered w-full pr-10 focus:border-primary focus:ring-primary"
+            placeholder="Pesquisar documentos..."
             value={filters.searchTerm}
             onChange={(e) => handleFilterUpdate({ searchTerm: e.target.value })}
             autoComplete="off"
+            disabled={isLoading}
           />
-          <div className="position-absolute top-50 end-0 translate-middle-y pe-3 text-muted">
+          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
             <Search size={20} />
           </div>
         </div>
-      </div>
+      </form>
 
+      {/* Painel de Filtros Avançados (Gaveta) */}
       {isFilterOpen && (
-        <div className="filter-area-container">
-          <div className="card card-body mt-3 shadow-sm" style={{ backgroundColor: '#fdfdfd' }}>
+        <div className="card bg-base-100 shadow-lg border border-base-200 animate-fade-in-down mb-6">
+          <div className="card-body p-4">
             <DocumentFilterSearch 
               currentFilters={filters}
               onAdvancedChange={handleAdvancedFilterChange}
               onApply={handleApplyAdvancedFilters}
+              availableCategories={availableCategories}
+              availableReviewers={availableReviewers}
+              isLoading={isLoading}
             />
           </div>
         </div>
       )}
-    </form>
+    </div>
   );
 };
 

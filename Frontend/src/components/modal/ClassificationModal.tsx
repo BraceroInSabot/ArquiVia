@@ -1,11 +1,14 @@
 import { useState, useEffect, useMemo, type ChangeEvent } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Save, Loader2, AlertCircle, ShapesIcon } from 'lucide-react'; // Ícones
+import { X, Save, Loader2, AlertCircle, Settings } from 'lucide-react';
 
 import documentService from '../../services/Document/api';
-import type { UpdateClassificationPayload, Category, AddCategoriesPayload } from '../../services/core-api';
-import { useAuth } from '../../contexts/AuthContext'; 
-import '../../assets/css/ClassificationModal.css';
+import type { 
+  UpdateClassificationPayload,
+  Category,
+  AddCategoriesPayload
+} from '../../services/core-api';
+import { useAuth } from '../../contexts/AuthContext';
 import { type ClassificationFormData, STATUS_OPTIONS, PRIVACITY_OPTIONS } from '../../types/classification';
 
 import ConfirmCloseModal from './ConfirmCloseModal';
@@ -20,7 +23,6 @@ interface ClassificationModalProps {
 export default function ClassificationModal({ documentId, onClose }: ClassificationModalProps) {
   const { user } = useAuth(); 
 
-  // Estados (Mantidos iguais)
   const [originalData, setOriginalData] = useState<ClassificationFormData | null>(null);
   const [formData, setFormData] = useState<ClassificationFormData | null>(null);
   const [reviewerName, setReviewerName] = useState<string>("Nenhum");
@@ -39,7 +41,6 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
     return classificationDirty || categoriesDirty;
   }, [originalData, formData, originalCategories, linkedCategories]);
 
-  // --- Lógica de Busca (Mantida igual) ---
   useEffect(() => {
     const fetchData = async () => {
       if (!documentId) return;
@@ -81,7 +82,6 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
     fetchData();
   }, [documentId]);
 
-  // --- Lógica de Salvar (Mantida igual) ---
   const handleSave = async () => {
     if (!formData || !isDirty || !user || !user.data) return;
 
@@ -156,20 +156,15 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
       if (name === 'is_reviewed') {
         const { checked } = e.target as HTMLInputElement;
         
-        // CASO 1: Usuário DESMARCOU
         if (!checked) {
-          setReviewerName("Nenhum"); // <--- Limpa o nome visual
+          setReviewerName("Nenhum"); 
           return { ...prev, is_reviewed: false, reviewer: null };
         }
 
-        // CASO 2: Usuário MARCOU
-        // Se já havia um revisor antes (ex: vindo do banco), mantemos.
-        // Se não, o usuário logado assume a revisão.
         const currentReviewerId = prev.reviewer || user?.data.user_id || null;
         
-        // Aqui está a correção: Atualizamos o nome visualmente também
         if (!prev.reviewer && user?.data) {
-            setReviewerName(user.data.name); // <--- Define o nome do usuário atual
+            setReviewerName(user.data.name); 
         }
 
         return { 
@@ -179,7 +174,6 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
         };
       }
 
-      // Lógica padrão para Selects
       const processedValue = (value === "null" || value === "") ? null : Number(value);
       return { ...prev, [name]: processedValue };
     });
@@ -198,7 +192,7 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
   const renderContent = () => {
     if (isLoading || !formData) { 
       return (
-        <div className="d-flex flex-column justify-content-center align-items-center py-5 text-muted">
+        <div className="flex flex-col items-center justify-center py-10 text-gray-400">
             <Loader2 className="animate-spin mb-2" size={32} />
             <span>Carregando dados...</span>
         </div>
@@ -206,9 +200,9 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
     }
     if (error) {
       return (
-        <div className="alert alert-danger d-flex align-items-center" role="alert">
-            <AlertCircle className="me-2" size={20} />
-            <div>{error}</div>
+        <div className="alert alert-error shadow-sm my-4">
+            <AlertCircle size={20} />
+            <span>{error}</span>
         </div>
       );
     }
@@ -216,8 +210,8 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
     const isCurrentUserTheReviewer = formData.reviewer !== null && formData.reviewer === user?.data.user_id;
 
     return (
-      <>
-        <div className="modal-body p-4 overflow-auto" style={{ maxHeight: '70vh' }}>
+      <div className="flex flex-col h-full">
+        <div className="flex-1 overflow-y-auto px-1">
             <ClassificationForm
                 formData={formData}
                 reviewerName={reviewerName}
@@ -229,70 +223,72 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
                 onSave={handleSave}
             />
 
-            <hr className="my-4 text-muted opacity-25" />
-
             <CategoryManager
                 documentId={documentId}
                 linkedCategories={linkedCategories}
                 onCategoryChange={setLinkedCategories} 
             />
         </div>
-
-        {/* Footer Fixo com o Botão Salvar */}
-        <div className="modal-footer border-top bg-light p-3 d-flex justify-content-end gap-2">
-             <button 
-                className="btn btn-light text-secondary" 
-                onClick={handleCloseAttempt}
-                disabled={isSaving}
-             >
-                Cancelar
-             </button>
-             <button 
-                className="btn btn-primary-custom d-flex align-items-center gap-2 px-4" 
-                onClick={handleSave}
-                disabled={!isDirty || isSaving}
-             >
-                {isSaving ? (
-                    <>
-                        <Loader2 className="animate-spin" size={18} />
-                        Salvando...
-                    </>
-                ) : (
-                    <>
-                        <Save size={18} />
-                        Salvar Alterações
-                    </>
-                )}
-             </button>
-        </div>
-      </>
+      </div>
     );
   };
 
   return createPortal(
     <>
-      <div className="modal-overlay" onClick={handleCloseAttempt}>
-        <div 
-            className="modal-content p-0 overflow-hidden" 
-            onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: '600px' }}
-        >
-          
-          {/* Cabeçalho do Modal */}
-          <div className="d-flex justify-content-between align-items-center p-3 px-4 border-bottom">
-            <h5 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-                <ShapesIcon size={20} className="text-primary-custom" />
-                Classificação do Documento
-            </h5>
-            <button className="btn btn-link text-secondary p-0" onClick={handleCloseAttempt}>
-                <X size={24} />
-            </button>
-          </div>
+      {/* Modal Principal */}
+      <div className="modal modal-open" role="dialog">
+        <div className="modal-box w-11/12 max-w-3xl h-[80vh] flex flex-col relative p-0 overflow-hidden">
+            
+            {/* Cabeçalho Fixo */}
+            <div className="flex justify-between items-center p-4 border-b border-base-200 bg-base-100 z-10">
+                <h3 className="font-bold text-lg flex items-center gap-2 text-secondary">
+                    <Settings size={20} className="text-primary" />
+                    Configurações do Documento
+                </h3>
+                <button className="btn btn-sm btn-circle btn-ghost" onClick={handleCloseAttempt}>
+                    <X size={20} />
+                </button>
+            </div>
 
-          {renderContent()}
+            {/* Corpo Rolável */}
+            <div className="flex-1 overflow-y-auto p-6">
+                {renderContent()}
+            </div>
+
+            {/* Rodapé Fixo */}
+            <div className="modal-action p-4 border-t border-base-200 bg-base-100 m-0 justify-end gap-2">
+                <button 
+                    className="btn btn-ghost text-secondary" 
+                    onClick={handleCloseAttempt}
+                    disabled={isSaving}
+                >
+                    Cancelar
+                </button>
+                <button 
+                    className="btn btn-primary text-white min-w-[140px]" 
+                    onClick={handleSave}
+                    disabled={!isDirty || isSaving}
+                >
+                    {isSaving ? (
+                        <>
+                            <Loader2 className="animate-spin" size={18} />
+                            Salvando...
+                        </>
+                    ) : (
+                        <>
+                            <Save size={18} />
+                            Salvar Alterações
+                        </>
+                    )}
+                </button>
+            </div>
         </div>
+        
+        {/* Backdrop */}
+        <div className="modal-backdrop bg-black/50 backdrop-blur-sm" onClick={handleCloseAttempt}></div>
       </div>
 
+      {/* Modal de Confirmação */}
       {showConfirmClose && (
         <ConfirmCloseModal
           onCancel={() => setShowConfirmClose(false)}

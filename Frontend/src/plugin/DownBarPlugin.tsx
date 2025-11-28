@@ -1,24 +1,22 @@
 import { useState, type JSX } from 'react';
 import { useParams } from 'react-router-dom';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+//@ts-ignore
 import { $generateHtmlFromNodes } from '@lexical/html';
-import jsPDF from 'jspdf';
+
 //@ts-ignore
 import { type EditorState } from 'lexical'; 
 import { 
-  Save, History, FileText, Paperclip, 
-  Eye, RotateCcw, Loader2 
+  Save, History, Paperclip, 
+  Eye, RotateCcw, Loader2, X 
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 import HistoryViewModal from './HistoryViewModal';
 import AttachedFilesModal from '../components/modal/AttachedFilesModal';
 import documentService from '../services/Document/api';
 import type { DocumentHistory } from '../services/core-api';
-import ConfirmModal from '../components/modal/ConfirmModal'; // Importe o Modal de Confirmação
-import toast from 'react-hot-toast';
-
-// Remova a importação do CSS customizado, usaremos só Bootstrap
-// import '../assets/css/ActionsPlugin.css'; 
+import ConfirmModal from '../components/modal/ConfirmModal';
 
 interface ActionsPluginProps {
   isAutosaveActive: boolean;
@@ -27,44 +25,23 @@ interface ActionsPluginProps {
   onManualSave: () => void;
 }
 
-export default function ActionsPlugin({ 
-  isAutosaveActive,
-  onAutosaveToggle,
-  isGlowing,
-  onManualSave
-}: ActionsPluginProps): JSX.Element {
+// @ts-ignore
+export default function ActionsPlugin({isAutosaveActive, onAutosaveToggle, isGlowing, onManualSave}: ActionsPluginProps): JSX.Element {
     const { id } = useParams<{ id: string }>(); 
     const documentId = id ? Number(id) : null;
     const [editor] = useLexicalComposerContext(); 
     
-    // Estados
     const [viewingState, setViewingState] = useState<string | null>(null);
     const [isFilesModalOpen, setIsFilesModalOpen] = useState(false);
     const [isHistoryVisible, setIsHistoryVisible] = useState(false);
     const [apiHistory, setApiHistory] = useState<DocumentHistory[]>([]);
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
-    // Estado para o modal de reversão
     const [revertConfig, setRevertConfig] = useState<{ isOpen: boolean; historyEntry: DocumentHistory | null }>({
         isOpen: false,
         historyEntry: null
     });
     const [isReverting, setIsReverting] = useState(false);
-
-    // --- FUNÇÕES ---
-    const handleExportToPdf = (): void => {
-        editor.getEditorState().read(() => {
-          const htmlString = $generateHtmlFromNodes(editor, null);
-          const pdf = new jsPDF('p', 'mm', 'a4');
-          pdf.html(htmlString, {
-            callback: function (doc: jsPDF) { doc.save('documento.pdf'); },
-            margin: [15, 15, 15, 15],
-            autoPaging: 'text',
-            width: 180,
-            windowWidth: 700,
-          });
-        });
-    };
 
     const handleFilesClick = () => {
         if (documentId) setIsFilesModalOpen(true);
@@ -93,12 +70,10 @@ export default function ActionsPlugin({
         }
     };
 
-    // Apenas abre o modal
     const requestRevert = (historyEntry: DocumentHistory) => {
         setRevertConfig({ isOpen: true, historyEntry });
     };
 
-    // Executa a reversão quando confirmado
     const handleConfirmRevert = async () => {
         const historyEntry = revertConfig.historyEntry;
         if (!documentId || !historyEntry) return;
@@ -115,16 +90,15 @@ export default function ActionsPlugin({
             editor.setEditorState(editorState);
             
             setIsHistoryVisible(false);
-            setRevertConfig({ isOpen: false, historyEntry: null }); // Fecha modal
+            setRevertConfig({ isOpen: false, historyEntry: null }); 
 
         } catch (e) {
             console.error("Falha ao reverter:", e);
-            toast.error("Erro ao reverter versão."); // Use toast se tiver
+            toast.error("Erro ao reverter versão."); 
         } finally {
             setIsReverting(false);
         }
     };
-
 
     const handleViewVersion = (content: any) => {
         const contentString = typeof content === 'string' ? content : JSON.stringify(content);
@@ -132,124 +106,128 @@ export default function ActionsPlugin({
     };
 
     return (
-        <div className="d-flex justify-content-center" style={{ position: 'fixed', bottom: '20px', left: 0, right: 0, zIndex: 100 }}>
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-[100] flex flex-col items-center">
             
-            {/* --- PAINEL DE HISTÓRICO (Estilizado com Bootstrap) --- */}
+            {/* --- PAINEL DE HISTÓRICO (Popover) --- */}
             {isHistoryVisible && (
-                <div 
-                    className="card shadow-lg border-0" 
-                    style={{ position: 'absolute', bottom: '60px', width: '340px', zIndex: 101, animation: 'slideUpFade 0.2s ease-out' }}
-                >
-                    <div className="card-header bg-light d-flex justify-content-between align-items-center py-2 px-3">
-                        <h6 className="fw-bold text-dark mb-0">Histórico de Versões</h6>
-                        <button className="btn-close small" onClick={() => setIsHistoryVisible(false)}></button>
-                    </div>
+                <div className="card bg-base-100 shadow-2xl w-80 border border-base-200 absolute bottom-16 animate-slide-up">
+                    <div className="card-body p-0 overflow-hidden">
+                        <div className="flex justify-between items-center p-3 bg-base-200/50 border-b border-base-200">
+                            <h3 className="font-bold text-sm text-secondary">Histórico de Versões</h3>
+                            <button className="btn btn-xs btn-circle btn-ghost" onClick={() => setIsHistoryVisible(false)}>
+                                <X size={16} />
+                            </button>
+                        </div>
 
-                    <div className="card-body p-0" style={{ maxHeight: '320px', overflowY: 'auto' }}>
-                        {isLoadingHistory ? (
-                            <div className="d-flex justify-content-center align-items-center p-3 text-muted">
-                                <Loader2 className="animate-spin me-2" size={20} />
-                                <small>Carregando...</small>
-                            </div>
-                        ) : apiHistory.length > 0 ? (
-                            <ul className="list-group list-group-flush">
-                                {apiHistory.map((entry) => (
-                                    <li key={entry.history_id} className="list-group-item list-group-item-action d-flex justify-content-between align-items-center px-3 py-2">
-                                        <div className="history-info">
-                                            <span className="fw-medium small">{entry.history_date}</span>
-                                            <span className="text-muted small d-block">{entry.user_name} • {entry.action}</span>
-                                        </div>
-                                        <div className="d-flex gap-1">
-                                            <button 
-                                                className="btn btn-sm btn-outline-secondary"
-                                                onClick={() => handleViewVersion(entry.content)}
-                                                title="Visualizar"
-                                            >
-                                                <Eye size={16} />
-                                            </button>
-                                            <button 
-                                                className="btn btn-sm btn-outline-danger"
-                                                // Alterado para chamar o requestRevert (abre o modal)
-                                                onClick={() => requestRevert(entry)}
-                                                title="Reverter"
-                                            >
-                                                <RotateCcw size={16} />
-                                            </button>
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
-                        ) : (
-                            <p className="text-center text-muted p-3 m-0 small">Nenhum histórico disponível.</p>
-                        )}
+                        <div className="max-h-72 overflow-y-auto p-1">
+                            {isLoadingHistory ? (
+                                <div className="flex justify-center items-center py-8 text-gray-400">
+                                    <Loader2 className="animate-spin mr-2" size={20} />
+                                    <span className="text-xs">Carregando...</span>
+                                </div>
+                            ) : apiHistory.length > 0 ? (
+                                <ul className="menu bg-base-100 w-full p-0 menu-xs">
+                                    {apiHistory.map((entry) => (
+                                        <li key={entry.history_id} className="border-b border-base-100 last:border-none">
+                                            <div className="flex flex-col gap-1 py-2 active:bg-base-100 cursor-default hover:bg-base-100">
+                                                <div className="w-full flex justify-between items-start">
+                                                    <div>
+                                                        <span className="font-bold block text-xs">
+                                                            {new Date(entry.history_date).toLocaleDateString()}
+                                                            <span className="font-normal ml-1 opacity-70">
+                                                                {new Date(entry.history_date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                                            </span>
+                                                        </span>
+                                                        <span className="text-[10px] text-gray-500 block mt-0.5">{entry.user_name} • {entry.action}</span>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="flex gap-2 mt-1 w-full justify-end">
+                                                    <button 
+                                                        className="btn btn-xs btn-outline btn-primary h-7 min-h-0 px-2"
+                                                        onClick={() => handleViewVersion(entry.content)}
+                                                        title="Visualizar"
+                                                    >
+                                                        <Eye size={12} className="mr-1" /> Ver
+                                                    </button>
+                                                    <button 
+                                                        className="btn btn-xs btn-outline btn-error h-7 min-h-0 px-2"
+                                                        onClick={() => requestRevert(entry)}
+                                                        title="Reverter"
+                                                    >
+                                                        <RotateCcw size={12} className="mr-1" /> Reverter
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <div className="text-center py-6 text-gray-400 text-xs italic">
+                                    Nenhum histórico disponível.
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}
 
-            {/* --- BARRA DE AÇÕES (ESTILIZADA COM BOOTSTRAP) --- */}
-            <div 
-                className="d-flex align-items-center gap-2 p-2 rounded-pill shadow"
-                style={{ backgroundColor: '#ffffff', border: '1px solid #e0e0e0' }}
-            >
-                {/* Grupo 1: Salvar */}
-                <div className="btn-group" role="group">
-                    <button
-                        onClick={onManualSave}
-                        className="btn btn-primary-custom d-flex align-items-center gap-2 rounded-pill px-3"
-                        title="Salvar Agora"
-                    >
-                        <Save size={18} />
-                        <span className="d-none d-sm-inline fw-medium" style={{ fontSize: '0.9rem' }}>Salvar</span>
-                    </button>
-                    
-                    <button
-                        onClick={onAutosaveToggle}
-                        className={`btn ${isAutosaveActive ? 'btn-success-subtle' : 'btn-light'} rounded-pill ms-2 px-3`}
-                        title={isAutosaveActive ? "Auto-salvamento Ativado" : "Desativado"}
-                        style={{ fontSize: '0.8rem', fontWeight: '600' }}
-                    >
-                        {isAutosaveActive ? 'AUTO ON' : 'AUTO OFF'}
-                    </button>
-                </div>
+            {/* --- BARRA DE AÇÕES (Toolbar DaisyUI) --- */}
+            <div className="join bg-base-100 shadow-lg rounded-full border border-base-300 p-1">
+                
+                {/* Botão Salvar */}
+                <button
+                    onClick={onManualSave}
+                    className="join-item btn btn-sm btn-primary rounded-full px-4 text-white border-none"
+                    title="Salvar Agora"
+                >
+                    <Save size={18} />
+                    <span className="hidden sm:inline ml-1">Salvar</span>
+                </button>
+                
+                {/* Toggle AutoSave */}
+                <button
+                    onClick={onAutosaveToggle}
+                    className={`join-item btn btn-sm border-none font-normal text-xs ${isAutosaveActive ? 'bg-success/10 text-success' : 'bg-base-200 text-gray-500'}`}
+                    title={isAutosaveActive ? "Auto-salvamento Ativado" : "Desativado"}
+                >
+                    {isAutosaveActive ? 'AUTO ON' : 'AUTO OFF'}
+                </button>
 
-                <div className="vr mx-2"></div>
+                {/* Divisor */}
+                <div className="join-item w-px bg-base-300 mx-1 my-1"></div>
 
-                {/* Grupo 2: Ferramentas */}
-                <div className="btn-group" role="group">
+                {/* Histórico */}
+                <div className="tooltip" data-tip="Histórico">
                     <button
                         onClick={handleHistoryClick}
-                        className={`btn ${isGlowing ? 'btn-success' : 'btn-light'} rounded-circle p-2 ${isHistoryVisible ? 'active' : ''}`}
-                        title="Histórico de Versões"
+                        className={`join-item btn btn-sm btn-circle btn-ghost ${isHistoryVisible ? 'bg-base-200 text-primary' : ''}`}
                     >
                         <History size={20} />
                     </button>
-                    
+                </div>
+
+                {/* Anexos */}
+                <div className="tooltip" data-tip="Anexos">
                     <button
                         onClick={handleFilesClick}
-                        className="btn btn-light rounded-circle p-2"
-                        title="Arquivos Anexados"
+                        className="join-item btn btn-sm btn-circle btn-ghost"
                         disabled={!documentId}
                     >
                         <Paperclip size={20} />
                     </button>
-
-                    <button
-                        onClick={handleExportToPdf}
-                        className="btn btn-light rounded-circle p-2"
-                        title="Exportar para PDF"
-                    >
-                        <FileText size={20} />
-                    </button>
                 </div>
+
             </div>
             
-            {/* Modais (Renderização intacta) */}
+            {/* Modais */}
             {viewingState && (
                 <HistoryViewModal
                     editorStateString={viewingState}
                     onClose={() => setViewingState(null)}
                 />
             )}
+
             {isFilesModalOpen && documentId && (
                 <AttachedFilesModal
                     documentId={documentId}
@@ -257,14 +235,13 @@ export default function ActionsPlugin({
                 />
             )}
 
-            {/* Modal de Confirmação de Reversão */}
             <ConfirmModal 
                 isOpen={revertConfig.isOpen}
                 onClose={() => setRevertConfig({ isOpen: false, historyEntry: null })}
                 onConfirm={handleConfirmRevert}
                 isLoading={isReverting}
                 title="Reverter Versão"
-                message={`Tem certeza que deseja reverter para a versão de ${revertConfig.historyEntry?.history_date || ''}? Isso substituirá o conteúdo atual.`}
+                message={`Tem certeza que deseja reverter para a versão de ${new Date(revertConfig.historyEntry?.history_date || '').toLocaleString()}? Isso substituirá o conteúdo atual.`}
                 variant="warning"
                 confirmText="Sim, Reverter"
             />

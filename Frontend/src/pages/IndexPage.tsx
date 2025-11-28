@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import heroImage from '../assets/imgs/img-index2.png';
 import { useAuth } from '../contexts/AuthContext';
 import { Menu, X, CheckCircle, Shield, Zap, Layers, ArrowRight } from 'lucide-react';
+//@ts-ignore
+import Prism from "prismjs";
 
 const IndexPage = () => {
   const { user } = useAuth();

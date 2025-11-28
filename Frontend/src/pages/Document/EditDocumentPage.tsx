@@ -35,12 +35,12 @@ import ImagePlugin from '../../plugin/ImagePlugin';
 import FormattingToolbarPlugin from '../../plugin/ToolBarPlugin';
 import ActionsPlugin from '../../plugin/DownBarPlugin';
 
-import '../../assets/css/EditorTheme.css'; // Mantém o tema interno do Lexical
+import '../../assets/css/Editor.css'; // Mantém o tema interno do Lexical
+import '../../assets/css/EditorTheme.css'; // Estilos customizados para o editor
 
 const baseInitialConfig = {
   namespace: 'MyEditor',
   theme: {
-    // ... (Mapeamento de classes do Lexical - Mantido)
     list: { ol: 'editor-list-ol', ul: 'editor-list-ul', listitem: 'editor-listitem' },
     image: 'editor-image', video: 'editor-video',
     heading: { h1: 'editor-heading-h1', h2: 'editor-heading-h2', h3: 'editor-heading-h3' },

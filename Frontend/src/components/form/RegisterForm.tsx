@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 
 import Validate from '../../utils/credential_validation';
 import registerService from '../../services/User/api';
+import TermsModal from '../modal/TermsModal';
 
 const RegisterForm = () => {
   const navigate = useNavigate();
@@ -17,6 +18,8 @@ const RegisterForm = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
   
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -35,6 +38,11 @@ const RegisterForm = () => {
   const handleRegister = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
+
+    if (!acceptedTerms) {
+        setError("Você precisa aceitar os Termos de Uso para criar uma conta.");
+        return;
+    }
 
     const usernameValidation = Validate.username(username);
     if (!usernameValidation[0]) { 
@@ -90,14 +98,6 @@ const RegisterForm = () => {
 
   return (
     <form onSubmit={handleRegister} className="space-y-4">
-      {/* Error Alert */}
-      {error && (
-        <div className="alert alert-error shadow-lg">
-          <AlertCircle className="w-5 h-5" />
-          <span className="text-sm">{error}</span>
-        </div>
-      )}
-
       {/* Username Field */}
       <div className="form-control">
         <label className="label" htmlFor="username">
@@ -288,6 +288,37 @@ const RegisterForm = () => {
           </label>
         </div>
       </div>
+      
+      {/* Error Alert */}
+      {error && (
+        <div className="alert alert-error shadow-lg">
+          <AlertCircle className="w-5 h-5" />
+          <span className="text-sm">{error}</span>
+        </div>
+      )}
+      
+      <div className="form-control mb-4">
+        <label className="label cursor-pointer justify-start gap-3">
+            <input 
+                type="checkbox" 
+                className="checkbox checkbox-primary checkbox-sm" 
+                checked={acceptedTerms}
+                onChange={(e) => setAcceptedTerms(e.target.checked)}
+            />
+            <span className="label-text text-gray-600">
+                Eu li e concordo com os 
+                <span 
+                    className="text-primary font-bold hover:underline cursor-pointer ml-1"
+                    onClick={(e) => {
+                        e.preventDefault();
+                        setShowTermsModal(true);
+                    }}
+                >
+                    Termos de Uso e Condições
+                </span>.
+            </span>
+        </label>
+      </div>
 
       {/* Submit Button */}
       <div className="form-control mt-6">
@@ -309,6 +340,10 @@ const RegisterForm = () => {
           )}
         </button>
       </div>
+
+      {showTermsModal && (
+        <TermsModal onClose={() => setShowTermsModal(false)} />
+      )}
     </form>
   );
 };

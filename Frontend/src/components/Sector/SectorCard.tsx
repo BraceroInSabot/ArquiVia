@@ -71,13 +71,6 @@ const SectorCard = ({ sector, onView, onEdit, onDelete, onDeactivateOrActivate }
 
         {/* --- Rodapé: Ações --- */}
         <div className="flex flex-wrap items-center justify-end mt-auto gap-2">
-          
-          {/* Botão Documentos */}
-          <div className="tooltip tooltip-bottom" data-tip="Documentos">
-            <button className="btn btn-square btn-sm btn-ghost text-base-content/60">
-              <FileText size={18} />
-            </button>
-          </div>
 
           {canView && (
             <div className="tooltip tooltip-bottom" data-tip="Detalhes">

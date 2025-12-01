@@ -54,6 +54,11 @@ class CreateEnterpriseView(APIView):
             
             return res
 
+        res: Type[HttpResponse] = Response() # type: ignore
+        res.status_code=201
+        res.data = default_response(success=True, message="Empresa criada com sucesso!") # type: ignore
+        return res
+
 
 class RetrieveEnterpriseView(APIView):
     permission_classes = [IsAuthenticated, IsLinkedtoEnterprise]

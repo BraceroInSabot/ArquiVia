@@ -82,6 +82,7 @@ const EditDocumentPage = () => {
   const [isLoading, setIsLoading] = useState(true); 
   const [initialContent, setInitialContent] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
+  const [isTitleFocused, setIsTitleFocused] = useState(false);
 
   const [isAutosaveActive, setIsAutosaveActive] = useState(true);
   const [isGlowing, setIsGlowing] = useState(false);
@@ -163,6 +164,11 @@ const EditDocumentPage = () => {
     autosaveActiveRef.current = isAutosaveActive;
   }, [isAutosaveActive]);
 
+  const getDisplayTitle = () => {
+    if (isTitleFocused) return title; // Se focado, mostra tudo
+    if (title.length > 30) return title.substring(0, 24) + '...'; // Se blur, corta
+    return title; // Se curto, mostra tudo
+  };
 
   if (isLoading) {
     return (
@@ -191,16 +197,20 @@ const EditDocumentPage = () => {
           <div>
               <input 
                   type="text" 
-                  value={title}
+                  value={getDisplayTitle()}
                   onChange={(e) => setTitle(e.target.value)}
+                  onFocus={() => setIsTitleFocused(true)}
                   onBlur={() => {
-                      if (id) {
-                          documentService.updateDocument(Number(id), { title: title });
-                      }
+                    setIsTitleFocused(false); 
+                    if (id) {
+                      documentService.updateDocument(Number(id), { title: title });
+                    }
                   }}
+                  
                   placeholder="Título do Documento"
-                  className="input input-ghost w-full text-lg font-bold text-center focus:bg-base-100 w-full focus:text-secondary"
-              />
+                  className="input input-ghost text-xl font-bold max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl w-full focus:outline-none"
+                  title={title}
+                />
           </div>
         </div>
 

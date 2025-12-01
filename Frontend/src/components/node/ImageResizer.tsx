@@ -129,7 +129,7 @@ export default function ImageResizer({
     }
   };
 
-  const handleClass = "absolute w-4 h-4 bg-[#008C99] bg-primary border-2 border-white shadow-md z-50 pointer-events-auto rounded-sm hover:scale-110 transition-transform";
+  const handleClass = "absolute w-4 h-4 bg-[#008C99] bg-primary border-2 border-white shadow-md z-50 pointer-events-auto rounded-lg hover:scale-110 transition-transform";
 
   return (
     <div 

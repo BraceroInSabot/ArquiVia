@@ -70,7 +70,10 @@ def log_save_handler(sender, instance, created, **kwargs):
     if sender not in MODELS_TO_AUDIT:
         return
 
-    user = current_request().user # type: ignore
+    try:
+        user = current_request().user # type: ignore
+    except Exception:
+        user=None
 
     action_code = '+' if created else '~'
     try:

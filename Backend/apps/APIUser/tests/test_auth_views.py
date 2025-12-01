@@ -29,7 +29,7 @@ class TestLoginAPI:
         Returns:
             None
         """
-        user: User = User.objects.create_user( # type: ignore
+        user = User.objects.create_user(
             username="test",
             name="This is a Test",
             email="test@gmail.com",

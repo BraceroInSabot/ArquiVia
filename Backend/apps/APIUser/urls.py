@@ -27,9 +27,9 @@ urlpatterns = [
     # User CRUD
     path("consultar/<str:username>/", RetrieveUserView.as_view(), name="consultar-usuario"),
     path("editar/<str:username>/", EditUserView.as_view(), name="editar-usuario"),
-    path('alterar-senha/', ChangePasswordView.as_view(), name='alterar-senha'),
-    path('desativar/', DeactivateUserView.as_view(), name='desativar-usuario'),
-    path("listar/", UsersLinkedToMyListView.as_view(), name="usuario-listar"),
+    path('alterar-senha/<str:username>/', ChangePasswordView.as_view(), name='alterar-senha'),
+    path('desativar/<str:username>/', DeactivateUserView.as_view(), name='desativar-usuario'),
+    path("listar-usuarios-vinculados/", UsersLinkedToMyListView.as_view(), name="usuario-listar"),
 ]+ [
     # Password Reset
     path("esqueci-senha/", RequisicaoRedefinicaoSenhaView.as_view(), name="esqueci-senha"),

@@ -10,12 +10,8 @@ import {
     PASTE_COMMAND,
     $createParagraphNode,
     $isNodeSelection,
-    //@ts-ignore
-    $getRoot,
-    FORMAT_ELEMENT_COMMAND, // <-- Importe isso
-    type ElementFormatType,     // <-- Importe isso
-    //@ts-ignore
-    $getNodeByKey
+    FORMAT_ELEMENT_COMMAND, // Importe
+    type ElementFormatType // Importe
 } from 'lexical';
 
 export const INSERT_IMAGE_COMMAND = createCommand<CreateImageNodePayload>();
@@ -24,7 +20,7 @@ export default function ImagePlugin() {
     const [editor] = useLexicalComposerContext();
 
     useEffect(() => {
-        // --- COMANDO DE INSERÇÃO (MANTIDO IGUAL) ---
+        // --- COMANDO DE INSERÇÃO (Criação) ---
         const unregisterInsertCommand = editor.registerCommand(
             INSERT_IMAGE_COMMAND,
             (payload) => {
@@ -32,21 +28,19 @@ export default function ImagePlugin() {
                     const selection = $getSelection();
                     if ($isRangeSelection(selection) || $isNodeSelection(selection)) {
                         
-                        // Lógica de contagem (mantida)
-                        const allNodes = editor.getEditorState()._nodeMap;
+                        // Contagem de imagens
                         let imageCount = 0;
+                        const nodes = editor.getEditorState()._nodeMap;
                         //@ts-ignore
-                        for (const [key, node] of allNodes) {
+                        for (const [key, node] of nodes) {
                             if ($isImageNode(node)) imageCount++;
                         }
                         
-                        const nextIndex = imageCount + 1;
-                        const defaultCaption = `Imagem ${nextIndex}`;
-
+                        // Cria o nó JÁ com formato 'center'
                         const imageNode = $createImageNode({
                             ...payload,
-                            caption: payload.caption || defaultCaption,
-                            format: 'center' // Define padrão ao criar
+                            caption: payload.caption || `Imagem ${imageCount + 1}`,
+                            format: 'center' 
                         });
                         
                         selection.insertNodes([imageNode]);
@@ -63,21 +57,23 @@ export default function ImagePlugin() {
             COMMAND_PRIORITY_EDITOR,
         );
 
-        // --- NOVO: INTERCEPTA COMANDO DE FORMATAÇÃO (ALINHAMENTO) ---
+        // --- COMANDO DE ALINHAMENTO (Formatação) ---
+        // Isso captura o clique nos botões Esquerda/Centro/Direita da toolbar
         const unregisterFormatCommand = editor.registerCommand<ElementFormatType>(
             FORMAT_ELEMENT_COMMAND,
             (formatType) => {
                 const selection = $getSelection();
                 
-                // Se a seleção for um Nó (imagem clicada), aplica o formato nela
+                // Verifica se o que está selecionado é a Imagem (NodeSelection)
                 if ($isNodeSelection(selection)) {
                     const nodes = selection.getNodes();
                     const node = nodes[0];
                     if ($isImageNode(node)) {
                         editor.update(() => {
+                            // Atualiza a propriedade 'format' do nó
                             node.setFormat(formatType);
                         });
-                        return true; // Impede que o comando propague e formate o parágrafo pai
+                        return true; // Impede que o comando formate o texto em volta
                     }
                 }
                 return false;
@@ -85,7 +81,7 @@ export default function ImagePlugin() {
             COMMAND_PRIORITY_EDITOR
         );
 
-        // --- COMANDO DE COLAR (MANTIDO IGUAL) ---
+        // --- COMANDO DE COLAR (Paste) ---
         const unregisterPasteCommand = editor.registerCommand(
             PASTE_COMMAND,
             (event: ClipboardEvent) => {
@@ -98,9 +94,8 @@ export default function ImagePlugin() {
                         event.preventDefault();
                         const reader = new FileReader();
                         reader.onload = () => {
-                            const imageDataURL = reader.result as string;
                             editor.dispatchCommand(INSERT_IMAGE_COMMAND, {
-                                src: imageDataURL,
+                                src: reader.result as string,
                                 altText: 'Imagem colada',
                             });
                         };
@@ -115,7 +110,7 @@ export default function ImagePlugin() {
 
         return () => {
             unregisterInsertCommand();
-            unregisterFormatCommand(); // <-- Limpa o novo listener
+            unregisterFormatCommand();
             unregisterPasteCommand();
         };
     }, [editor]);

@@ -9,7 +9,7 @@ import type {
   SerializedLexicalNode,
   //@ts-ignore
   Spread,
-  ElementFormatType, // <-- Importe isso
+  ElementFormatType, // Importante
 } from 'lexical';
 import { $applyNodeReplacement, DecoratorNode } from 'lexical';
 import * as React from 'react';
@@ -25,7 +25,7 @@ export interface CreateImageNodePayload {
   width?: number;
   key?: NodeKey;
   caption?: string;
-  format?: ElementFormatType; // <-- Novo Campo
+  format?: ElementFormatType; // Payload aceita formato
 }
 
 export interface SerializedImageNode extends SerializedLexicalNode {
@@ -35,7 +35,7 @@ export interface SerializedImageNode extends SerializedLexicalNode {
   src: string;
   width?: number;
   caption?: string;
-  format?: ElementFormatType; // <-- Novo Campo
+  format?: ElementFormatType; // Serialização aceita formato
   type: 'image';
   version: 1;
 }
@@ -47,7 +47,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
   __height: 'inherit' | number;
   __maxWidth: number;
   __caption: string;
-  __format: ElementFormatType; // <-- Propriedade da Classe
+  __format: ElementFormatType; // Armazena o alinhamento
 
   static getType(): string {
     return 'image';
@@ -61,7 +61,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
       node.__width,
       node.__height,
       node.__caption,
-      node.__format, // <-- Clone
+      node.__format, // Clona o formato atual
       node.__key,
     );
   }
@@ -75,7 +75,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
       src,
       width,
       caption,
-      format, // <-- Import
+      format, // Recupera o formato salvo
     });
     return node;
   }
@@ -90,7 +90,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
       version: 1,
       width: this.__width === 'inherit' ? 0 : this.__width,
       caption: this.__caption,
-      format: this.__format, // <-- Export
+      format: this.__format, // Salva o formato atual
     };
   }
 
@@ -101,7 +101,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     width?: 'inherit' | number,
     height?: 'inherit' | number,
     caption?: string,
-    format?: ElementFormatType, // <-- Construtor
+    format?: ElementFormatType, 
     key?: NodeKey,
   ) {
     super(key);
@@ -111,25 +111,19 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     this.__width = width || 'inherit';
     this.__height = height || 'inherit';
     this.__caption = caption || '';
-    this.__format = format || 'center'; // Padrão: Centro (opcional, pode ser left)
+    // Define 'center' como padrão se nenhum formato for passado
+    this.__format = format || 'center'; 
   }
 
-  // --- Getters e Setters ---
-
-  getFormat(): ElementFormatType {
-    return this.__format;
-  }
+  // --- Setters e Getters ---
 
   setFormat(format: ElementFormatType): void {
     const writable = this.getWritable();
     writable.__format = format;
   }
 
-  getCaption(): string { return this.__caption; }
-  
-  setCaption(caption: string): void {
-    const writable = this.getWritable();
-    writable.__caption = caption;
+  getFormat(): ElementFormatType {
+    return this.__format;
   }
 
   setWidthAndHeight(width: 'inherit' | number, height: 'inherit' | number): void {
@@ -137,18 +131,25 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     writable.__width = width;
     writable.__height = height;
   }
-  
+
+  setCaption(caption: string): void {
+    const writable = this.getWritable();
+    writable.__caption = caption;
+  }
+
   getSrc(): string { return this.__src; }
   getAltText(): string { return this.__altText; }
+  getCaption(): string { return this.__caption; }
 
+  // Cria o elemento DOM wrapper.
+  // É crucial que ele seja display: block para ocupar a linha toda.
+  //@ts-ignore
   createDOM(config: EditorConfig): HTMLElement {
-    const span = document.createElement('span');
-    const theme = config.theme;
-    const className = theme.image;
-    if (className !== undefined) {
-      span.className = className;
-    }
-    return span;
+    const element = document.createElement('div');
+    element.className = 'editor-image-wrapper'; // Classe opcional para CSS global
+    element.style.display = 'block'; 
+    element.style.width = '100%';
+    return element;
   }
 
   updateDOM(): boolean {
@@ -166,7 +167,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
           maxWidth={this.__maxWidth}
           nodeKey={this.getKey()}
           caption={this.__caption}
-          format={this.__format} // <-- Passa para o componente visual
+          format={this.__format} // Passa o formato para o React
         />
       </Suspense>
     );
@@ -176,7 +177,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
 export function $createImageNode({
   altText,
   height,
-  maxWidth = 500,
+  maxWidth = 1000,
   src,
   width,
   caption,

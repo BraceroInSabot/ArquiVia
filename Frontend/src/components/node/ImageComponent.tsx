@@ -13,7 +13,7 @@ export default function ImageComponent({
   height,
   maxWidth,
   caption,
-  format, // <-- Recebe o formato
+  format, // <--- Recebe 'left', 'center', 'right'
 }: {
   src: string;
   altText: string;
@@ -28,13 +28,13 @@ export default function ImageComponent({
   const [isSelected, setSelected, clearSelection] = useLexicalNodeSelection(nodeKey);
   const [isResizing, setIsResizing] = useState(false);
   const imageRef = useRef<HTMLImageElement>(null);
-  
   const [captionText, setCaptionText] = useState(caption);
 
   useEffect(() => {
     setCaptionText(caption);
   }, [caption]);
 
+  // Atualiza tamanho
   const onResizeEnd = (nextWidth: 'inherit' | number, nextHeight: 'inherit' | number) => {
     setTimeout(() => { setIsResizing(false); }, 200);
     editor.update(() => {
@@ -47,6 +47,7 @@ export default function ImageComponent({
 
   const onResizeStart = () => { setIsResizing(true); };
 
+  // Lógica de seleção
   const onClick = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation(); 
@@ -63,6 +64,7 @@ export default function ImageComponent({
     [isResizing, isSelected, setSelected, clearSelection],
   );
 
+  // Atualiza legenda
   const handleCaptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newText = e.target.value;
     setCaptionText(newText);
@@ -72,54 +74,56 @@ export default function ImageComponent({
     });
   };
 
+  // --- DEFINIÇÃO DO ALINHAMENTO ---
+  let justifyContent = 'center'; // Padrão
+  if (format === 'left' || format === 'start') justifyContent = 'flex-start';
+  else if (format === 'right' || format === 'end') justifyContent = 'flex-end';
+  
+  // Exibe input se selecionado ou tiver texto
   const showCaption = isSelected || captionText.trim().length > 0;
 
-  // --- LÓGICA DE ALINHAMENTO ---
-  // Mapeia o 'format' do Lexical para classes Flexbox do Tailwind
-  let alignmentClass = 'justify-center'; // Padrão
-  if (format === 'left' || format === 'start') alignmentClass = 'justify-start';
-  if (format === 'right' || format === 'end') alignmentClass = 'justify-end';
-  // 'justify' para imagem geralmente é tratado como centro ou esquerda, mantemos centro ou start
-
   return (
-    // O Container precisa ser flex e ocupar largura total para permitir o alinhamento
-    <div className={`flex w-full my-4 ${alignmentClass}`}>
+    // Wrapper Principal com Flexbox para Alinhamento
+    <div style={{ 
+        display: 'flex', 
+        width: '100%', 
+        justifyContent: justifyContent, // Aplica o alinhamento horizontal
+        margin: '12px 0' 
+    }}>
       
-      <div className="relative inline-block select-none group flex flex-col items-center">
+      {/* Bloco da Imagem + Legenda */}
+      <div className="relative inline-flex flex-col items-center group" style={{ maxWidth: '100%' }}>
         
-        {/* LEGENDA */}
-        <div className="w-full mb-1 flex justify-center">
+        {/* Input de Legenda */}
+        <div className={`w-full mb-1 transition-opacity duration-200 ${showCaption ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
           <input
               type="text"
               value={captionText}
               onChange={handleCaptionChange}
-              placeholder="Adicionar legenda..."
-              className={`
-                  input input-ghost input-sm w-full text-center font-medium text-gray-600
-                  focus:bg-base-200 focus:outline-none transition-opacity duration-200
-                  ${showCaption ? 'opacity-100' : 'opacity-0 pointer-events-none'}
-              `}
-              onClick={(e) => e.stopPropagation()}
+              placeholder="Legenda..."
+              className="input input-ghost input-sm w-full text-center font-medium text-gray-600 focus:bg-base-200 focus:outline-none bg-transparent px-0 h-auto min-h-[24px]"
+              onClick={(e) => e.stopPropagation()} 
           />
         </div>
 
-        {/* IMAGEM */}
+        {/* Área da Imagem */}
         <div className="relative" style={{ lineHeight: 0 }}>
             <img
-              className={`max-w-full h-auto object-contain block ${isSelected ? 'ring-2 ring-primary ring-offset-2 cursor-default' : 'cursor-pointer hover:opacity-90'}`}
+              className={`max-w-full h-auto object-contain block ${isSelected ? 'ring-2 ring-primary ring-offset-2' : 'cursor-pointer hover:opacity-95'}`}
               src={src}
               alt={altText}
               ref={imageRef}
               style={{
                 width: width === 'inherit' ? 'auto' : width,
                 height: height === 'inherit' ? 'auto' : height,
-                maxWidth: maxWidth,
+                maxWidth: maxWidth, 
                 display: 'block',
               }}
               onClick={onClick}
               draggable="false"
             />
             
+            {/* Redimensionador */}
             {isSelected && (
               <ImageResizer
                 editor={editor}

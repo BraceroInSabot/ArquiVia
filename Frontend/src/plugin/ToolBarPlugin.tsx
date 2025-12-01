@@ -203,7 +203,7 @@ export default function FormattingToolbarPlugin() {
   return (
     <>
       {/* Toolbar Container (Sticky no topo do papel) */}
-      <div className="sticky flex w-full justify-center items-center top-0 z-30 bg-white/95 backdrop-blur transition-all duration-300 animate-fade-in-down">
+      <div className="sticky flex w-full justify-center items-center top-0 z-30 bg-transparent transition-all duration-300 animate-fade-in-down">
         
         <input type="file" ref={imageFileInputRef} className="hidden" accept="image/*" onChange={handleFileSelect} />
 

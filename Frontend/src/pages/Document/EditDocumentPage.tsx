@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Loader2, CheckCircle, AlertCircle } from 'lucide-react'; // AlertCircle adicionado
 import toast from 'react-hot-toast';
 
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
@@ -26,8 +26,6 @@ import { ListPlugin } from '@lexical/react/LexicalListPlugin';
 import { LinkPlugin } from '@lexical/react/LexicalLinkPlugin';
 import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
 import { TRANSFORMERS, CODE } from '@lexical/markdown';
-//@ts-ignore
-import Prism from "prismjs";
 
 // Imports de Plugins Customizados
 import VideoPlugin from '../../plugin/VideoPlugin';
@@ -35,8 +33,7 @@ import ImagePlugin from '../../plugin/ImagePlugin';
 import FormattingToolbarPlugin from '../../plugin/ToolBarPlugin';
 import ActionsPlugin from '../../plugin/DownBarPlugin';
 
-import '../../assets/css/Editor.css'; // Mantém o tema interno do Lexical
-import '../../assets/css/EditorTheme.css'; // Estilos customizados para o editor
+import '../../assets/css/EditorTheme.css'; 
 
 const baseInitialConfig = {
   namespace: 'MyEditor',
@@ -53,20 +50,30 @@ const baseInitialConfig = {
 
 const filteredTransformers = TRANSFORMERS.filter(t => t !== CODE);
 
+// --- CORREÇÃO APLICADA AQUI ---
+// O setTimeout(..., 0) resolve o aviso de flushSync
 function LoadInitialStatePlugin({ initialContent }: { initialContent: string | null }) {
   const [editor] = useLexicalComposerContext();
+  
   useEffect(() => {
     if (initialContent) {
-      try {
-        const initialEditorState = editor.parseEditorState(initialContent);
-        editor.setEditorState(initialEditorState);
-      } catch (e) {
-        console.error("Falha ao carregar estado salvo.", e);
-      }
+      // Move a atualização para o final da fila de eventos
+      const timer = setTimeout(() => {
+        try {
+          const initialEditorState = editor.parseEditorState(initialContent);
+          editor.setEditorState(initialEditorState);
+        } catch (e) {
+          console.error("Falha ao carregar estado salvo.", e);
+        }
+      }, 0);
+
+      return () => clearTimeout(timer);
     }
   }, [editor, initialContent]); 
+  
   return null;
 }
+// --- FIM DA CORREÇÃO ---
 
 const EditDocumentPage = () => {
   const { id } = useParams<{ id: string }>(); 
@@ -116,7 +123,6 @@ const EditDocumentPage = () => {
 
   const saveSnapshot = useCallback(async (currentState: string) => {
     setSaveStatus('saving');
-    // addHistoryEntry(currentState); 
     
     if (id) {
       if (currentState === '{"root":{"children":[{"type":"paragraph","version":1}],"direction":null,"format":"","indent":0,"version":1}}') return; 
@@ -156,7 +162,6 @@ const EditDocumentPage = () => {
   useEffect(() => {
     autosaveActiveRef.current = isAutosaveActive;
   }, [isAutosaveActive]);
-  // --- FIM DA LÓGICA ---
 
 
   if (isLoading) {
@@ -171,7 +176,6 @@ const EditDocumentPage = () => {
   return (
     <div className="flex flex-col h-screen bg-base-200 overflow-hidden">
       
-      {/* --- HEADER FIXO (DaisyUI Navbar) --- */}
       <div className="navbar flex justify-between items-center bg-base-100 border-b border-base-300 shadow-sm h-16 px-4 z-20">
         <div>
           <div className="navbar-start w-auto">
@@ -219,34 +223,28 @@ const EditDocumentPage = () => {
         </div>
       </div>
 
-      {/* --- WORKSPACE (Scrollável) --- */}
       <div className="flex-1 overflow-y-auto flex justify-center p-4 md:p-8 relative">
           
-          {/* --- PAPEL A4 (Editor Container) --- */}
           <div className="bg-white w-full max-w-[850px] min-h-[1100px] shadow-lg rounded-none md:rounded-lg border border-base-300 flex flex-col relative">
             
             <LexicalComposer initialConfig={baseInitialConfig}>
-                {/* Wrapper para garantir flex grow */}
                 <div className="flex flex-col flex-grow h-full relative">
                 
-                    {/* Toolbar (Sticky dentro do papel) */}
                     <div className="sticky flex justify-end top-0 z-10">
                         <FormattingToolbarPlugin />
                     </div>
                     
-                    {/* Área de Texto */}
                     <div className="flex-grow relative px-8 md:px-16 cursor-text" onClick={() => {
-                        // Foca no editor ao clicar no papel vazio
                         const editorElement = document.querySelector('.editor-input') as HTMLElement;
                         if(editorElement) editorElement.focus();
                     }}>
                         <RichTextPlugin
                             contentEditable={<ContentEditable className="editor-input outline-none min-h-full text-lg leading-relaxed text-gray-800" />}
+                            placeholder={null} // Placeholder removido do JSX original, ajuste se necessário
                             ErrorBoundary={LexicalErrorBoundary}
                         />
                     </div>
                     
-                    {/* Plugins Não-Visuais */}
                     <OnChangePlugin onChange={handleOnChange} />
                     <HistoryPlugin />
                     <ListPlugin />
@@ -255,7 +253,6 @@ const EditDocumentPage = () => {
                     <ImagePlugin />
                     <VideoPlugin />
 
-                    {/* Dock de Ações Flutuante */}
                     <ActionsPlugin 
                         isAutosaveActive={isAutosaveActive}
                         onAutosaveToggle={() => setIsAutosaveActive(prev => !prev)}
@@ -263,6 +260,7 @@ const EditDocumentPage = () => {
                         onManualSave={handleManualSave}
                     />
                     
+                    {/* Usando o componente corrigido */}
                     <LoadInitialStatePlugin initialContent={initialContent} />
 
                 </div>

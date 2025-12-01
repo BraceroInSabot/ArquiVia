@@ -1,116 +1,136 @@
-import React, { useRef, useState, useCallback, type JSX } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { 
-  $getNodeByKey, 
-  type LexicalEditor, 
-  type NodeKey } from 'lexical';
+import { useLexicalNodeSelection } from '@lexical/react/useLexicalNodeSelection';
+import { $getNodeByKey, type NodeKey, type ElementFormatType } from 'lexical';
+import React, { useCallback, useRef, useState, useEffect } from 'react';
+import ImageResizer from './ImageResizer';
 import { $isImageNode } from './ImageNode';
 
-interface ImageResizerProps {
-  imageRef: React.RefObject<HTMLImageElement>;
-  editor: LexicalEditor;
-  onResizeStart: () => void;
-  onResizeEnd: () => void;
-}
-
-function ImageResizer({ 
-  imageRef,
-  //@ts-ignore 
-  editor, 
-  onResizeStart, 
-  onResizeEnd 
-}: ImageResizerProps): JSX.Element {
-  const buttonRef = useRef<HTMLDivElement>(null);
-
-  const handleResize = useCallback(
-    (event: MouseEvent) => {
-      const button = buttonRef.current;
-      const image = imageRef.current;
-      if (button && image) {
-        const { width, height } = image.getBoundingClientRect();
-        const { clientX, clientY } = event;
-        const buttonRect = button.getBoundingClientRect();
-        const newWidth = width + (clientX - buttonRect.right);
-        const newHeight = height + (clientY - buttonRect.bottom);
-        image.style.width = `${newWidth}px`;
-        image.style.height = `${newHeight}px`;
-      }
-    },
-    [imageRef],
-  );
-
-  const handleMouseUp = useCallback(() => {
-    onResizeEnd();
-    document.removeEventListener('mousemove', handleResize);
-    document.removeEventListener('mouseup', handleMouseUp);
-  }, [handleResize, onResizeEnd]);
-
-  const handleMouseDown = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
-      event.preventDefault();
-      onResizeStart();
-      document.addEventListener('mousemove', handleResize);
-      document.addEventListener('mouseup', handleMouseUp);
-    },
-    [handleResize, handleMouseUp, onResizeStart],
-  );
-
-  return <div className="image-resizer" ref={buttonRef} onMouseDown={handleMouseDown} />;
-}
-
-interface ImageComponentProps {
+export default function ImageComponent({
+  src,
+  altText,
+  nodeKey,
+  width,
+  height,
+  maxWidth,
+  caption,
+  format, // <-- Recebe o formato
+}: {
   src: string;
   altText: string;
-  width: string | number;
-  height: string | number;
   nodeKey: NodeKey;
-}
-
-export default function ImageComponent({ 
-  src, 
-  altText, 
-  width, 
-  height, 
-  nodeKey 
-}: ImageComponentProps): JSX.Element {
+  width: number | 'inherit';
+  height: number | 'inherit';
+  maxWidth: number;
+  caption: string;
+  format?: ElementFormatType;
+}): JSX.Element {
   const [editor] = useLexicalComposerContext();
+  const [isSelected, setSelected, clearSelection] = useLexicalNodeSelection(nodeKey);
+  const [isResizing, setIsResizing] = useState(false);
   const imageRef = useRef<HTMLImageElement>(null);
-  const [isSelected, setIsSelected] = useState(false);
+  
+  const [captionText, setCaptionText] = useState(caption);
 
-  const onResizeEnd = () => {
-    const image = imageRef.current;
-    if (image) {
-      editor.update(() => {
+  useEffect(() => {
+    setCaptionText(caption);
+  }, [caption]);
+
+  const onResizeEnd = (nextWidth: 'inherit' | number, nextHeight: 'inherit' | number) => {
+    setTimeout(() => { setIsResizing(false); }, 200);
+    editor.update(() => {
+      const node = $getNodeByKey(nodeKey);
+      if ($isImageNode(node)) {
+        node.setWidthAndHeight(nextWidth, nextHeight);
+      }
+    });
+  };
+
+  const onResizeStart = () => { setIsResizing(true); };
+
+  const onClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation(); 
+      if (isResizing) return;
+      
+      if (e.shiftKey) {
+        setSelected(!isSelected);
+      } else {
+        clearSelection();
+        setSelected(true);
+      }
+      return true;
+    },
+    [isResizing, isSelected, setSelected, clearSelection],
+  );
+
+  const handleCaptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newText = e.target.value;
+    setCaptionText(newText);
+    editor.update(() => {
         const node = $getNodeByKey(nodeKey);
-        if ($isImageNode(node)) {
-          node.setWidthAndHeight(image.style.width, image.style.height);
-        }
-      });
-    }
+        if ($isImageNode(node)) node.setCaption(newText);
+    });
   };
 
-  const onClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    setIsSelected(!isSelected);
-  };
+  const showCaption = isSelected || captionText.trim().length > 0;
+
+  // --- LÓGICA DE ALINHAMENTO ---
+  // Mapeia o 'format' do Lexical para classes Flexbox do Tailwind
+  let alignmentClass = 'justify-center'; // Padrão
+  if (format === 'left' || format === 'start') alignmentClass = 'justify-start';
+  if (format === 'right' || format === 'end') alignmentClass = 'justify-end';
+  // 'justify' para imagem geralmente é tratado como centro ou esquerda, mantemos centro ou start
 
   return (
-    <div className="editor-image-container" draggable="false" onClick={onClick}>
-      <img
-        src={src}
-        alt={altText}
-        ref={imageRef}
-        style={{ width, height, maxWidth: '100%' }}
-        draggable="false"
-      />
-      {isSelected && (
-        <ImageResizer
-          imageRef={imageRef}
-          editor={editor}
-          onResizeStart={() => setIsSelected(true)}
-          onResizeEnd={onResizeEnd}
-        />
-      )}
+    // O Container precisa ser flex e ocupar largura total para permitir o alinhamento
+    <div className={`flex w-full my-4 ${alignmentClass}`}>
+      
+      <div className="relative inline-block select-none group flex flex-col items-center">
+        
+        {/* LEGENDA */}
+        <div className="w-full mb-1 flex justify-center">
+          <input
+              type="text"
+              value={captionText}
+              onChange={handleCaptionChange}
+              placeholder="Adicionar legenda..."
+              className={`
+                  input input-ghost input-sm w-full text-center font-medium text-gray-600
+                  focus:bg-base-200 focus:outline-none transition-opacity duration-200
+                  ${showCaption ? 'opacity-100' : 'opacity-0 pointer-events-none'}
+              `}
+              onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+
+        {/* IMAGEM */}
+        <div className="relative" style={{ lineHeight: 0 }}>
+            <img
+              className={`max-w-full h-auto object-contain block ${isSelected ? 'ring-2 ring-primary ring-offset-2 cursor-default' : 'cursor-pointer hover:opacity-90'}`}
+              src={src}
+              alt={altText}
+              ref={imageRef}
+              style={{
+                width: width === 'inherit' ? 'auto' : width,
+                height: height === 'inherit' ? 'auto' : height,
+                maxWidth: maxWidth,
+                display: 'block',
+              }}
+              onClick={onClick}
+              draggable="false"
+            />
+            
+            {isSelected && (
+              <ImageResizer
+                editor={editor}
+                imageRef={imageRef}
+                maxWidth={maxWidth}
+                onResizeStart={onResizeStart}
+                onResizeEnd={onResizeEnd}
+              />
+            )}
+        </div>
+      </div>
     </div>
   );
 }

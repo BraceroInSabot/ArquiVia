@@ -1,5 +1,5 @@
 import type { Sector, ToggleSectorStatusPayload } from '../../services/core-api';
-import { Eye, Pencil, Trash2, Power, FileText, Layers } from 'lucide-react';
+import { Eye, Pencil, Trash2, Power, Layers } from 'lucide-react';
 
 interface SectorCardProps {
   sector: Sector;

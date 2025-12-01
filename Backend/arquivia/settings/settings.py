@@ -118,7 +118,7 @@ AUTH_USER_MODEL = "APIUser.AbsUser"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-if os.getenv('DEBUG'):
+if os.getenv('DEBUG', 'False') == 'True':
     FRONTEND_URL = "http://localhost:3000"
 else:
     FRONTEND_URL = "https://arquivia.bracero.com.br"

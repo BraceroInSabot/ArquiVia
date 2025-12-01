@@ -338,7 +338,7 @@ class RequisicaoRedefinicaoSenhaView(APIView):
         user_object = get_object_or_404(User, email=email)
         
         token = PasswordResetToken.objects.create(user=user_object, token=str(uuid4()))
-        url = f"{settings.FRONTEND_URL}/redefinir-senha/{token.token}"
+        url = f"https://www.arquivia.bracero.com.br/redefinir-senha/{token.token}"
 
         if self.enviar_email_recuperacao_senha(email, user_object, url=url, token=token.token):
             res: HttpResponse = Response()

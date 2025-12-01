@@ -11,9 +11,9 @@ export default function ImageComponent({
   nodeKey,
   width,
   height,
-  maxWidth,
+  maxWidth, // Esse valor (ex: 1000) serve para limitar o resize, não o display CSS
   caption,
-  format, // <--- Recebe 'left', 'center', 'right'
+  format,
 }: {
   src: string;
   altText: string;
@@ -34,7 +34,6 @@ export default function ImageComponent({
     setCaptionText(caption);
   }, [caption]);
 
-  // Atualiza tamanho
   const onResizeEnd = (nextWidth: 'inherit' | number, nextHeight: 'inherit' | number) => {
     setTimeout(() => { setIsResizing(false); }, 200);
     editor.update(() => {
@@ -47,7 +46,6 @@ export default function ImageComponent({
 
   const onResizeStart = () => { setIsResizing(true); };
 
-  // Lógica de seleção
   const onClick = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation(); 
@@ -64,7 +62,6 @@ export default function ImageComponent({
     [isResizing, isSelected, setSelected, clearSelection],
   );
 
-  // Atualiza legenda
   const handleCaptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newText = e.target.value;
     setCaptionText(newText);
@@ -74,56 +71,50 @@ export default function ImageComponent({
     });
   };
 
-  // --- DEFINIÇÃO DO ALINHAMENTO ---
-  let justifyContent = 'center'; // Padrão
+  let justifyContent = 'center'; 
   if (format === 'left' || format === 'start') justifyContent = 'flex-start';
   else if (format === 'right' || format === 'end') justifyContent = 'flex-end';
   
-  // Exibe input se selecionado ou tiver texto
   const showCaption = isSelected || captionText.trim().length > 0;
 
   return (
-    // Wrapper Principal com Flexbox para Alinhamento
-    <div style={{ 
-        display: 'flex', 
-        width: '100%', 
-        justifyContent: justifyContent, // Aplica o alinhamento horizontal
-        margin: '12px 0' 
-    }}>
+    <div style={{ display: 'flex', justifyContent: justifyContent, width: '100%', height: '100%', margin: '5px 0' }}>
       
-      {/* Bloco da Imagem + Legenda */}
-      <div className="relative inline-flex flex-col items-center group" style={{ maxWidth: '100%' }}>
+      {/* Container que envolve Imagem + Legenda */}
+      {/* Adicionei 'max-w-full' aqui também para garantir que o wrapper não estoure */}
+      <div className="relative inline-flex flex-col items-center group max-w-full max-h-full">
         
-        {/* Input de Legenda */}
-        <div className={`w-full mb-1 transition-opacity duration-200 ${showCaption ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+        <div className={`w-full transition-opacity duration-200 ${showCaption ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
           <input
               type="text"
               value={captionText}
               onChange={handleCaptionChange}
               placeholder="Legenda..."
               className="input input-ghost input-sm w-full text-center font-medium text-gray-600 focus:bg-base-200 focus:outline-none bg-transparent px-0 h-auto min-h-[24px]"
-              onClick={(e) => e.stopPropagation()} 
+              onClick={(e) => e.stopPropagation()}
           />
         </div>
 
-        {/* Área da Imagem */}
-        <div className="relative" style={{ lineHeight: 0 }}>
+        <div className="relative max-w-full max-h-full" style={{ lineHeight: 0 }}>
             <img
-              className={`max-w-full h-auto object-contain block ${isSelected ? 'ring-2 ring-primary ring-offset-2' : 'cursor-pointer hover:opacity-95'}`}
+              // A classe 'max-w-full' do Tailwind já está aqui, mas o style inline sobrescrevia.
+              className={`max-w-full h-auto object-contain block ${isSelected ? 'ring-2 ring-primary ring-offset-2 cursor-default' : 'cursor-pointer hover:opacity-95'}`}
               src={src}
               alt={altText}
               ref={imageRef}
               style={{
                 width: width === 'inherit' ? 'auto' : width,
-                height: height === 'inherit' ? 'auto' : height,
-                maxWidth: maxWidth, 
+                height: 'auto',
+                // --- CORREÇÃO AQUI ---
+                // Removemos 'maxWidth: maxWidth' (que era 1000px fixo)
+                // Definimos 'maxWidth: 100%' para respeitar o tamanho da tela/pai
+                maxWidth: '100%', 
                 display: 'block',
               }}
               onClick={onClick}
               draggable="false"
             />
             
-            {/* Redimensionador */}
             {isSelected && (
               <ImageResizer
                 editor={editor}

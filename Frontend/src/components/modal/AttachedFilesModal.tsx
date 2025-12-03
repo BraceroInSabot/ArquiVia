@@ -2,16 +2,13 @@ import React, { useState, useEffect, useRef, type ChangeEvent } from 'react';
 import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { 
-  Download, Trash2, UploadCloud, File as FileIcon, 
-  Loader2, AlertCircle, Paperclip 
+  X, Download, Trash2, UploadCloud, File as FileIcon, 
+  Loader2, AlertCircle, Paperclip, Plus 
 } from 'lucide-react'; 
 
 import documentService from '../../services/Document/api';
 import type { AttachedFile } from '../../services/core-api';
-import ConfirmModal from './ConfirmModal'; // 1. Importe o Modal Genérico
-
-import '../../assets/css/ClassificationModal.css'; 
-import '../../assets/css/AttachedFilesModal.css'; 
+import ConfirmModal from './ConfirmModal'; 
 
 const FORBIDDEN_EXTENSIONS = [
   '.exe', '.bat', '.sh', '.cmd', '.msi', '.com', '.jar', '.vbs', '.ps1', '.php', '.py', '.pl', '.cgi'
@@ -24,19 +21,16 @@ interface AttachedFilesModalProps {
 }
 
 export default function AttachedFilesModal({ documentId, onClose }: AttachedFilesModalProps) {
-  // Estados da Lista
   const [files, setFiles] = useState<AttachedFile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [listError, setListError] = useState<string | null>(null);
   
-  // 2. Estados para o Modal de Confirmação
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [confirmConfig, setConfirmConfig] = useState<{ isOpen: boolean; fileId: number | null }>({
     isOpen: false,
     fileId: null
   });
 
-  // Estados do Upload
   const [isUploadFormOpen, setIsUploadFormOpen] = useState(false);
   const [uploadTitle, setUploadTitle] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -74,7 +68,6 @@ export default function AttachedFilesModal({ documentId, onClose }: AttachedFile
     document.body.removeChild(link);
   };
 
-  // --- 3. Handler para ABRIR o Modal ---
   const requestDetach = (attachedFileId: number) => {
     setConfirmConfig({
         isOpen: true,
@@ -82,7 +75,6 @@ export default function AttachedFilesModal({ documentId, onClose }: AttachedFile
     });
   };
 
-  // --- 4. Handler para EXECUTAR a Ação ---
   const handleConfirmDetach = async () => {
     const fileId = confirmConfig.fileId;
     if (!fileId) return;
@@ -90,12 +82,8 @@ export default function AttachedFilesModal({ documentId, onClose }: AttachedFile
     setIsActionLoading(true);
     try {
       await documentService.detachFile(fileId);
-      
-      // Sucesso: Remove da lista localmente
       setFiles(prevFiles => prevFiles.filter(f => f.attached_file_id !== fileId));
       toast.success("Arquivo removido com sucesso.");
-      
-      // Fecha o modal
       setConfirmConfig({ isOpen: false, fileId: null });
     } catch (err: any) {
       console.error("Erro ao remover anexo:", err);
@@ -105,7 +93,6 @@ export default function AttachedFilesModal({ documentId, onClose }: AttachedFile
     }
   };
 
-  // --- Handlers de Upload (Sem mudanças) ---
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     setUploadError(null);
@@ -172,7 +159,7 @@ export default function AttachedFilesModal({ documentId, onClose }: AttachedFile
   const renderContent = () => {
     if (isLoading) {
         return (
-            <div className="d-flex flex-column justify-content-center align-items-center py-5 text-muted">
+            <div className="flex flex-col justify-center items-center py-12 text-gray-400">
                 <Loader2 className="animate-spin mb-2" size={32} />
                 <span>Carregando arquivos...</span>
             </div>
@@ -180,158 +167,176 @@ export default function AttachedFilesModal({ documentId, onClose }: AttachedFile
     }
     if (listError) {
         return (
-            <div className="alert alert-danger d-flex align-items-center m-3" role="alert">
-                <AlertCircle className="me-2" size={20} />
-                <div>{listError}</div>
+            <div className="alert alert-error shadow-sm my-4">
+                <AlertCircle size={20} />
+                <span>{listError}</span>
             </div>
         );
     }
     
     return (
-      <>
-        <div className="modal-body p-0" style={{ maxHeight: '50vh', overflowY: 'auto' }}>
-            {files.length === 0 ? (
-            <div className="text-center py-5 px-4 text-muted">
-                <Paperclip size={48} className="opacity-25 mb-3" />
-                <p className="mb-0 fst-italic">Nenhum arquivo anexado a este documento.</p>
-            </div>
-            ) : (
-            <ul className="list-group list-group-flush">
-                {files.map(file => (
-                <li key={file.attached_file_id} className="list-group-item d-flex justify-content-between align-items-center p-3">
-                    <div className="d-flex align-items-center overflow-hidden">
-                        <div className="bg-light p-2 rounded me-3 text-secondary">
-                            <FileIcon size={20} />
-                        </div>
-                        <div className="overflow-hidden">
-                            <h6 className="mb-0 text-dark text-truncate" style={{ maxWidth: '250px' }} title={file.title}>
-                                {file.title}
-                            </h6>
-                            <small className="text-muted d-block">
-                                {file.attached_at} • {new Date(file.attached_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                            </small>
-                        </div>
-                    </div>
-                    
-                    <div className="d-flex gap-2">
+      <div className="overflow-y-auto max-h-[50vh] px-1">
+        {files.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-10 text-gray-400 border-2 border-dashed border-base-200 rounded-xl bg-base-100/50">
+              <Paperclip size={40} className="opacity-30 mb-3" />
+              <p className="text-sm font-medium">Nenhum arquivo anexado.</p>
+              <p className="text-xs mt-1">Faça o upload para adicionar documentos complementares.</p>
+          </div>
+        ) : (
+          <ul className="flex flex-col gap-3">
+            {files.map(file => (
+              <li key={file.attached_file_id} className="flex items-center justify-between p-3 bg-base-100 border border-base-200 rounded-lg shadow-sm hover:border-primary/30 transition-colors">
+                  <div className="flex items-center gap-3 overflow-hidden">
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                          <FileIcon size={20} />
+                      </div>
+                      <div className="min-w-0">
+                          <h4 className="font-medium text-sm text-secondary truncate max-w-[200px]" title={file.title}>
+                              {file.title}
+                          </h4>
+                          <p className="text-xs text-gray-500">
+                              {file.attached_at}
+                          </p>
+                      </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-1">
+                      <div className="tooltip tooltip-left" data-tip="Baixar">
                         <button 
-                            className="btn btn-light btn-sm text-primary" 
-                            title="Baixar"
+                            className="btn btn-square btn-sm btn-ghost text-primary hover:bg-primary/10" 
                             onClick={() => handleDownload(file.file, file.title)}
                         >
-                            <Download size={18} />
+                            <Download size={16} />
                         </button>
-                        
-                        {/* 5. Botão atualizado para chamar requestDetach */}
+                      </div>
+                      
+                      <div className="tooltip tooltip-left" data-tip="Remover">
                         <button 
-                            className="btn btn-light btn-sm text-danger" 
-                            title="Remover Anexo"
+                            className="btn btn-square btn-sm btn-ghost text-error hover:bg-error/10" 
                             onClick={() => requestDetach(file.attached_file_id)}
                             disabled={isActionLoading && confirmConfig.fileId === file.attached_file_id}
                         >
-                             {isActionLoading && confirmConfig.fileId === file.attached_file_id ? (
-                                <Loader2 size={18} className="animate-spin" />
+                            {isActionLoading && confirmConfig.fileId === file.attached_file_id ? (
+                                <Loader2 size={16} className="animate-spin" />
                             ) : (
-                                <Trash2 size={18} />
+                                <Trash2 size={16} />
                             )}
                         </button>
-                    </div>
-                </li>
-                ))}
-            </ul>
-            )}
-        </div>
-
-        <div className="modal-footer bg-light d-block p-3 border-top">
-          {!isUploadFormOpen ? (
-            <button 
-              className="btn btn-outline-primary w-100 d-flex align-items-center justify-content-center gap-2" 
-              onClick={() => setIsUploadFormOpen(true)}
-            >
-              <UploadCloud size={20} />
-              Anexar Novo Arquivo
-            </button>
-          ) : (
-            <form className="upload-form" onSubmit={handleUpload}>
-              <h6 className="fw-bold text-dark mb-3">Novo Anexo</h6>
-              
-              {uploadError && (
-                  <div className="alert alert-danger d-flex align-items-center p-2 small mb-3" role="alert">
-                    <AlertCircle className="me-2 flex-shrink-0" size={16} />
-                    <div>{uploadError}</div>
+                      </div>
                   </div>
-              )}
-
-              <div className="mb-3">
-                <input 
-                  type="text"
-                  className="form-control form-control-sm"
-                  placeholder="Título do arquivo (ex: Contrato Assinado)"
-                  value={uploadTitle}
-                  onChange={(e) => setUploadTitle(e.target.value)}
-                  required
-                  disabled={isUploading}
-                />
-              </div>
-
-              <div className="mb-3">
-                <input 
-                  type="file"
-                  className="form-control form-control-sm"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  required
-                  disabled={isUploading}
-                />
-                <div className="form-text text-muted small mt-1">
-                  Máx: 50MB. Proibido: .exe, .bat, .sh, etc.
-                </div>
-              </div>
-
-              <div className="d-flex justify-content-end gap-2">
-                <button 
-                  type="button" 
-                  className="btn btn-sm btn-light text-secondary"
-                  onClick={() => {
-                    setIsUploadFormOpen(false);
-                    setUploadError(null);
-                  }}
-                  disabled={isUploading}
-                >
-                  Cancelar
-                </button>
-                <button 
-                  type="submit" 
-                  className="btn btn-sm btn-success d-flex align-items-center gap-2"
-                  disabled={isUploading || !selectedFile || !uploadTitle}
-                >
-                   {isUploading ? (
-                        <>
-                            <Loader2 className="animate-spin" size={16} /> Enviando...
-                        </>
-                    ) : (
-                        'Anexar Arquivo'
-                    )}
-                </button>
-              </div>
-            </form>
-          )}
-        </div>
-      </>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     );
   };
 
   return createPortal(
     <>
-      <div className="modal-overlay" onClick={onClose}>
-        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-          <button className="modal-close-btn" onClick={onClose}>&times;</button>
-          <h2>Arquivos Anexados</h2>
-          {renderContent()}
+      <div className="modal modal-open" role="dialog">
+        <div className="modal-box relative max-w-lg p-0 overflow-hidden">
+            
+            {/* Cabeçalho Fixo */}
+            <div className="flex justify-between items-center p-4 border-b border-base-200 bg-base-100">
+                <h3 className="font-bold text-lg flex items-center gap-2 text-secondary">
+                    <Paperclip size={20} className="text-primary" />
+                    Arquivos Anexados
+                </h3>
+                <button className="btn btn-sm btn-circle btn-ghost" onClick={onClose}>
+                    <X size={20} />
+                </button>
+            </div>
+
+            {/* Conteúdo Rolável */}
+            <div className="p-4 bg-base-100/50">
+                {renderContent()}
+            </div>
+
+            {/* Rodapé (Formulário de Upload) */}
+            <div className="p-4 border-t border-base-200 bg-base-100">
+                {!isUploadFormOpen ? (
+                    <button 
+                        className="btn btn-outline btn-primary w-full gap-2 border-dashed" 
+                        onClick={() => setIsUploadFormOpen(true)}
+                    >
+                        <Plus size={18} />
+                        Anexar Novo Arquivo
+                    </button>
+                ) : (
+                    <form onSubmit={handleUpload} className="bg-base-100 rounded-lg animate-fade-in-up">
+                        <div className="flex justify-between items-center mb-3">
+                            <span className="text-sm font-bold text-secondary">Novo Anexo</span>
+                            <button 
+                                type="button"
+                                className="btn btn-xs btn-circle btn-ghost"
+                                onClick={() => {
+                                    setIsUploadFormOpen(false);
+                                    setUploadError(null);
+                                }}
+                            >
+                                <X size={14} />
+                            </button>
+                        </div>
+                        
+                        {uploadError && (
+                            <div className="alert alert-error shadow-sm py-2 text-sm mb-3">
+                                <AlertCircle size={16} />
+                                <span>{uploadError}</span>
+                            </div>
+                        )}
+
+                        <div className="space-y-3">
+                            <input 
+                                type="text"
+                                className="input input-bordered input-sm w-full"
+                                placeholder="Título do arquivo (ex: Contrato Assinado)"
+                                value={uploadTitle}
+                                onChange={(e) => setUploadTitle(e.target.value)}
+                                required
+                                disabled={isUploading}
+                            />
+
+                            <input 
+                                type="file"
+                                className="file-input file-input-bordered file-input-primary file-input-sm w-full"
+                                ref={fileInputRef}
+                                onChange={handleFileChange}
+                                required
+                                disabled={isUploading}
+                            />
+                            <p className="text-xs text-gray-500 px-1">
+                                Máx: 50MB. Proibido: .exe, .bat, .sh, etc.
+                            </p>
+
+                            <div className="flex justify-end mt-2">
+                                <button 
+                                    type="submit" 
+                                    className="btn btn-sm btn-primary text-white gap-2"
+                                    disabled={isUploading || !selectedFile || !uploadTitle}
+                                >
+                                    {isUploading ? (
+                                        <>
+                                            <Loader2 className="animate-spin" size={16} /> Enviando...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <UploadCloud size={16} /> Anexar
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                )}
+            </div>
         </div>
+        
+        <form method="dialog" className="modal-backdrop">
+            <button onClick={onClose}>close</button>
+        </form>
       </div>
 
-      {/* 6. Renderização do Modal Genérico */}
       <ConfirmModal 
         isOpen={confirmConfig.isOpen}
         onClose={() => setConfirmConfig({ isOpen: false, fileId: null })}

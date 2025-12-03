@@ -7,7 +7,7 @@ from apps.APISetor.sectorUserUtils.serializers import SectorUserRoleSerializer
 from apps.APISetor.models import Sector, SectorUser
 from apps.APIEmpresa.models import Enterprise
 from django.contrib.auth import get_user_model
-from apps.APISetor.permissions import IsEnterpriseOwnerOrSectorManager, IsOwnerManagerOrSectorAdmin, IsLinkedToSector
+from apps.APISetor.permissions import IsEnterpriseOwnerBySector, IsEnterpriseOwnerOrSectorManager, IsOwnerManagerOrSectorAdmin, IsLinkedToSector
 from apps.core.utils import default_response
 
 
@@ -65,10 +65,16 @@ class RemoveUserFromSectorView(APIView):
             ), 
             pk=pk
         )
+        
         sector_query: Sector = sector_user_link.sector
         self.check_object_permissions(request, sector_query)
         
         user_name = sector_user_link.user.name # type: ignore
+        
+        if sector_user_link.sector.manager == sector_user_link.user:
+            sector_user_link.sector.manager = sector_query.enterprise.owner
+            sector_user_link.sector.save()
+        
         sector_user_link.delete()
 
         res: HttpResponse = Response()
@@ -84,26 +90,15 @@ class SetManagerForSectorView(APIView):
     Requires authentication, and the requesting user must be the 
     enterprise owner, current sector manager, or a sector admin.
     """
-    permission_classes = [IsAuthenticated, IsOwnerManagerOrSectorAdmin]
+    permission_classes = [IsAuthenticated, IsEnterpriseOwnerBySector]
     
     def patch(self, request, pk: int):
         new_manager_email = request.data.get("new_manager_email")
-        
-        if not new_manager_email:
-            res: HttpResponse = Response()
-            res.status_code = 400
-            res.data = default_response(success=False, message="O campo 'email' é obrigatório.")
-            return res
-        
+
         sector_query: Union[Sector, None] = get_object_or_404(Sector, pk=pk)
         new_manager_query: Union[USER, None] = get_object_or_404(USER, email=new_manager_email) #type: ignore
-        self.check_object_permissions(request, sector_query)
         
-        if SectorUser.objects.filter(sector=sector_query, user=new_manager_query).exists() is False:
-            res: HttpResponse = Response()
-            res.status_code=400
-            res.data = default_response(success=False, message="O novo gerente deve ser um membro do setor.") 
-            return res
+        self.check_object_permissions(request, sector_query)
         
         sector_query.manager = new_manager_query # type: ignore
         sector_query.save()

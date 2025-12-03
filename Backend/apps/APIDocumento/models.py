@@ -32,6 +32,7 @@ class Document(models.Model):
     is_active = models.BooleanField(default=True, db_column='is_active_document')
     
     history = HistoricalRecords(table_name='Document_Record')
+    search_content = models.TextField(blank=True, null=True, db_column='search_content_document')
 
     def __str__(self):
         return self.title 

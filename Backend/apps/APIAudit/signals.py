@@ -1,9 +1,10 @@
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
 from django.forms.models import model_to_dict
 from apps.core.get_request_user import current_request
 
 from .models import AuditLog
+from apps.APIDocumento.models import Document
 from apps.APIDocumento.models import (Category, Classification)
 from apps.APISetor.models import Sector
 from apps.APIEmpresa.models import Enterprise
@@ -12,6 +13,8 @@ from django.contrib.auth import get_user_model
 from django.db.models.fields.files import FieldFile, ImageFieldFile
 from decimal import Decimal
 import datetime
+
+from json import JSONDecoder
 
 User = get_user_model()
 
@@ -108,3 +111,50 @@ def log_delete_handler(sender, instance, **kwargs):
         changes={"deleted_state": final_state}
     )
     
+def extract_text_from_json(node):
+    """
+    Função recursiva que varre o JSON e retorna APENAS o texto visível.
+    Ignora chaves, formatação e, principalmente, IMAGENS.
+    
+    formato do JSON:
+    {
+    "root": {
+        "children": [
+        {
+            "children": [
+            {
+                "detail": 0,
+                "format": 0,
+                "mode": "normal",
+                "style": "",
+                "text": "Contratos para professores",
+                "type": "text",
+                "version": 1
+            }
+            ],
+            "direction": null,
+            "format": "",
+            "indent": 0,
+            "type": "paragraph",
+            "version": 1,
+            "textFormat": 0,
+            "textStyle": ""
+        },
+    """    
+    node_json = JSONDecoder().decode(node) if isinstance(node, str) else node
+    paragraphs_ctx = [ctx['children'][0]['text'] for ctx in node_json['root']['children'] if len(ctx['children']) > 0 and 'text' in ctx['children'][0]]
+    paragraphs_ctx = " ".join(paragraphs_ctx)
+    
+    return paragraphs_ctx
+
+@receiver(pre_save, sender=Document)
+def update_search_content(sender, instance, **kwargs):
+    """
+    Antes de salvar o documento, extrai o texto limpo do JSON
+    e salva no campo search_content.
+    """
+    if instance.content:
+        raw_text = extract_text_from_json(instance.content)
+        instance.search_content = raw_text[:500000] # Limita a 500k caracteres
+    else:
+        instance.search_content = ""

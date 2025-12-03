@@ -22,7 +22,7 @@ from django.db.models import Q
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank, TrigramSimilarity
 from django.db.models import Value, TextField
-from django.db.models.functions import Coalesce, Cast, Greatest
+from django.db.models.functions import Coalesce, Cast, Greatest, Left
 
 User = get_user_model()
 
@@ -382,9 +382,14 @@ class DocumentSearchView(APIView):
             queryset = queryset.filter(categories__category__in=categories_list)
 
         if querySearch:
+            safe_content = Left(
+                Cast(Coalesce('content', Value('{}')), TextField()), # type: ignore
+                999_999 # 1MB é 1048576, usamos 1M para ter margem
+            )
+            
             vector = (
                 SearchVector('title', weight='B', config='portuguese') + 
-                SearchVector('content', weight='A', config='portuguese')
+                SearchVector('search_content', weight='A', config='portuguese')
             )
             
             search_query = SearchQuery(querySearch, config='portuguese')
@@ -396,11 +401,11 @@ class DocumentSearchView(APIView):
                 ),
                 sim_title=TrigramSimilarity('title', querySearch),
                 
-                sim_content=TrigramSimilarity(Cast(Coalesce('content', Value('{}')), TextField()), querySearch),
+                sim_content=TrigramSimilarity('search_content', querySearch),
             ).annotate(
                 similarity=Greatest('sim_title', 'sim_content')
             ).filter(
-                Q(rank__gte=0.01) | Q(similarity__gt=0.1)
+                Q(rank__gte=0.5) | Q(similarity__gt=0.3)
             ).order_by('-similarity','-rank')
         else:
             queryset = queryset.order_by('-created_at')

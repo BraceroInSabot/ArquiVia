@@ -170,6 +170,11 @@ export interface ClassificationPrivacity {
   privacity: string;
 }
 
+export interface ReviewDetails {
+  review_age_days: number;
+  last_review_date_from_log: string;
+}
+
 export interface Classification {
   classification_id: number;
   is_reviewed: boolean;
@@ -178,6 +183,7 @@ export interface Classification {
     [key: string]: any | null;
   } | null;
   privacity: ClassificationPrivacity | null;
+  review_details?: ReviewDetails | null;
 }
 
 export interface UpdateClassificationPayload {

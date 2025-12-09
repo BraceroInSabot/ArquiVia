@@ -1,8 +1,14 @@
+export interface ReviewDetails {
+  review_age_days: number;
+  last_review_date_from_log: string;
+}
+
 export interface ClassificationFormData {
   is_reviewed: boolean;
   classification_status: number | null;
   privacity: number | null;
   reviewer: number | null; 
+  review_details?: ReviewDetails | null;
 }
 
 export const STATUS_OPTIONS = [

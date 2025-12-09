@@ -26,6 +26,7 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
   const [originalData, setOriginalData] = useState<ClassificationFormData | null>(null);
   const [formData, setFormData] = useState<ClassificationFormData | null>(null);
   const [reviewerName, setReviewerName] = useState<string>("Nenhum");
+  const [reviewDetails, setReviewDetails] = useState<any>(null);
   const [originalCategories, setOriginalCategories] = useState<Category[]>([]);
   const [linkedCategories, setLinkedCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -61,11 +62,13 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
           classification_status: statusId,
           privacity: privacityId,
           reviewer: classificationData.reviewer?.user_id || null, 
+          review_details: classificationData.review_details || null,
         };
 
         setOriginalData(initialFormData);
         setFormData(initialFormData);
         setReviewerName(classificationData.reviewer?.name || "Nenhum");
+        setReviewDetails(classificationData.review_details || null);
 
         const categoryData = categoriesRes.data.data || [];
         setOriginalCategories(categoryData);
@@ -215,6 +218,7 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
             <ClassificationForm
                 formData={formData}
                 reviewerName={reviewerName}
+                reviewDetails={reviewDetails}
                 isCurrentUserTheReviewer={isCurrentUserTheReviewer}
                 isDirty={isDirty}
                 isSaving={isSaving}

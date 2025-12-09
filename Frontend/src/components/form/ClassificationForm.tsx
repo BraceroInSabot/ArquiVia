@@ -2,9 +2,17 @@ import React, { type ChangeEvent } from 'react';
 import { Shield, UserCheck } from 'lucide-react';
 import { type ClassificationFormData, STATUS_OPTIONS, PRIVACITY_OPTIONS } from '../../types/classification';
 
+// Adicionando a tipagem para o novo objeto de detalhes (baseado no payload que você enviou)
+export interface ReviewDetails {
+  review_age_days: number;
+  last_review_date_from_log: string;
+}
+
 interface ClassificationFormProps {
   formData: ClassificationFormData;
   reviewerName: string;
+  // Nova prop para receber os detalhes
+  reviewDetails?: ReviewDetails | null; 
   isCurrentUserTheReviewer: boolean;
   isDirty: boolean;
   isSaving: boolean;
@@ -16,10 +24,25 @@ interface ClassificationFormProps {
 const ClassificationForm: React.FC<ClassificationFormProps> = ({
   formData,
   reviewerName,
+  reviewDetails,
   isCurrentUserTheReviewer,
   onFormChange,
   onTakeReview,
 }) => {
+
+  // Função auxiliar para formatar a data por extenso
+  const formatReviewDate = (isoString: string) => {
+    if (!isoString) return '';
+    const date = React.useMemo(() => new Date(isoString), [isoString]);
+    
+    return date.toLocaleDateString('pt-BR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  };
+  console.log("Review Details:", reviewDetails);
+  console.log("Last Review Date:", formData);
   return (
     <form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-5">
       
@@ -82,32 +105,52 @@ const ClassificationForm: React.FC<ClassificationFormProps> = ({
           </div>
       </div>
 
-      {/* Card de Revisor */}
+      {/* Card de Revisor e Detalhes da Revisão */}
       <div className="form-control w-full">
         <label className="label">
             <span className="label-text font-semibold text-secondary text-xs uppercase tracking-wide">Revisor Responsável</span>
         </label>
         
-        <div className="flex justify-between items-center p-3 border border-base-300 rounded-lg bg-base-100">
+        <div className="flex justify-between items-center p-3 border border-base-300 rounded-lg bg-base-100 min-h-[4.5rem]">
+            
+            {/* Lado Esquerdo: Ícone e Nome */}
             <div className="flex items-center gap-3">
                 <div className={`p-2 rounded-full ${formData.is_reviewed ? 'bg-success/10 text-success' : 'bg-base-200 text-base-content/30'}`}>
                     {formData.is_reviewed ? <UserCheck size={20} /> : <Shield size={20} />}
                 </div>
-                <span className={`font-medium text-sm truncate max-w-[180px] ${formData.is_reviewed ? 'text-secondary' : 'text-gray-400 italic'}`}>
+                <span className={`font-medium text-sm truncate max-w-[150px] sm:max-w-[180px] ${formData.is_reviewed ? 'text-secondary' : 'text-gray-400 italic'}`}>
                     {formData.is_reviewed ? reviewerName : "Sem revisor informado"}
                 </span>
             </div>
           
-            {formData.is_reviewed && !isCurrentUserTheReviewer && (
-                <button 
-                type="button" 
-                className="btn btn-xs btn-outline btn-primary"
-                onClick={onTakeReview}
-                title="Assumir a revisão deste documento"
-                >
-                Assumir
-                </button>
-            )}
+            {/* Lado Direito: Ação OU Detalhes de Data */}
+            <div className="flex items-center">
+                {formData.is_reviewed && !isCurrentUserTheReviewer ? (
+                    <button 
+                        type="button" 
+                        className="btn btn-xs btn-outline btn-primary"
+                        onClick={onTakeReview}
+                        title="Assumir a revisão deste documento"
+                    >
+                        Assumir
+                    </button>
+                ) : (
+                    // Exibe os detalhes de data se houver (e se não estiver mostrando o botão de assumir)
+                    reviewDetails && formData.is_reviewed && (
+                        <div className="text-right flex flex-col justify-center">
+                            <span className="text-xs font-bold text-secondary flex items-center justify-end gap-1">
+                                {reviewDetails.review_age_days === 0 
+                                    ? "Hoje" 
+                                    : `há ${reviewDetails.review_age_days} ${reviewDetails.review_age_days === 1 ? 'dia' : 'dias'}`
+                                }
+                            </span>
+                            <span className="text-[10px] text-gray-400 font-medium">
+                                ({formatReviewDate(reviewDetails.last_review_date_from_log)})
+                            </span>
+                        </div>
+                    )
+                )}
+            </div>
         </div>
       </div>
 

@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from apps.APIEmpresa.models import Enterprise
+from django.db import models
+from django.core.validators import MinValueValidator
 
 User = get_user_model()
 
@@ -37,14 +39,31 @@ class SectorUser(models.Model):
     def __str__(self):
         return f"{self.user} vinculado ao setor {self.sector}"
 
-# class KeyCodeSector(models.Model):
-#     key_code_id = models.AutoField(primary_key=True, db_column="ID_key_code")
-#     key = models.CharField(max_length=256, db_column="key")
-#     expiration = models.DateTimeField(default=lambda: timezone.now() + timedelta(hours=3), db_column="expiration_date")
-#     sector = models.ForeignKey(Sector, on_delete=models.CASCADE, db_column="PK_sector")
+
+class SectorReviewPolicy(models.Model):
+    """
+    Define o SLA de revisão para cada setor.
+    Ex: Setor Financeiro tem validade de 30 dias.
+    """
+    review_policy_id = models.AutoField(primary_key=True, db_column='PK_sector_review_policy')
+    sector = models.OneToOneField(
+        'Sector', 
+        on_delete=models.CASCADE, 
+        related_name='review_policy',
+        verbose_name="Setor",
+        db_column='FK_sector_review_policy'
+    )
     
-#     class Meta:
-#         db_table = "KeyCodeSector"
-        
-#         verbose_name = "Codigo Chave"
-#         verbose_name_plural = "Códigos Chave"
+    days = models.PositiveIntegerField(default=0, validators=[MinValueValidator(0)], db_column='days_review_policy')
+    
+    is_active = models.BooleanField(default=False, db_column='is_active_sector_review_policy')
+
+    class Meta:
+        db_table = 'Sector_Review_Policy'
+        verbose_name = "Política de Revisão"
+        verbose_name_plural = "Políticas de Revisão"
+
+
+    def __str__(self):
+        return f"Validade de documento para o setor {self.sector}: {self.days}dias"
+    

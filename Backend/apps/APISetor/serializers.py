@@ -1,7 +1,7 @@
 
 
 from rest_framework import serializers
-from .models import Sector
+from .models import Sector, SectorReviewPolicy
 from apps.APIEmpresa.models import Enterprise
 from apps.core.utils import optimize_image
 
@@ -128,3 +128,12 @@ class SectorUpdateSerializer(serializers.ModelSerializer):
         ).exclude(pk=self.instance.pk).exists():
             raise serializers.ValidationError("Um setor com este nome já existe nesta empresa.")
         return value
+    
+class SectorReviewPolicySerializer(serializers.ModelSerializer):
+    """
+    Serializer for Sector Review Policy.
+    """
+    sector_id = serializers.IntegerField(source='sector.pk', read_only=True)
+    class Meta:
+        model = SectorReviewPolicy
+        fields = ['sector_id', 'days', 'is_active']

@@ -103,6 +103,24 @@ const sectorService = {
   getSectorDashboard(sector_id: number): Promise<{ data: ResponseStructure<SectorDashboardData> }> {
     return api.get(`/painel/gerencial/${sector_id}/`);
   },
+
+  /*
+   * Retorna dados sobre a política de revisão de documentos de um setor.
+   * @param sectorId O ID do setor.
+   */
+  getReviewPolicy(sectorId: number): Promise<{ data: ResponseStructure<[]> }> {
+    return api.get(`/setor/${sectorId}/politica-revisao/`);
+  },
+
+  /*
+   * Atualiza a política de revisão de documentos de um setor.
+   * @param sectorId O ID do setor.
+   * @param data Os novos dados da política de revisão.
+   */
+  updateReviewPolicy(sectorId: number, data: FormData): Promise<{ data: ResponseStructure<[]> }> {
+    return api.put(`/setor/${sectorId}/politica-revisao/`, data);
+  },
+
 };
 
 export default sectorService;

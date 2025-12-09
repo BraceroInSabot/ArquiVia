@@ -6,7 +6,8 @@ from .views import (
     ListUserSectorsView,
     ActivateOrDeactivateSectorView,
     EditSectorView,
-    ExcludeSectorView
+    ExcludeSectorView,
+    SectorReviewDateView
     )
 
 from .sectorUserUtils.urls import sector_user_urlpatterns
@@ -18,4 +19,5 @@ urlpatterns = [
     path("alterar/<int:pk>/", EditSectorView.as_view(), name="atualizar-setor"),
     path("ativar-desativar/<int:pk>/", ActivateOrDeactivateSectorView.as_view(), name="ativar-desativar-setor"),
     path("excluir/<int:pk>/", ExcludeSectorView.as_view(), name="deletar-setor"),
+    path("<int:pk>/politica-revisao/", SectorReviewDateView.as_view(), name="sector-review-policy"),
 ] + sector_user_urlpatterns

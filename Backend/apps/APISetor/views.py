@@ -3,15 +3,16 @@ from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404
 from rest_framework.views import APIView, Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import Sector, SectorUser
+from .models import Sector, SectorUser, SectorReviewPolicy
 from apps.APIEmpresa.models import Enterprise
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from apps.core.utils import default_response
-from .serializers import SectorCreateSerializer, SectorDetailSerializer, SectorUpdateSerializer
+from .serializers import SectorCreateSerializer, SectorDetailSerializer, SectorReviewPolicySerializer, SectorUpdateSerializer
 from .permissions import (
     IsEnterpriseOwner, 
-    IsEnterpriseOwnerOrMember, 
+    IsEnterpriseOwnerOrMember,
+    IsEnterpriseOwnerOrSectorManager, 
     IsOwnerOrSectorMember, 
     IsSectorEnterpriseOwner, 
     IsOwnerManagerOrSectorAdmin,
@@ -212,3 +213,64 @@ class ExcludeSectorView(APIView):
         res.status_code = 200
         res.data = default_response(success=True, message=f"Setor {sector_name} deletado com sucesso.") 
         return res
+
+class SectorReviewDateView(APIView):
+    permission_classes = [IsAuthenticated, IsEnterpriseOwnerOrSectorManager]
+    
+    def put(self, request, pk: int):
+        sector = get_object_or_404(Sector, pk=pk)
+        self.check_object_permissions(request, sector)
+        
+        review_date: int = request.data.get("days")
+        is_active: bool = request.data.get("is_active", True)
+        
+        if review_date is None:
+            res: HttpResponse = Response()
+            res.status_code = 400
+            res.data = default_response(success=False, message="A data de revisão é obrigatória.")
+            return res
+        
+        if not isinstance(review_date, int) or review_date < 0:
+            res: HttpResponse = Response()
+            res.status_code = 400
+            res.data = default_response(success=False, message="A data de revisão deve ser um número inteiro positivo.")
+            return res
+        
+        revision_policy = SectorReviewPolicy.objects.get_or_create(sector=sector)[0]
+        
+        print(revision_policy)
+        
+        if revision_policy.days == review_date:
+            pass
+        else:
+            revision_policy.days = review_date
+            revision_policy.save()
+        
+        revision_policy.is_active = is_active
+        revision_policy.save()
+        
+        serializer = SectorDetailSerializer(sector)
+        
+        res: HttpResponse = Response()
+        res.status_code = 200
+        res.data = default_response(success=True, message="Data de revisão atualizada com sucesso!", data=serializer.data)
+        return res
+    
+    def get(self, request, pk: int):
+        sector = get_object_or_404(Sector, pk=pk)
+        self.check_object_permissions(request, sector)
+        
+        try:
+            revision_policy = SectorReviewPolicy.objects.get(sector=sector)
+            
+            serialized_data = SectorReviewPolicySerializer(revision_policy)
+
+            res: HttpResponse = Response()
+            res.status_code = 200
+            res.data = default_response(success=True, message="Política de revisão recuperada com sucesso!", data=serialized_data.data)
+            return res
+        except SectorReviewPolicy.DoesNotExist:
+            res: HttpResponse = Response()
+            res.status_code = 404
+            res.data = default_response(success=False, message="Política de revisão não encontrada para este setor.")
+            return res

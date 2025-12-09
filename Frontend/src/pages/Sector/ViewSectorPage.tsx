@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Pencil, Loader2, AlertCircle, 
-  Users, FolderTree, BarChart2, History, Layers, Lock, Building2 // Building2 importado
+  Users, FolderTree, BarChart2, History, Layers, Lock, Building2,
+  Settings // <--- 1. Importação do ícone
 } from 'lucide-react'; 
 
 import sectorService from '../../services/Sector/api';
@@ -12,6 +13,9 @@ import { useAuth } from '../../contexts/AuthContext';
 import SectorUsers from '../../components/Sector/SectorUsers';  
 import SectorCategories from '../../components/Sector/SectorCategories'; 
 import SectorMetrics from '../../components/Sector/SectorMetrics';
+
+// --- 2. Importação do Modal ---
+import ReviewPolicyModal from '../../components/modal/ReviewPolicyModal';
 
 // --- Componentes Locais Estilizados ---
 
@@ -44,6 +48,9 @@ const ViewSectorPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabName>('users');
+
+  // --- 3. Estado para controlar o Modal ---
+  const [isPolicyModalOpen, setIsPolicyModalOpen] = useState(false);
 
   useEffect(() => {
     if (!id) {
@@ -118,13 +125,25 @@ const ViewSectorPage = () => {
             </div>
             
             {(isOwner || isManager) && (
-                <button 
-                    onClick={goToEditSectorPage}
-                    className="btn btn-outline btn-sm gap-2"
-                >
-                    <Pencil size={16} />
-                    <span className="hidden sm:inline">Editar</span>
-                </button>
+                <div className="flex gap-2">
+                    {/* --- 4. Botão de Configuração (Engrenagem) --- */}
+                    <div className="tooltip tooltip-bottom" data-tip="Configurar Revisão (SLA)">
+                        <button 
+                            onClick={() => setIsPolicyModalOpen(true)}
+                            className="btn btn-square btn-ghost btn-sm text-secondary"
+                        >
+                            <Settings size={20} />
+                        </button>
+                    </div>
+
+                    <button 
+                        onClick={goToEditSectorPage}
+                        className="btn btn-outline btn-sm gap-2"
+                    >
+                        <Pencil size={16} />
+                        <span className="hidden sm:inline">Editar</span>
+                    </button>
+                </div>
             )}
         </div>
 
@@ -133,15 +152,7 @@ const ViewSectorPage = () => {
             <div className="card-body flex-col md:flex-row items-start md:items-center gap-6 p-6">
                 {/* Imagem */}
                 <div className="avatar">
-                    <div style={{display: 'flex !important',
-              justifyContent: 'center !important',
-              textJustify: 'auto',
-              justifyItems: 'center',
-              justifySelf: 'center',
-              justifyTracks: 'center',
-              alignItems: 'center',
-              alignContent: 'center'
-            }} className="w-24 h-24 rounded-xl ring ring-base-300 ring-offset-base-100 ring-offset-2 bg-base-200 flex items-center justify-center overflow-hidden">
+                    <div className="w-24 h-24 rounded-xl ring ring-base-300 ring-offset-base-100 ring-offset-2 bg-base-200 flex items-center justify-center overflow-hidden">
                         {sector.image ? (
                             <img src={sector.image} alt={sector.name} className="object-cover w-full h-full" />
                         ) : (
@@ -157,10 +168,7 @@ const ViewSectorPage = () => {
                         <Building2 size={16} className="shrink-0" /> {sector.enterprise_name}
                     </p>
                     
-                    <div style={{display: 'flex !important',
-              alignItems: 'center',
-              alignContent: 'center'
-            }} className="flex flex-wrap gap-2 mt-2">
+                    <div className="flex flex-wrap gap-2 mt-2 items-center">
                          <div className="badge badge-lg bg-secondary border-none text-white gap-2 p-3 h-auto py-1">
                             <span className="font-bold text-white/70 text-xs uppercase">Gerente:</span> 
                             <span>{sector.manager_name}</span>
@@ -227,6 +235,15 @@ const ViewSectorPage = () => {
         </div>
 
       </div>
+
+      {/* --- 5. Renderização do Modal de Política --- */}
+      {isPolicyModalOpen && sector.sector_id && (
+        <ReviewPolicyModal 
+            sectorId={sector.sector_id} 
+            onClose={() => setIsPolicyModalOpen(false)} 
+        />
+      )}
+
     </div>
   );
 };

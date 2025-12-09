@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const BASE: string = "https://bracero.com.br/"
-// const BASE: string = "http://localhost:8000/"
+//const BASE: string = "http://localhost:8000/"
 const VERSION: string = "api/v2/"
 const URL: string = BASE + VERSION
 

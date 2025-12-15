@@ -17,7 +17,9 @@
     "@lexical/markdown": "^0.38.2",
     "@lexical/react": "^0.38.2",
     "@lexical/rich-text": "^0.38.2",
+    "@react-oauth/google": "^0.12.2",
     "axios": "^1.12.2",
+    "js-cookie": "^3.0.5",
     "jspdf": "^3.0.3",
     "lexical": "^0.38.2",
     "lucide-react": "^0.553.0",
@@ -29,6 +31,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
+    "@types/js-cookie": "^3.0.6",
     "@types/node": "^24.10.0",
     "@types/prismjs": "^1.26.5",
     "@types/react": "^18.3.26",

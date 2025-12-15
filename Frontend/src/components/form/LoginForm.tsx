@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { User, Lock, LogIn, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import userService from '../../services/User/api';
+import { GoogleBtn } from '../../components/button/GoogleBtn';
 
 interface LoginFormProps {
   login: (username: string) => Promise<void>;
@@ -135,6 +136,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ login, navigate }) => {
             </>
           )}
         </button>
+
+        <div className="divider text-xs text-gray-400">OU</div>
+
+        <GoogleBtn isLogin={true} />  
       </div>
     </form>
   );

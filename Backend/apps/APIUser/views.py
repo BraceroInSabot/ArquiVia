@@ -21,6 +21,10 @@ from uuid import uuid4
 from rest_framework import status
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth import update_session_auth_hash
+from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+from dj_rest_auth.registration.views import SocialLoginView
+from dj_rest_auth.utils import jwt_encode
 
 from django.db.models import Q
 
@@ -110,6 +114,35 @@ class LoginTokenRefreshPairView(TokenRefreshView):
             response = Response(status=500)
             response.data = default_response(success=False, message="Houve erros internos na aplicação.")
             return response
+        
+class GoogleLoginView(SocialLoginView):
+    """    
+    Endpoint for Google token exchange for JWT.
+    """
+    adapter_class = GoogleOAuth2Adapter
+    client_class = OAuth2Client
+    
+    def get_response(self):
+        # 1. Forçamos a geração do JWT manualmente para não depender da config
+        self.access_token, self.refresh_token = jwt_encode(self.user)
+        
+        # 2. Montamos a resposta JSON manualmente
+        # Isso garante que você receba EXATAMENTE o que precisa
+        print(self.user)
+        data = {
+            'access_token': str(self.access_token),
+            'refresh_token': str(self.refresh_token),
+            'user': {
+                'pk': self.user.pk, # type: ignore
+                'email': self.user.email, # type: ignore
+                'name': getattr(self.user, 'name', ''),
+                'username': self.user.username, # type: ignore
+                'image': self.user.image.url # type: ignore
+                # Adicione outros campos do seu User se quiser
+            }
+        }
+        
+        return Response(data, status=200)
 
 class RegisterTokenView(APIView):
     permission_classes: AllowAny = [AllowAny] #type: ignore

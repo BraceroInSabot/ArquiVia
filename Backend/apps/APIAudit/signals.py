@@ -45,7 +45,7 @@ def sanitize_data(data):
     return clean_data
 
 def convert_img_model_to_img_name(instance):
-    model_conversion = model_to_dict(instance)
+    model_conversion = model_to_dict(instance, exclude=['groups', 'user_permissions', 'password', 'last_login'])
 
     if model_conversion.get('image'):
         model_conversion['image'] = model_conversion['image'].name

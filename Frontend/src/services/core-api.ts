@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-const BASE: string = "https://bracero.com.br/"
-//const BASE: string = "http://localhost:8000/"
+// const BASE: string = "https://bracero.com.br/"
+const BASE: string = "http://localhost:8000/"
 const VERSION: string = "api/v2/"
 const URL: string = BASE + VERSION
 
@@ -334,6 +334,23 @@ export interface PaginatedResponse<T> {
   next: string | null;
   previous: string | null;
   results: T[];
+}
+
+export interface GoogleLoginPayload {
+  access_token: string;
+}
+
+export interface AuthResponse {
+  access: string;        // O Token JWT de acesso
+  refresh: string;       // O Token JWT de refresh
+  user: {                // Dados do usuário
+    pk?: number;
+    user_id?: number;
+    email: string;
+    first_name?: string;
+    last_name?: string;
+    username?: string;
+  };
 }
 
 const api = axios.create({

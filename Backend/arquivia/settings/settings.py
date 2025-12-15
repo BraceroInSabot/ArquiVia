@@ -4,12 +4,32 @@ from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-INSTALLED_APPS =  [
-    "rest_framework_simplejwt",
-    "rest_framework",
-    "corsheaders",
-    'simple_history',
+INSTALLED_APPS = [
+    # 1. DJANGO CORE
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions", 
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "django.contrib.postgres",
+    "django.contrib.sites",
 ] + [
+    # 2. THIRD PARTY
+    "corsheaders", 
+    "rest_framework",
+    "rest_framework.authtoken",
+    "rest_framework_simplejwt",
+    'simple_history',
+    
+    # oAuth
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    'dj_rest_auth',
+    'dj_rest_auth.registration',
+] + [
+    # 3. LOCAL APPS
     "apps.core",
     "apps.APIUser",
     "apps.APIEmpresa",
@@ -17,14 +37,6 @@ INSTALLED_APPS =  [
     "apps.APIDocumento",
     'apps.APIAudit',
     'apps.APIDashboard',
-] + [
-    # "django.contrib.admin",
-    "django.contrib.auth",
-    "django.contrib.contenttypes",
-    "django.contrib.sessions",
-    "django.contrib.messages",
-    "django.contrib.staticfiles",
-    "django.contrib.postgres",
 ]
 
 REST_FRAMEWORK = {
@@ -39,16 +51,17 @@ REST_FRAMEWORK = {
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     'simple_history.middleware.HistoryRequestMiddleware',
     "apps.core.get_request_user.RequestMiddleware",
+    "allauth.account.middleware.AccountMiddleware", 
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-] 
+]
 
 ROOT_URLCONF = "arquivia.urls"
 
@@ -118,7 +131,34 @@ AUTH_USER_MODEL = "APIUser.AbsUser"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-if os.getenv('DEBUG', 'False') == 'True':
-    FRONTEND_URL = "http://localhost:3000"
-else:
-    FRONTEND_URL = "https://arquivia.bracero.com.br"
+SITE_ID = 1
+
+REST_USE_JWT = True
+# JWT_AUTH_COOKIE = 'access_token' 
+JWT_AUTH_REFRESH_COOKIE = 'refresh_token'
+
+ACCOUNT_USER_MODEL_USERNAME_FIELD = 'username'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+
+SOCIALACCOUNT_ADAPTER = 'apps.APIUser.adapters.GoogleAutoLinkAdapter'
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        },
+        'VERIFIED_EMAIL': True
+    }
+}
+
+REST_AUTH_SERIALIZERS = {
+    'USER_DETAILS_SERIALIZER': 'apps.APIUser.serializers.UserDetailSerializer', # Ajuste o caminho
+    'JWT_SERIALIZER': 'dj_rest_auth.serializers.JWTSerializer',
+}

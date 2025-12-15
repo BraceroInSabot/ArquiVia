@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import Validate from '../../utils/credential_validation';
 import registerService from '../../services/User/api';
 import TermsModal from '../modal/TermsModal';
+import { GoogleBtn } from '../button/GoogleBtn';
 
 const RegisterForm = () => {
   const navigate = useNavigate();
@@ -339,6 +340,10 @@ const RegisterForm = () => {
             </>
           )}
         </button>
+
+        <div className="divider text-xs text-gray-400">OU</div>
+      
+        <GoogleBtn isLogin={false} />  
       </div>
 
       {showTermsModal && (

@@ -1,7 +1,6 @@
 import axios from 'axios';
 
-// const BASE: string = "https://bracero.com.br/"
-const BASE: string = "http://localhost:8000/"
+const BASE: string = import.meta.env.VITE_API_ENDPOINT
 const VERSION: string = "api/v2/"
 const URL: string = BASE + VERSION
 

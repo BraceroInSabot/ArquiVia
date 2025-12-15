@@ -17,15 +17,10 @@ export const GoogleBtn = ({ isLogin }: { isLogin: boolean }) => {
     try {
       const { access_token: googleToken } = tokenResponse;
 
-      // 1. Envia token do Google para o Backend
       const response = await api.post('usuario/auth/google/', { 
         access_token: googleToken,
       });
 
-      console.log("Login Success:", response.data);
-
-      // 2. Extrai os dados EXATOS do novo JSON do backend
-      // { access_token, refresh_token, user }
       const { access_token, refresh_token, user } = response.data;
 
       if (!access_token || !user) {
@@ -36,7 +31,7 @@ export const GoogleBtn = ({ isLogin }: { isLogin: boolean }) => {
       
       if (user.is_new_user) {
         toast("Cadastro inicializado! Complete seu perfil para continuar.", { icon: '📝' });
-        // Redireciona para a tela de completar perfil
+
         navigate('/completar-perfil'); 
       } else {
         toast.success(`Bem-vindo de volta, ${user.name || user.username}!`);

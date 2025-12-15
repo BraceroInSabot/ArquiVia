@@ -136,7 +136,7 @@ const CompleteProfilePage = () => {
                         required
                     />
                     <label className="label">
-                        <span className="label-text-alt text-gray-400">Usado para login e menções</span>
+                        <span className="label-text-alt text-gray-400">Usado para login e menções. <strong>Atenção:</strong> Atributo não alteravel depois de escolhido e confirmado.</span>
                     </label>
                 </div>
                 

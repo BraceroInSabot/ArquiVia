@@ -87,6 +87,14 @@ const userService = {
   listAvailableUsers(): Promise<{ data: ResponseStructure<AvailableUser[]> }> {
     return api.get('/usuario/listar/');
   },
+
+  /**
+   * Finaliza o cadastro de usuários vindos do Google.
+   * Envia multipart/form-data (imagem + textos).
+   */
+  completeProfileGoogle(userId: number, formData: FormData): Promise<{ data: any }> {
+    return api.patch(`/usuario/completar-perfil/${userId}/google/`, formData);
+  },
 };
 
 export default userService;

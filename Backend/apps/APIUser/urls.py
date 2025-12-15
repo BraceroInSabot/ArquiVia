@@ -15,7 +15,8 @@ from .views import (
     RedefinirSenhaView,
     DeactivateUserView,
     UsersLinkedToMyListView,
-    GoogleLoginView
+    GoogleLoginView,
+    CompleteGoogleProfileView,
 )
 
 urlpatterns = [
@@ -36,5 +37,8 @@ urlpatterns = [
     path("esqueci-senha/", RequisicaoRedefinicaoSenhaView.as_view(), name="esqueci-senha"),
     path("validar-token-senha/<str:token>/", ValidarTokenRedefinicaoValidoView.as_view(), name="validar-token-senha"),
     path("redefinir-senha/<str:token>/", RedefinirSenhaView.as_view(), name="redefinir-senha"),
+] + [
+    #oAuth
     path('auth/google/', GoogleLoginView.as_view(), name='google_login'),
+    path('completar-perfil/<int:pk>/google/', CompleteGoogleProfileView.as_view(), name='profile_complete'),
 ]

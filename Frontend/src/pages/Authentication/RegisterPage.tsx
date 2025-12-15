@@ -9,7 +9,7 @@ const RegisterPage = () => {
   
   useEffect(() => {
     if (user) {
-      navigate("/painel");
+      // navigate("/painel");
     }
   }, [user, navigate]);
 

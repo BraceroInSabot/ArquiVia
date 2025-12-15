@@ -31,12 +31,17 @@ export const GoogleBtn = ({ isLogin }: { isLogin: boolean }) => {
       if (!access_token || !user) {
         throw new Error("Resposta do servidor incompleta (falta token ou usuário).");
       }
-      console.log(user)
       // 3. Loga no Contexto (que vai salvar como Bearer e normalizar o user)
       signIn(access_token, refresh_token, user);
       
-      toast.success(`Bem-vindo(a), ${user.name || user.username}!`);
-      navigate('/painel'); 
+      if (user.is_new_user) {
+        toast("Cadastro inicializado! Complete seu perfil para continuar.", { icon: '📝' });
+        // Redireciona para a tela de completar perfil
+        navigate('/completar-perfil'); 
+      } else {
+        toast.success(`Bem-vindo de volta, ${user.name || user.username}!`);
+        navigate('/painel');
+      }
 
     } catch (error: any) {
       console.error("Erro Login Google:", error);

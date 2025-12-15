@@ -1,3 +1,4 @@
+from datetime import timedelta
 from typing import Dict
 from django.utils.decorators import method_decorator
 from django.utils.html import strip_tags
@@ -7,9 +8,10 @@ from rest_framework.views import Response, APIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from .permissions import OnlyUserRequestOwner
 from apps.APISetor.models import Sector, SectorUser
 from apps.APIEmpresa.models import Enterprise
-from .serializer import ChangePasswordSerializer, RegistroUsuarioSerializer, UserDetailSerializer, UserEditSerializer, UserSearchSerializer
+from .serializer import ChangePasswordSerializer, GoogleAccountCompleteSerializer, RegistroUsuarioSerializer, UserDetailSerializer, UserEditSerializer, UserSearchSerializer
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from django.conf import settings
@@ -123,11 +125,10 @@ class GoogleLoginView(SocialLoginView):
     client_class = OAuth2Client
     
     def get_response(self):
-        # 1. Forçamos a geração do JWT manualmente para não depender da config
         self.access_token, self.refresh_token = jwt_encode(self.user)
         
-        # 2. Montamos a resposta JSON manualmente
-        # Isso garante que você receba EXATAMENTE o que precisa
+        is_new_user = (timezone.now() - self.user.date_joined) < timedelta(seconds=30) # type: ignore
+        
         print(self.user)
         data = {
             'access_token': str(self.access_token),
@@ -137,12 +138,39 @@ class GoogleLoginView(SocialLoginView):
                 'email': self.user.email, # type: ignore
                 'name': getattr(self.user, 'name', ''),
                 'username': self.user.username, # type: ignore
-                'image': self.user.image.url # type: ignore
-                # Adicione outros campos do seu User se quiser
+                'image': self.user.image.url, # type: ignore
+                'is_new_user': is_new_user,
             }
         }
         
         return Response(data, status=200)
+    
+class CompleteGoogleProfileView(APIView):
+    permission_classes = [IsAuthenticated, OnlyUserRequestOwner]
+    
+    def patch(self, request, pk: int):
+        user = get_object_or_404(User, pk=pk)
+        
+        self.check_object_permissions(request, user)
+        
+        serializer = GoogleAccountCompleteSerializer(
+            instance=user, 
+            data=request.data, 
+            partial=True 
+        )
+
+        if serializer.is_valid():
+            serializer.save()
+        else:
+            res: HttpResponse = Response()
+            res.status_code = 400
+            res.data = default_response(success=False, data=serializer.errors)
+            return res
+
+        res: HttpResponse = Response()
+        res.status_code = 200
+        res.data = default_response(success=True, data=serializer.data)
+        return res
 
 class RegisterTokenView(APIView):
     permission_classes: AllowAny = [AllowAny] #type: ignore

@@ -100,7 +100,6 @@ class UserDetailSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = User
-        # Defina os campos que você quer que sejam visíveis na API
         fields = ['user_id', 'username', 'name', 'email', 'image']
         read_only_fields = ['user_id', 'username', 'name', 'email', 'image']
         
@@ -127,6 +126,57 @@ class UserEditSerializer(serializers.ModelSerializer):
             if optimized:
                 return optimized
         return value
+    
+class GoogleAccountCompleteSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = User
+        fields = ['name', 'username', 'image']
+        
+    def validate_image(self, value):
+        """
+        Optimize image before validation.
+        """
+        if value:
+            optimized = optimize_image(
+                value,
+                max_width=1920,
+                max_height=1920,
+                quality=85,
+                convert_to_jpeg=True
+            )
+            if optimized:
+                return optimized
+        return value
+    
+    def validate(self, attrs: dict) -> dict | serializers.ValidationError:
+        """
+        Validate the user data before edit any data.
+        
+        Args:
+            attrs (dict): The attributes to validate.
+
+        Raises:
+            serializers.ValidationError: If validation fails. Appoint the field and the error.
+
+        Returns:
+            Returns the validated attributes if validation is successful.
+        """
+        validation = ValidateAuth(
+            username=attrs.get('username'),
+            name=attrs.get('name'),
+            password='SenhaForte-123',
+            c_password='SenhaForte-123',
+            email='teste@gmail.com'
+        ).validate()
+        
+        if isinstance(validation, list) and len(validation) > 0:
+            print(validation)
+            raise serializers.ValidationError(
+                [err for err in validation]
+            )
+
+        return attrs
         
 class ChangePasswordSerializer(serializers.Serializer):
     """

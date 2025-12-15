@@ -17,6 +17,8 @@ import RequestResetPassword from './pages/Authentication/RequestResetPasswordPag
 import ResetPassword from './pages/Authentication/ResetPasswordPage';
 import ProfilePage from './pages/ProfilePage';
 import MainLayout from './components/menu/MenuLayout';
+import CompleteProfilePage from './pages/Authentication/CompleteProfilePage';
+
 
 function ArquiVia() {
   return (
@@ -43,6 +45,7 @@ function ArquiVia() {
             <Route path='/perfil' element={<ProfilePage />} />
             <Route path='/documentos' element={<DocumentPage />} />
           </Route>
+            <Route path='/completar-perfil' element={<CompleteProfilePage/>}/> 
             <Route path='/documento/editar/:id' element={<EditDocumentPage />} />
         </Route>
       </Routes>

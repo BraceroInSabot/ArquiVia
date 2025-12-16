@@ -1,5 +1,5 @@
 import { createContext, useState, useContext, type ReactNode, useEffect } from 'react';
-import Cookies from 'js-cookie'; // <--- Importe o js-cookie
+import Cookies from 'js-cookie';
 import type { UserDetails } from '../services/core-api';
 import userService from '../services/User/api';
 import api from '../services/core-api'; 
@@ -7,34 +7,41 @@ import api from '../services/core-api';
 interface AuthContextType {
   user: UserDetails | null;
   isLoading: boolean;
+  // Login Social (Google - JWT)
   signIn: (accessToken: string, refreshToken: string, rawUser: any) => void;
+  // Login Padrão (Usuário/Senha - Sessão)
+  login: (username: string) => Promise<void>; 
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Nomes das chaves
 const USER_STORAGE_KEY = '@arquivia:user';
-const TOKEN_COOKIE_KEY = 'access_token';  // Nome do cookie
-const REFRESH_COOKIE_KEY = 'refresh_token'; // Nome do cookie
+const TOKEN_COOKIE_KEY = 'access_token'; 
+const REFRESH_COOKIE_KEY = 'refresh_token';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // --- Função de Login ---
+  // --- Função Auxiliar para Persistir Usuário ---
+  const persistUser = (userData: UserDetails) => {
+    setUser(userData);
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userData));
+  };
+
+  // --- 1. Login Social (Google - JWT) ---
   const signIn = (accessToken: string, refreshToken: string, rawUser: any) => {
-    // 1. Salva Tokens nos Cookies
-    // 'expires: 7' define validade de 7 dias (ajuste conforme a expiração do seu JWT)
-    // 'secure: true' exige HTTPS (bom para produção)
-    // 'sameSite: Strict' protege contra CSRF
+    // Salva Tokens nos Cookies
     const cookieOptions = { expires: 7, secure: window.location.protocol === 'https:', sameSite: 'Strict' as const };
-    
     Cookies.set(TOKEN_COOKIE_KEY, accessToken, cookieOptions);
     Cookies.set(REFRESH_COOKIE_KEY, refreshToken, cookieOptions);
 
-    // 2. Normaliza e Salva Usuário no LocalStorage (Cookies são pequenos para objetos JSON grandes)
+    // Configura o Header
+    api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+
+    // Normaliza e Salva Usuário
     const normalizedUser: UserDetails = {
         sucesso: true,
         mensagem: "Login realizado via OAuth",
@@ -46,32 +53,45 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             image: rawUser.image || ""
         }
     };
-    
-    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(normalizedUser));
-
-    // 3. Configura o Axios (Importante: Cookies não vão sozinhos no header Authorization, precisa injetar)
-    api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
-
-    // 4. Atualiza Estado
-    setUser(normalizedUser);
+    persistUser(normalizedUser);
   };
 
-  // --- Logout ---
+  // --- 2. Login Padrão (Usuário e Senha - Sessão/Cookie) ---
+  // Restaurado para funcionar com seu formulário de login antigo
+  const login = async (username: string) => {
+    setIsLoading(true);
+    try {
+      // Como o cookie de sessão é HttpOnly e automático, 
+      // apenas buscamos os detalhes do usuário para confirmar o login.
+      const response = await userService.getUserDetails(username);
+      persistUser(response.data);
+      
+      // Nota: Não setamos token JWT aqui, pois o login padrão usa Session Cookie.
+    } catch (error) {
+      console.error("Erro no login padrão:", error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // --- Logout Unificado ---
   const logout = () => {
     setUser(null);
     localStorage.removeItem(USER_STORAGE_KEY);
     
-    // Remove Cookies
+    // Limpa Tokens (Google)
     Cookies.remove(TOKEN_COOKIE_KEY);
     Cookies.remove(REFRESH_COOKIE_KEY);
-    
     delete api.defaults.headers.common['Authorization'];
+
+    // Chama endpoint de logout (Limpa Sessão Django)
     userService.logout().catch(() => {});
   };
 
   // --- Refresh User ---
   const refreshUser = async () => {
-    // Lê do Cookie
+    // Se tiver token JWT (Google), injeta. Se não, confia no Cookie de Sessão.
     const token = Cookies.get(TOKEN_COOKIE_KEY);
     if (token) api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
@@ -80,9 +100,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       const response = await userService.getUserDetails(username);
-      const freshUser = response.data;
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(freshUser));
-      setUser(freshUser);
+      persistUser(response.data);
     } catch (error: any) {
       if (error.response?.status === 401) logout();
       throw error;
@@ -92,14 +110,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // --- Inicialização (F5) ---
   useEffect(() => {
     const initAuth = async () => {
-      // Lê Tokens dos Cookies e Usuário do LocalStorage
+      // 1. Tenta recuperar Token JWT (Login Google)
       const storedToken = Cookies.get(TOKEN_COOKIE_KEY);
-      const storedUser = localStorage.getItem(USER_STORAGE_KEY);
-
-      if (storedToken && storedUser) {
+      if (storedToken) {
         api.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+      }
+
+      // 2. Tenta recuperar Usuário (Login Google OU Padrão)
+      const storedUserString = localStorage.getItem(USER_STORAGE_KEY);
+
+      if (storedUserString) {
         try {
-            setUser(JSON.parse(storedUser));
+            const storedUser: UserDetails = JSON.parse(storedUserString);
+            setUser(storedUser);
+
+            // 3. Validação Opcional: Bater no backend para garantir que a sessão/token ainda vale
+            // Isso cobre tanto o caso do Token expirado quanto do Cookie de sessão expirado
+            await userService.getUserDetails(storedUser.data.username)
+                .then(res => persistUser(res.data))
+                .catch(() => {
+                    // Se falhar a validação, desloga silenciosamente
+                    // logout(); 
+                    // (Comentado para evitar logout em erro de rede, descomente se quiser rigoroso)
+                });
         } catch {
             logout();
         }
@@ -111,7 +144,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, signIn, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, isLoading, signIn, login, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

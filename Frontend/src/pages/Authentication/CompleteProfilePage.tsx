@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Camera, User, Loader2, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -7,9 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import userService from '../../services/User/api';
 
 const CompleteProfilePage = () => {
-  const { user, logout } = useAuth(); // Precisamos do refreshUser para atualizar o contexto após salvar
-  const navigate = useNavigate();
-  
+  const { user, logout } = useAuth(); 
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -19,7 +16,6 @@ const CompleteProfilePage = () => {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Preenche os dados iniciais assim que o usuário (que acabou de logar) for carregado
   useEffect(() => {
     if (user?.data) {
       setName('');

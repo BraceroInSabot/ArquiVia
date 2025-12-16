@@ -1,17 +1,10 @@
-import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import LoginForm from "../../components/form/LoginForm";
 
 const LoginPage = () => {
-  const { user, login } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (user) { 
-      navigate("/painel");
-    }
-  }, [user, navigate]);
 
   const goToIndex = () => {
     navigate("/");

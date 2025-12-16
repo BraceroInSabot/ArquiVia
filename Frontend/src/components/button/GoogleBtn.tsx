@@ -30,9 +30,7 @@ export const GoogleBtn = ({ isLogin }: { isLogin: boolean }) => {
       signIn(access_token, refresh_token, user);
       
       if (user.is_new_user) {
-        toast("Cadastro inicializado! Complete seu perfil para continuar.", { icon: '📝' });
-
-        navigate('/completar-perfil'); 
+        navigate('/completar-perfil');
       } else {
         toast.success(`Bem-vindo de volta, ${user.name || user.username}!`);
         navigate('/painel');

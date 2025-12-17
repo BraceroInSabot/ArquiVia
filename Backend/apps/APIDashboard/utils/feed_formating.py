@@ -11,7 +11,6 @@ def format_activity_feed(doc_histories: QuerySet):
     for h in doc_histories:
         verb = {'+': 'criou', '~': 'editou', '-': 'excluiu'}.get(h.history_type, 'alterou')
         doc_name = h.title
-        print(doc_histories.values_list('document_id', 'history_user__user_id'))
         
         feed.append({
             'timestamp': h.history_date,

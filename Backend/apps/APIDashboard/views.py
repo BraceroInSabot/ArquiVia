@@ -67,46 +67,28 @@ class OperationalDashboardView(APIView):
             Q(sectors__sector_links__user=request_user) |
             Q(sectors__manager=request_user) 
         )
-        """ 
-        declare request_user int;
-        set request_user = 1; 
-        
-        select * from Enterprise E 
-        inner join Sector S on S.enterprise_id = E.enterprise_id
-        inner join SectorUser SU on SU.sector_id = S.sector_id
-        where 
-        E.owner = request_user or
-        S.manager = request_user or
-        SU.user = request_user
-
-        """
 
         user_enterprise_links = Enterprise.objects.filter(enterprise_query).distinct()
 
-        review_docs = Document.objects.filter(
+        user_sector_links = SectorUser.objects.filter(
+            (
+                Q(user=request_user) | Q(sector__manager=request_user) | Q(sector__enterprise__owner=request_user)
+            ),
             sector__enterprise__in=user_enterprise_links,
+        )
+        
+        review_docs = Document.objects.filter(
+            sector__in=user_sector_links.values_list('sector', flat=True).distinct(),
             classification__classification_status__status="Revisão necessária" 
         ).order_by('-created_at')
-        
-        # print('user_enterprise_links', user_enterprise_links)
-        # print('review_docs', review_docs)
 
         # Componente 3: Feed de Atividades nos Documentos (Log Semi-Geral)
         
-        enterprise_owners = user_enterprise_links.values_list('owner_id', flat=True)
-        print("enterprise_owners", enterprise_owners)
-        enterprise_managers = user_enterprise_links.values_list('sectors__manager__user_id', flat=True).exclude(sectors__manager__user_id=None)
-        print("enterprise_managers", enterprise_managers)
         enterprise_sectors = user_enterprise_links.values_list('sectors__sector_id').exclude(sectors__sector_id=None).exclude(sectors__is_active=False)
-        print("enterprise_sectors", enterprise_sectors)
-        enterprise_members = user_enterprise_links.values_list('sectors__sector_links__user', flat=True).exclude(sectors__sector_links__user__user_id=None)
-        print("enterprise_members", enterprise_members)
-
+                                                               
         doc_logs = Document.history.filter( # type: ignore
             sector__in=enterprise_sectors
         ).order_by('-history_date')[:20]
-        
-        print(doc_logs)
 
         activity_feed = format_activity_feed(doc_logs)
 

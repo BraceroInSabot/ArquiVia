@@ -161,9 +161,9 @@ const documentService = {
     params.append('page', page.toString());
 
     if (filters.searchTerm) params.append('q', filters.searchTerm);
-    if (filters.isReviewed && filters.isReviewed !== 'all') params.append('is_reviewed', filters.isReviewed);
-    if (filters.statusId && filters.statusId !== 'all') params.append('status_id', filters.statusId);
-    if (filters.privacityId && filters.privacityId !== 'all') params.append('privacity_id', filters.privacityId);
+    if (filters.isReviewed && filters.isReviewed !== '') params.append('is_reviewed', filters.isReviewed);
+    if (filters.statusId && filters.statusId !== '') params.append('status_id', filters.statusId);
+    if (filters.privacityId && filters.privacityId !== '') params.append('privacity_id', filters.privacityId);
     if (filters.reviewer && filters.reviewer.trim() !== '') params.append('reviewer_name', filters.reviewer);
     if (filters.categories && filters.categories.trim() !== '') params.append('categories', filters.categories);
 

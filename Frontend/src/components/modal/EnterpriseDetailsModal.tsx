@@ -45,11 +45,19 @@ const EnterpriseDetailsModal: React.FC<EnterpriseDetailsModalProps> = ({ enterpr
                             title={enterprise.is_active ? "Ativa" : "Inativa"}
                         ></span>
                         
-                        <div className="w-24 h-24 rounded-full ring ring-base-100 ring-offset-base-100 ring-offset-2 bg-base-100 flex items-center justify-center overflow-hidden shadow-md">
+                        <div style={{display: 'flex !important',
+              justifyContent: 'center !important',
+              textJustify: 'auto',
+              justifyItems: 'center',
+              justifySelf: 'center',
+              justifyTracks: 'center',
+              alignItems: 'center',
+              alignContent: 'center'
+            }} className="w-24 h-24 rounded-full bg-base-200 ring ring-base-100 ring-offset-base-100 ring-offset-2 bg-base-100 flex items-center justify-center overflow-hidden shadow-md">
                              {enterprise.image ? (
                                 <img src={enterprise.image} alt={enterprise.name} />
                             ) : (
-                                <Building2 size={32} className="text-base-300" />
+                                <Building2 size={32} className="text-gray-400" />
                             )}
                         </div>
                     </div>

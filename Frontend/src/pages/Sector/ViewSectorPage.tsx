@@ -152,7 +152,15 @@ const ViewSectorPage = () => {
             <div className="card-body flex-col md:flex-row items-start md:items-center gap-6 p-6">
                 {/* Imagem */}
                 <div className="avatar">
-                    <div className="w-24 h-24 rounded-xl ring ring-base-300 ring-offset-base-100 ring-offset-2 bg-base-200 flex items-center justify-center overflow-hidden">
+                    <div style={{display: 'flex !important',
+              justifyContent: 'center !important',
+              textJustify: 'auto',
+              justifyItems: 'center',
+              justifySelf: 'center',
+              justifyTracks: 'center',
+              alignItems: 'center',
+              alignContent: 'center'
+            }} className="w-24 h-24 rounded-xl ring ring-base-300 ring-offset-base-100 ring-offset-2 bg-base-200 flex items-center justify-center overflow-hidden">
                         {sector.image ? (
                             <img src={sector.image} alt={sector.name} className="object-cover w-full h-full" />
                         ) : (

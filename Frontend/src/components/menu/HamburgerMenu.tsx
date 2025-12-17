@@ -17,7 +17,13 @@ const HamburgerMenu = () => {
 
     const toggleMenu = () => setIsOpen(!isOpen);
 
-    const goToProfile = () => navigate('/perfil');
+    const goToProfile = () => {
+        if (user?.data.name) {
+            navigate('/perfil')
+        } else {
+            navigate('/completar-perfil')
+        }
+    };
 
     // Fecha o menu automaticamente quando a rota mudar
     useEffect(() => {
@@ -71,26 +77,43 @@ const HamburgerMenu = () => {
                         title="Ir para o Perfil"
                     >
                         {user ? (
-                            <>
-                                <div className="text-right hidden sm:block">
-                                    <p className="text-sm font-bold text-secondary leading-none">{user.data.name}</p>
-                                    <p className="text-xs text-gray-500 mt-1">Ver Perfil</p>
-                                </div>
-                                
-                                <div className="avatar placeholder">
-                                    <div className="bg-primary text-primary-content rounded-full w-10 h-10 ring ring-primary ring-offset-base-100 ring-offset-2">
-                                        {user.data.image ? (
-                                            <img src={user.data.image} alt={user.data.name} />
-                                        ) : (
-                                            <span className="text-lg font-semibold">
-                                                {user.data.name.charAt(0).toUpperCase()}
-                                            </span>
-                                        )}
+                            // ESTADO 1: USUÁRIO LOGADO
+                            !user.data.name ? (
+                                /* --- SUB-ESTADO: LOGADO MAS SEM NOME (PENDENTE) --- */
+                                <button 
+                                    className="btn btn-sm btn-warning animate-pulse text-white"
+                                >
+                                    ⚠️ Completar Cadastro
+                                </button>
+                            ) : (
+                                /* --- SUB-ESTADO: PERFIL COMPLETO --- */
+                                <div className="flex items-center gap-3">
+                                    <div className="text-right hidden sm:block">
+                                        <p className="text-sm font-bold text-secondary leading-none">
+                                            {user.data.name}
+                                        </p>
+                                        <p className="text-xs text-gray-500 mt-1 cursor-pointer">Ver Perfil</p>
+                                    </div>
+                                    
+                                    <div className="avatar placeholder">
+                                        <div className="bg-primary text-primary-content rounded-full w-10 h-10 ring ring-primary ring-offset-base-100 ring-offset-2">
+                                            {user.data.image ? (
+                                                <img src={user.data.image} alt={user.data.name} />
+                                            ) : (
+                                                <span className="text-lg font-semibold">
+                                                    {user.data.name.charAt(0).toUpperCase()}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-                            </>
+                            )
                         ) : (
-                            <button className="btn btn-sm btn-outline btn-primary">
+                            // ESTADO 2: NÃO LOGADO
+                            <button 
+                                className="btn btn-sm btn-outline btn-primary"
+                                onClick={() => navigate('/entrar')}
+                            >
                                 Entrar
                             </button>
                         )}

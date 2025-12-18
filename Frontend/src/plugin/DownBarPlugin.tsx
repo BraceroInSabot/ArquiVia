@@ -1,4 +1,4 @@
-import { useState, type JSX } from 'react';
+import { useState, useEffect, type JSX } from 'react';
 import { useParams } from 'react-router-dom';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 //@ts-ignore
@@ -8,7 +8,8 @@ import { $generateHtmlFromNodes } from '@lexical/html';
 import { type EditorState } from 'lexical'; 
 import { 
   Save, History, Paperclip, 
-  Eye, RotateCcw, Loader2, X 
+  Eye, RotateCcw, Loader2, X,
+  Lock, Unlock 
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -34,6 +35,9 @@ export default function ActionsPlugin({isAutosaveActive, onAutosaveToggle, isGlo
     const [viewingState, setViewingState] = useState<string | null>(null);
     const [isFilesModalOpen, setIsFilesModalOpen] = useState(false);
     const [isHistoryVisible, setIsHistoryVisible] = useState(false);
+    
+    const [isEditable, setIsEditable] = useState(() => editor.isEditable());
+
     const [apiHistory, setApiHistory] = useState<DocumentHistory[]>([]);
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
@@ -42,6 +46,21 @@ export default function ActionsPlugin({isAutosaveActive, onAutosaveToggle, isGlo
         historyEntry: null
     });
     const [isReverting, setIsReverting] = useState(false);
+
+    useEffect(() => {
+        return editor.registerEditableListener((editable) => {
+            setIsEditable(editable);
+        });
+    }, [editor]);
+
+    const toggleLock = () => {
+        editor.setEditable(!isEditable);
+        if (isEditable) {
+            toast("Modo Leitura: Editor bloqueado.", { icon: '🔒' });
+        } else {
+            toast("Modo Edição: Editor desbloqueado.", { icon: '🔓' });
+        }
+    };
 
     const handleFilesClick = () => {
         if (documentId) setIsFilesModalOpen(true);
@@ -106,11 +125,13 @@ export default function ActionsPlugin({isAutosaveActive, onAutosaveToggle, isGlo
     };
 
     return (
-        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-[100] flex flex-col items-center">
+        // FIX 1: Container fixo usando w-full e justify-center.
+        // Isso impede que ele force a largura da página além de 100vw.
+        <div className="fixed bottom-6 left-0 w-full z-[100] flex justify-center pointer-events-none px-4">
             
-            {/* --- PAINEL DE HISTÓRICO (Popover) --- */}
+            {/* --- PAINEL DE HISTÓRICO --- */}
             {isHistoryVisible && (
-                <div className="card bg-base-100 shadow-2xl w-80 border border-base-200 absolute bottom-16 animate-slide-up">
+                <div className="card bg-base-100 shadow-2xl w-80 border border-base-200 absolute bottom-16 animate-slide-up pointer-events-auto">
                     <div className="card-body p-0 overflow-hidden">
                         <div className="flex justify-between items-center p-3 bg-base-200/50 border-b border-base-200">
                             <h3 className="font-bold text-sm text-secondary">Histórico de Versões</h3>
@@ -172,49 +193,68 @@ export default function ActionsPlugin({isAutosaveActive, onAutosaveToggle, isGlo
                 </div>
             )}
 
-            {/* --- BARRA DE AÇÕES (Toolbar DaisyUI) --- */}
-            <div className="join bg-base-100 shadow-lg rounded-full border border-base-300 p-1">
+            {/* --- BARRA DE AÇÕES FIXA (SEM SCROLL) --- */}
+            {/* - pointer-events-auto: Habilita cliques
+                - flex-nowrap: Garante que fique em linha
+                - gap-1: Espaçamento mínimo
+            */}
+            <div className="pointer-events-auto flex items-center justify-center gap-1 sm:gap-2 p-1.5 bg-base-100 shadow-xl rounded-full border border-base-300 max-w-full">
                 
-                {/* Botão Salvar */}
+                {/* Botão Salvar: Icone sempre, Texto apenas em SM+ */}
                 <button
                     onClick={onManualSave}
-                    className="join-item btn btn-sm btn-primary rounded-full px-4 text-white border-none"
+                    disabled={!isEditable}
+                    className={`btn btn-sm btn-primary rounded-full px-2 sm:px-4 text-white border-none ${!isEditable ? 'opacity-50 cursor-not-allowed' : ''}`}
                     title="Salvar Agora"
                 >
                     <Save size={18} />
                     <span className="hidden sm:inline ml-1">Salvar</span>
                 </button>
                 
+                {/* Divisor: Oculto no Mobile para economizar espaço */}
+                <div className="hidden sm:block w-px h-6 bg-base-200 mx-1"></div>
+
                 {/* Toggle AutoSave */}
                 <button
                     onClick={onAutosaveToggle}
-                    className={`join-item btn btn-sm border-none font-normal text-xs ${isAutosaveActive ? 'bg-success/10 text-success' : 'bg-base-200 text-gray-500'}`}
+                    disabled={!isEditable}
+                    className={`btn btn-sm btn-ghost rounded-full text-[10px] sm:text-xs font-normal px-2 ${isAutosaveActive ? 'text-success bg-success/10' : 'text-gray-400'}`}
                     title={isAutosaveActive ? "Auto-salvamento Ativado" : "Desativado"}
                 >
+                    {/* No mobile pode mostrar só 'AUTO' ou abreviação se ficar apertado, mas aqui cabe */}
                     {isAutosaveActive ? 'AUTO ON' : 'AUTO OFF'}
                 </button>
 
-                {/* Divisor */}
-                <div className="join-item w-px bg-base-300 mx-1 my-1"></div>
+                <div className="hidden sm:block w-px h-6 bg-base-200 mx-1"></div>
 
                 {/* Histórico */}
-                <div className="tooltip" data-tip="Histórico">
+                <div className="tooltip tooltip-top" data-tip="Histórico">
                     <button
                         onClick={handleHistoryClick}
-                        className={`join-item btn btn-sm btn-circle btn-ghost ${isHistoryVisible ? 'bg-base-200 text-primary' : ''}`}
+                        className={`btn btn-sm btn-circle btn-ghost ${isHistoryVisible ? 'bg-base-200 text-primary' : ''}`}
                     >
                         <History size={20} />
                     </button>
                 </div>
 
                 {/* Anexos */}
-                <div className="tooltip" data-tip="Anexos">
+                <div className="tooltip tooltip-top" data-tip="Anexos">
                     <button
                         onClick={handleFilesClick}
-                        className="join-item btn btn-sm btn-circle btn-ghost"
+                        className="btn btn-sm btn-circle btn-ghost"
                         disabled={!documentId}
                     >
                         <Paperclip size={20} />
+                    </button>
+                </div>
+
+                {/* Bloquear/Desbloquear */}
+                <div className="tooltip tooltip-top" data-tip={isEditable ? "Bloquear Edição" : "Desbloquear Edição"}>
+                    <button
+                        onClick={toggleLock}
+                        className={`btn btn-sm btn-circle btn-ghost ${!isEditable ? 'text-error bg-error/10' : 'text-gray-500'}`}
+                    >
+                        {isEditable ? <Unlock size={20} /> : <Lock size={20} />}
                     </button>
                 </div>
 

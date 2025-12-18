@@ -233,9 +233,9 @@ const EditDocumentPage = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto flex justify-center p-4 md:p-8 relative">
+      <div className="flex overflow-y-auto flex justify-center">
           
-          <div className="bg-white w-full max-w-[850px] min-h-[1100px] h-fit mb-8 p-2 shadow-lg rounded-none md:rounded-lg border border-base-300 flex flex-col relative">
+          <div className="bg-white w-full max-w-[850px] min-h-[1100px] h-fit mb-20 p-2 shadow-lg rounded-none md:rounded-lg border border-base-300 flex flex-col relative">
             
             <LexicalComposer initialConfig={baseInitialConfig}>
                 <div className="flex flex-col flex-grow h-full relative">

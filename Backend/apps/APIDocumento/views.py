@@ -381,12 +381,7 @@ class DocumentSearchView(APIView):
         if categories_list:
             queryset = queryset.filter(categories__category__in=categories_list)
 
-        if querySearch:
-            safe_content = Left(
-                Cast(Coalesce('content', Value('{}')), TextField()), # type: ignore
-                999_999 # 1MB é 1048576, usamos 1M para ter margem
-            )
-            
+        if querySearch:            
             vector = (
                 SearchVector('title', weight='B', config='portuguese') + 
                 SearchVector('search_content', weight='A', config='portuguese')
@@ -405,7 +400,7 @@ class DocumentSearchView(APIView):
             ).annotate(
                 similarity=Greatest('sim_title', 'sim_content')
             ).filter(
-                Q(rank__gte=0.5) | Q(similarity__gt=0.3)
+                Q(rank__gte=0.05) | Q(similarity__gt=0.03)
             ).order_by('-similarity','-rank')
         else:
             queryset = queryset.order_by('-created_at')
@@ -422,6 +417,7 @@ class DocumentSearchView(APIView):
         
         paginator = DocumentPagination()
         result_page = paginator.paginate_queryset(queryset, request, view=self)
+        # result_page = self.get_categories_color(result_page)
         
         if result_page is not None:
             serializer = self.serializer_class(result_page, many=True)

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Save, X, Loader2, AlertCircle, Pencil } from 'lucide-react';
+import { Save, X, Loader2, AlertCircle, Pencil, Palette } from 'lucide-react'; // Adicionei Palette
 import documentService from '../../services/Document/api';
 import type { Category, UpdateCategoryPayload } from '../../services/core-api';
 
@@ -14,6 +14,7 @@ interface EditCategoryModalProps {
 const EditCategoryModal: React.FC<EditCategoryModalProps> = ({ sectorId, category, onClose, onSuccess }) => {
   const [name, setName] = useState(category.category);
   const [description, setDescription] = useState(category.description || '');
+  const [color, setColor] = useState(category.color || '#000000'); 
   const [isPublic, setIsPublic] = useState(category.is_public);
   
   const [isSaving, setIsSaving] = useState(false);
@@ -27,11 +28,13 @@ const EditCategoryModal: React.FC<EditCategoryModalProps> = ({ sectorId, categor
     setError(null);
 
     try {
+      // Adicionamos a cor ao payload
       const payload: UpdateCategoryPayload = {
         sector_id: sectorId,
         category: name,
         description: description,
         is_public: isPublic,
+        color: color, 
       };
 
       await documentService.updateCategory(category.category_id, payload);
@@ -83,20 +86,42 @@ const EditCategoryModal: React.FC<EditCategoryModalProps> = ({ sectorId, categor
 
         <form onSubmit={handleSave} className="space-y-4">
           
-          {/* Nome */}
-          <div className="form-control w-full">
-            <label htmlFor="cat_name" className="label">
-              <span className="label-text font-semibold text-secondary">Nome da Categoria</span>
-            </label>
-            <input 
-              type="text" 
-              id="cat_name"
-              className="input input-bordered input-primary w-full"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              placeholder="Ex: Contratos 2024"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4 items-start">
+            {/* Nome */}
+            <div className="form-control w-full">
+                <label htmlFor="cat_name" className="label">
+                <span className="label-text font-semibold text-secondary">Nome da Categoria</span>
+                </label>
+                <input 
+                type="text" 
+                id="cat_name"
+                className="input input-bordered input-primary w-full"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                placeholder="Ex: Contratos 2024"
+                />
+            </div>
+
+            {/* Input de Cor */}
+            <div className="form-control">
+                <label htmlFor="cat_color" className="label">
+                    <span className="label-text font-semibold text-secondary flex items-center gap-1">
+                        <Palette size={14}/> Cor
+                    </span>
+                </label>
+                <div className="flex items-center gap-2">
+                    <div className="w-12 h-12 rounded-lg overflow-hidden border border-base-300 shadow-sm relative cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all">
+                        <input
+                            type="color"
+                            id="cat_color"
+                            value={color}
+                            onChange={(e) => setColor(e.target.value)}
+                            className="absolute -top-2 -left-2 w-16 h-16 p-0 border-0 cursor-pointer"
+                        />
+                    </div>
+                </div>
+            </div>
           </div>
 
           {/* Descrição */}

@@ -198,10 +198,12 @@ export interface Category {
   category: string; 
   description: string | null;
   is_public: boolean;
+  color: string;
 }
 
 export interface CreateCategoryPayload {
   category: string;
+  color: string;
   description?: string;
   is_public?: boolean;
   category_sector: number;
@@ -212,6 +214,7 @@ export interface UpdateCategoryPayload {
   category?: string;
   description?: string;
   is_public?: boolean;
+  color: string;
 }
 
 export interface AddCategoriesPayload {

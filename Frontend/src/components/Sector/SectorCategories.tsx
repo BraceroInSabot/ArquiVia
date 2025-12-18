@@ -162,12 +162,20 @@ const SectorCategories: React.FC<SectorCategoriesProps> = ({ sectorId }) => {
               <div className="card-body p-5">
                 
                 <div className="flex justify-between items-start mb-2">
+                  <div className='flex gap-2'>
                     <h4 className="card-title text-base text-secondary line-clamp-1" title={category.category}>
                         {category.category}
                     </h4>
-                    <div className={`badge badge-sm ${category.is_public ? 'badge-success text-white' : 'badge-neutral'} gap-1`}>
-                        {category.is_public ? 'Pública' : 'Privada'}
+                    <div 
+                        aria-label="status" 
+                        className='h-3 w-3 rounded-full shadow-sm shrink-0' 
+                        style={{backgroundColor: category.color}}
+                    >
                     </div>
+                  </div>
+                  <div className={`badge badge-sm ${category.is_public ? 'badge-success text-white' : 'badge-neutral'} gap-1`}>
+                      {category.is_public ? 'Pública' : 'Privada'}
+                  </div>
                 </div>
 
                 <p className="text-sm text-gray-500 line-clamp-2 min-h-[40px]">

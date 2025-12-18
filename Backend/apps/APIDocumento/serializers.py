@@ -3,6 +3,7 @@ from django.db import transaction
 from .models import Attached_Files_Document, Document, Classification, Category, Classification_Status, Classification_Privacity
 from apps.APISetor.models import Sector, SectorUser
 from apps.core.utils import optimize_image
+from typing import List, Dict
 
 class DocumentCreateSerializer(serializers.ModelSerializer):
     """
@@ -149,10 +150,28 @@ class DocumentListSerializer(serializers.ModelSerializer):
     sector = serializers.CharField(source='sector.name', read_only=True)
     
     enterprise = serializers.CharField(source='sector.enterprise.name', read_only=True)
+    
+    categories_data = serializers.SerializerMethodField()
+    
+    def get_categories_data(self, obj: Document) -> List[Dict[str, str]]:
+        """
+        Search for categories linked to document object.
+        """
+        categories_data = []
+        
+        print(obj.categories.all())
+
+        for category in obj.categories.all():
+            categories_data.append({
+                'category': category.category,
+                'color': category.color
+            })
+            
+        return categories_data
 
     class Meta:
         model = Document
-        fields = ['document_id', 'title', 'creator_name', 'created_at', 'is_active', 'sector', 'enterprise']
+        fields = ['document_id', 'title', 'creator_name', 'created_at', 'is_active', 'sector', 'enterprise', 'categories_data']
         
 class DocumentUpdateSerializer(serializers.ModelSerializer):
     """

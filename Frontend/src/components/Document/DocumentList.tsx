@@ -30,6 +30,20 @@ interface ConfirmConfig {
   confirmText: string;
 }
 
+const getContrastColor = (hexcolor: string) => {
+  if (!hexcolor) return '#000000';
+  
+  const hex = hexcolor.replace("#", "");
+  
+  const r = parseInt(hex.substr(0,2),16);
+  const g = parseInt(hex.substr(2,2),16);
+  const b = parseInt(hex.substr(4,2),16);
+  
+  const yiq = ((r*299)+(g*587)+(b*114))/1000;
+  
+  return (yiq >= 128) ? '#000000' : '#FFFFFF';
+};
+
 const PAGE_SIZE = 21; 
 
 const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
@@ -44,6 +58,7 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDocId, setSelectedDocId] = useState<number | null>(null);
   const [searchMessage, setSearchMessage] = useState<string>('');
+  const [areLabelsExpanded, setAreLabelsExpanded] = useState(false);
   
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [confirmConfig, setConfirmConfig] = useState<ConfirmConfig>({
@@ -181,12 +196,48 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
     <div className={`card bg-base-100 shadow-md hover:shadow-lg transition-all duration-200 border border-base-200 h-full ${!doc.is_active ? 'opacity-75 bg-base-200/50' : ''}`}>
       <div className="card-body p-5 flex flex-col h-full">
         
-        <div className="flex items-start justify-between mb-2">
+        <div className="flex items-start justify-between">
            <h3 className="card-title text-base text-secondary line-clamp-2 min-h-[3rem]" title={doc.title}>
              {doc.title || "Sem Título"}
            </h3>
            {/* Indicador de Status */}
            <div className={`badge badge-xs ${doc.is_active ? 'badge-success' : 'badge-warning'}`}></div>
+        </div>
+        <div 
+            className="flex flex-wrap gap-1.5 min-h-[1.5rem] content-start cursor-pointer group"
+            onClick={(e) => {
+                e.stopPropagation(); // Evita abrir o card se tiver clique no card
+                setAreLabelsExpanded(!areLabelsExpanded);
+            }}
+            title="Clique para expandir/colapsar etiquetas"
+        >
+          {doc?.categories_data?.map((category, index) => (
+             <span 
+                key={index}
+                className={`
+                    transition-all duration-300 rounded font-bold text-xs
+                    ${areLabelsExpanded 
+                        ? 'px-2 py-1 badge border-none h-auto' // Modo Expandido
+                        : 'w-8 h-2 hover:w-10 hover:opacity-80' // Modo Colapsado (Barra)
+                    }
+                `}
+                style={{
+                    backgroundColor: category.color,
+                    // Aplica contraste apenas se expandido, senão transparente
+                    color: areLabelsExpanded ? getContrastColor(category.color) : 'transparent'
+                }}
+             >
+                {/* Só mostra o texto se estiver expandido */}
+                {areLabelsExpanded && category.category}
+             </span>
+          ))}
+          {(
+            !doc?.categories_data 
+            ||
+            //@ts-ignore 
+            doc.categories_data.length === 0) && (
+             <span className="text-xs text-gray-400 italic select-none">Sem categorias</span>
+          )}
         </div>
         
         <div className="text-xs text-gray-500 space-y-1.5 flex-grow">

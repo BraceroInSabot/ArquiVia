@@ -154,6 +154,10 @@ export interface DocumentList {
   is_active: boolean;
   sector: string;
   enterprise: string;
+  categories_data: [{
+    category: string,
+    color:string
+  }] | null;
 }
 
 export interface UpdateDocumentPayload {

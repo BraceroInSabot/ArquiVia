@@ -107,6 +107,7 @@ class CreateCategorySerializer(ModelSerializer):
         model = Category
         fields = [
             'category',
+            'color',
             'description',
             'category_sector',
             'category_enterprise',
@@ -129,6 +130,7 @@ class CategoryListSerializer(serializers.ModelSerializer):
             'sector_name',
             'enterprise_name',
             'is_public',
+            'color'
         ]
         
 class CategoryDetailSerializer(serializers.ModelSerializer):
@@ -146,7 +148,8 @@ class CategoryDetailSerializer(serializers.ModelSerializer):
             'description',
             'is_public',
             'enterprise_name',
-            'sector_name'
+            'sector_name',
+            'color'
         ]
         
 class UpdateCategorySerializer(serializers.ModelSerializer):
@@ -166,7 +169,7 @@ class UpdateCategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ['category', 'description', 'category_sector', 'is_public']
+        fields = ['category', 'description', 'category_sector', 'is_public', 'color']
 
     def validate_category(self, value):
         """

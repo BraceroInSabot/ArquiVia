@@ -148,6 +148,7 @@ class Category(models.Model):
         null=False, 
         blank=False)
     is_public = models.BooleanField(default=False, db_column='is_public_category')
+    color = models.CharField(max_length=7, default='#FFFFFF', null=True, blank=True, db_column='color_category')
     
 
     def __str__(self):

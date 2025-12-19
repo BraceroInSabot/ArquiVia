@@ -134,7 +134,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 SITE_ID = 1
 
 REST_USE_JWT = True
-# JWT_AUTH_COOKIE = 'access_token' 
+JWT_AUTH_COOKIE = 'access_token' 
 JWT_AUTH_REFRESH_COOKIE = 'refresh_token'
 
 ACCOUNT_USER_MODEL_USERNAME_FIELD = 'username'

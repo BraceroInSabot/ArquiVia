@@ -43,8 +43,6 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "apps.APIUser.utils.autenticacao.CookiesJWTAuth",
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-        "rest_framework.authentication.SessionAuthentication",
-        "rest_framework.authentication.BasicAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": {
         "rest_framework.permissions.IsAuthenticated",
@@ -84,6 +82,8 @@ SIMPLE_JWT = {
         'no_active_account': 'As credenciais fornecidas estão incorretas ou a conta está inativa.'
     }
 }
+
+REST_SESSION_LOGIN = False
 
 TEMPLATES = [
     {

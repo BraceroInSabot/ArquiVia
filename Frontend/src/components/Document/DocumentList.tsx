@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Eye, Settings, User, Calendar, SearchX, Loader2, AlertCircle, 
-  Trash2, Power, Building, Layers, Archive 
+  Trash2, Power, Building, Layers, Archive, Edit, FileText
 } from 'lucide-react'; 
 
 import type { DocumentList, DocumentFilters, PaginatedResponse } from '../../services/core-api';
@@ -192,115 +192,179 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters }) => {
     return null;
   };
 
-  const renderDocCard = (doc: DocumentList) => (
-    <div className={`card bg-base-100 shadow-md hover:shadow-lg transition-all duration-200 border border-base-200 h-full ${!doc.is_active ? 'opacity-75 bg-base-200/50' : ''}`}>
-      <div className="card-body p-5 flex flex-col h-full">
+  const handleS3FileDownload = (fileUrl: string) => {
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.download = '';
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const renderDocCard = (doc: DocumentList) => {
+    // Verifica se tem imagem para exibir
+    //@ts-ignore
+    const hasThumbnail = doc.is_uploaded_document && doc.thumbnail_path;
+    const file_url: string = doc.file_url || '';
+
+    return (
+      <div className={`card w-full h-[28rem] bg-base-100 shadow-md hover:shadow-xl transition-all duration-300 border border-base-200 flex flex-col ${!doc.is_active ? 'opacity-75 grayscale-[0.5]' : ''}`}>
         
-        <div className="flex items-start justify-between">
-           <h3 className="card-title text-base text-secondary line-clamp-2 min-h-[3rem]" title={doc.title}>
-             {doc.title || "Sem Título"}
-           </h3>
-           {/* Indicador de Status */}
-           <div className={`badge badge-xs ${doc.is_active ? 'badge-success' : 'badge-warning'}`}></div>
-        </div>
-        <div 
-            className="flex flex-wrap gap-1.5 min-h-[1.5rem] content-start cursor-pointer group"
-            onClick={(e) => {
-                e.stopPropagation(); // Evita abrir o card se tiver clique no card
-                setAreLabelsExpanded(!areLabelsExpanded);
-            }}
-            title="Clique para expandir/colapsar etiquetas"
+        {/* --- ÁREA SUPERIOR (IMAGEM OU ICONE) --- */}
+        <figure 
+            className="h-44 w-full relative overflow-hidden bg-base-200 shrink-0 group cursor-pointer"
+            onClick={() => handleS3FileDownload(file_url)}
         >
-          {doc?.categories_data?.map((category, index) => (
-             <span 
-                key={index}
-                className={`
-                    transition-all duration-300 rounded font-bold text-xs
-                    ${areLabelsExpanded 
-                        ? 'px-2 py-1 badge border-none h-auto' // Modo Expandido
-                        : 'w-8 h-2 hover:w-10 hover:opacity-80' // Modo Colapsado (Barra)
-                    }
-                `}
-                style={{
-                    backgroundColor: category.color,
-                    // Aplica contraste apenas se expandido, senão transparente
-                    color: areLabelsExpanded ? getContrastColor(category.color) : 'transparent'
+            {/* 1. Imagem de Fundo ou Placeholder */}
+            {hasThumbnail ? (
+                <img 
+                    // @ts-ignore
+                    src={doc.thumbnail_path} 
+                    alt={doc.title} 
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                />
+            ) : (
+                <div className="w-full h-full flex items-center justify-center text-base-content/20 group-hover:text-primary/50 transition-colors">
+                    {/* Ícone Gigante do DaisyUI/Lucide como fallback */}
+                    <FileText size={64} strokeWidth={1} />
+                </div>
+            )}
+
+            {/* Overlay Escuro no Hover (Opcional, para dar foco) */}
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+
+            {/* 2. TÍTULO SOBREPOSTO (Canto Superior Esquerdo) */}
+            <div className="absolute top-3 left-3 right-3 z-10 flex items-start gap-2">
+                <div className="bg-base-100/95 backdrop-blur-sm p-3 rounded-lg shadow-sm border border-base-200 max-w-full flex-1">
+                    <div className="flex justify-between items-start gap-2">
+                        <h3 
+                            className="font-bold text-sm text-secondary line-clamp-2 leading-tight" 
+                            title={doc.title}
+                        >
+                            {doc.title || "Sem Título"}
+                        </h3>
+                        {/* Status Indicator (movido para cá para ficar junto ao cabeçalho) */}
+                        <div 
+                            className={`badge badge-xs shrink-0 mt-1 ${doc.is_active ? 'badge-success' : 'badge-warning'}`} 
+                            title={doc.is_active ? "Ativo" : "Inativo"}
+                        />
+                    </div>
+                </div>
+            </div>
+        </figure>
+
+        {/* --- CORPO DO CARD --- */}
+        <div className="card-body p-4 flex flex-col flex-nowrap h-full overflow-hidden">
+            
+            {/* Área de Categorias (Trello Style) */}
+            {/* Adicionei 'shrink-0' para garantir que não suma se faltar espaço */}
+            <div 
+                className="flex flex-wrap gap-1.5 min-h-[1.5rem] content-start cursor-pointer group shrink-0 mb-2"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    setAreLabelsExpanded(!areLabelsExpanded);
                 }}
-             >
-                {/* Só mostra o texto se estiver expandido */}
-                {areLabelsExpanded && category.category}
-             </span>
-          ))}
-          {(
-            !doc?.categories_data 
-            ||
-            //@ts-ignore 
-            doc.categories_data.length === 0) && (
-             <span className="text-xs text-gray-400 italic select-none">Sem categorias</span>
-          )}
-        </div>
-        
-        <div className="text-xs text-gray-500 space-y-1.5 flex-grow">
-          <div className="flex items-center gap-2" title="Empresa">
-            <Building size={14} className="text-primary opacity-70" />
-            <span className="truncate">{doc.enterprise || "N/A"}</span>
-          </div>
-          <div className="flex items-center gap-2" title="Setor">
-            <Layers size={14} className="text-primary opacity-70" />
-            <span className="truncate">{doc.sector || "N/A"}</span>
-          </div>
-          <div className="flex items-center gap-2" title="Criador">
-            <User size={14} className="text-primary opacity-70" />
-            <span className="truncate">{doc.creator_name}</span>
-          </div>
-          <div className="flex items-center gap-2" title="Data de Criação">
-            <Calendar size={14} className="text-primary opacity-70" />
-            <span>{doc.created_at}</span>
-          </div>
-        </div>
+                title="Clique para expandir/colapsar etiquetas"
+            >
+                {doc?.categories_data?.map((category, index) => (
+                    <span 
+                        key={index}
+                        className={`
+                            transition-all duration-300 rounded font-bold text-[10px]
+                            ${areLabelsExpanded 
+                                ? 'px-2 py-0.5 badge border-none h-auto' 
+                                : 'w-8 h-1.5 hover:w-10 hover:opacity-80 rounded-full' 
+                            }
+                        `}
+                        style={{
+                            backgroundColor: category.color,
+                            color: areLabelsExpanded ? getContrastColor(category.color) : 'transparent'
+                        }}
+                    >
+                        {areLabelsExpanded && category.category}
+                    </span>
+                ))}
+                {//@ts-ignore
+                (!doc?.categories_data || doc.categories_data.length === 0) && (
+                    <span className="text-[10px] text-gray-300 italic select-none">Sem etiquetas</span>
+                )}
+            </div>
 
-        <div className="card-actions justify-end gap-1">
-          <div className="tooltip tooltip-bottom" data-tip="Abrir">
-            <button 
-              onClick={() => handleEditClick(doc.document_id)} 
-              className="btn btn-square btn-sm btn-ghost text-primary hover:bg-primary/10"
-            >
-              <Eye size={18} />
-            </button>
-          </div>
-          
-          <div className="tooltip tooltip-bottom" data-tip="Configurações">
-            <button 
-              onClick={() => handleModalOpen(doc.document_id)} 
-              className="btn btn-square btn-sm btn-ghost text-secondary hover:bg-secondary/10"
-            >
-              <Settings size={18} />
-            </button>
-          </div>
+            {/* Metadados (Flex Grow para ocupar espaço, mas truncando se necessário) */}
+            <div className="text-xs text-gray-500 space-y-2 flex-grow min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-base-300 pr-1">
+                <div className="flex items-center gap-2" title="Empresa">
+                    <Building size={14} className="text-primary opacity-70 shrink-0" />
+                    <span className="truncate">{doc.enterprise || "N/A"}</span>
+                </div>
+                <div className="flex items-center gap-2" title="Setor">
+                    <Layers size={14} className="text-primary opacity-70 shrink-0" />
+                    <span className="truncate">{doc.sector || "N/A"}</span>
+                </div>
+                <div className="flex items-center gap-2" title="Criador">
+                    <User size={14} className="text-primary opacity-70 shrink-0" />
+                    <span className="truncate">{doc.creator_name}</span>
+                </div>
+                <div className="flex items-center gap-2" title="Data de Criação">
+                    <Calendar size={14} className="text-primary opacity-70 shrink-0" />
+                    <span>{doc.created_at}</span>
+                </div>
+            </div>
 
-          <div className="w-px h-6 bg-base-300 mx-1 self-center"></div>
+            {/* Ações (Fixas no rodapé do corpo) */}
+            <div className="card-actions justify-end gap-1 mt-auto pt-3 border-t border-base-200">
+                { file_url == '' ? (
+                <div className="tooltip tooltip-left" data-tip="Abrir">
+                    <button 
+                        onClick={() => handleEditClick(doc.document_id)}
+                        className="btn btn-square btn-sm btn-ghost text-primary hover:bg-primary/10"
+                    >
+                        <Edit size={18} />
+                    </button>
+                </div>
+                ) : (
+                  <div className="tooltip tooltip-left" data-tip="Abrir">
+                    <button 
+                        onClick={() => handleS3FileDownload(file_url)} 
+                        className="btn btn-square btn-sm btn-ghost text-primary hover:bg-primary/10"
+                    >
+                        <Eye size={18} />
+                    </button>
+                </div>
+                )}
+                <div className="tooltip tooltip-top" data-tip="Configurações">
+                    <button 
+                        onClick={() => handleModalOpen(doc.document_id)} 
+                        className="btn btn-square btn-sm btn-ghost text-secondary hover:bg-secondary/10"
+                    >
+                        <Settings size={18} />
+                    </button>
+                </div>
 
-          <div className="tooltip tooltip-bottom" data-tip={doc.is_active ? 'Desativar' : 'Ativar'}>
-            <button 
-              onClick={() => requestToggleStatus(doc)} 
-              className={`btn btn-square btn-sm btn-ghost ${doc.is_active ? 'text-warning hover:bg-warning/10' : 'text-success hover:bg-success/10'}`}
-            >
-              <Power size={18} />
-            </button>
-          </div>
-          
-          <div className="tooltip tooltip-bottom" data-tip="Excluir">
-            <button 
-              onClick={() => requestDelete(doc)} 
-              className="btn btn-square btn-sm btn-ghost text-error hover:bg-error/10"
-            >
-               <Trash2 size={18} />
-            </button>
-          </div>
+                <div className="w-px h-5 bg-base-300 mx-1 self-center"></div>
+
+                <div className="tooltip tooltip-top" data-tip={doc.is_active ? 'Desativar' : 'Ativar'}>
+                    <button 
+                        onClick={() => requestToggleStatus(doc)} 
+                        className={`btn btn-square btn-sm btn-ghost ${doc.is_active ? 'text-warning hover:bg-warning/10' : 'text-success hover:bg-success/10'}`}
+                    >
+                        <Power size={18} />
+                    </button>
+                </div>
+                
+                <div className="tooltip tooltip-top" data-tip="Excluir">
+                    <button 
+                        onClick={() => requestDelete(doc)} 
+                        className="btn btn-square btn-sm btn-ghost text-error hover:bg-error/10"
+                    >
+                        <Trash2 size={18} />
+                    </button>
+                </div>
+            </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
 
   if (loading) {

@@ -2,6 +2,7 @@ from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView, Response
 from django.contrib.auth import get_user_model
+from apps.core.tasks import process_media_asset
 from apps.core.pagination import DocumentPagination
 from apps.APIEmpresa.models import Enterprise
 from apps.APISetor.models import Sector, SectorUser
@@ -23,6 +24,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank, TrigramSimilarity
 from django.db.models import Value, TextField
 from django.db.models.functions import Coalesce, Cast, Greatest, Left
+from rest_framework import generics, permissions
 
 User = get_user_model()
 
@@ -442,4 +444,44 @@ class DocumentSearchView(APIView):
             data=serializer.data
         )
         return res
-    
+
+# Document Import
+
+## File upload for S3.
+## Just brute code. Uses celery, handle with caution! (Memory leaks on serverside)
+
+class FileUploadView(APIView):
+    """
+    Receive the file and save it on S3. Also triggers for celery stack task.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser)
+
+    def post(self, request, *args, **kwargs):
+        file_obj = request.FILES.get('file')
+        
+        if not file_obj:
+            res = Response()
+            res.status_code = 400
+            res.data = default_response(success=False, message="Nenhum arquivo enviado")
+            return res
+
+        serializer = DocumentCreateSerializer(
+            data=request.data, 
+            context={'request': request, 'file_obj': file_obj}
+        )
+        
+        serializer.is_valid(raise_exception=True)
+        
+        document = serializer.save()
+        process_media_asset.delay(document.pk) # type: ignore
+
+        res = Response()
+        res.status_code = 201
+        res.data = default_response(
+            success=True, 
+            message="Documento recebido com sucesso e está sendo processado.", 
+            data={"document_id": str(document.pk)} # type: ignore
+            )
+        return res
+        

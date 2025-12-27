@@ -5,6 +5,9 @@ from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 from apps.core.utils import rename_file_for_s3
 from simple_history.models import HistoricalRecords
+from django.db import models
+from django.conf import settings
+import uuid
 
 User = get_user_model()
 
@@ -30,6 +33,8 @@ class Document(models.Model):
         db_column='FK_classification_document')
     created_at = models.DateTimeField(auto_now_add=True, db_column='date_created_at_document')
     is_active = models.BooleanField(default=True, db_column='is_active_document')
+    file_url = models.FileField(upload_to='uploaded_documents/', blank=True, default=None, db_column='file_url_document')
+    thumbnail_path = models.FileField(upload_to='thumbnails/', blank=True, default=None, db_column='thumbnail_path_document')
     
     history = HistoricalRecords(table_name='Document_Record')
     search_content = models.TextField(blank=True, null=True, db_column='search_content_document')
@@ -158,3 +163,4 @@ class Category(models.Model):
         db_table = 'Category'
         verbose_name = 'Category'
         verbose_name_plural = 'Categories'
+        

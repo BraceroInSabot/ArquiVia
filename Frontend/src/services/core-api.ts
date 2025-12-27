@@ -158,6 +158,7 @@ export interface DocumentList {
     category: string,
     color:string
   }] | null;
+  file_url?: string;
 }
 
 export interface UpdateDocumentPayload {
@@ -357,6 +358,31 @@ export interface AuthResponse {
     last_name?: string;
     username?: string;
   };
+}
+
+export interface MediaAssetUploadResponse {
+  media_asset_id: string;
+  status: 'PENDING' | 'PROCESSING' | 'DONE' | 'ERROR';
+  message: string;
+}
+
+export interface MediaAssetStatusResponse {
+  status: 'PENDING' | 'PROCESSING' | 'DONE' | 'ERROR';
+  thumbnail_url?: string;
+  error_message?: string;
+}
+
+export interface ImportDocumentPayload {
+  title: string;
+  description: string;
+  sector_id: number;
+  privacity_id: string;
+  media_asset_id: string;
+}
+
+export interface SectorSimple {
+  sector_id: number;
+  name: string;
 }
 
 const api = axios.create({

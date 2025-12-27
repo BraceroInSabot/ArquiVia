@@ -1,5 +1,5 @@
 import api from '../core-api';
-import type { Classification, CreateDocument, Document, DocumentList, ResponseStructure, UpdateDocumentPayload, UpdateClassificationPayload, Category, AddCategoriesPayload, CreateCategoryPayload, UpdateCategoryPayload, AttachedFile, DocumentHistory, DocumentFilters, AvailableCategorySearch, PaginatedResponse} from '../core-api';
+import type { Classification, CreateDocument, Document, DocumentList, ResponseStructure, UpdateDocumentPayload, UpdateClassificationPayload, Category, AddCategoriesPayload, CreateCategoryPayload, UpdateCategoryPayload, AttachedFile, DocumentHistory, DocumentFilters, AvailableCategorySearch, PaginatedResponse, MediaAssetStatusResponse, ImportDocumentPayload} from '../core-api';
 
 const documentService = {
     /**
@@ -209,6 +209,38 @@ const documentService = {
   deleteDocument(document_id: number): Promise<{ data: ResponseStructure<null> }> {
     return api.delete(`/documento/excluir/${document_id}/`);
   },
+
+  // IMPORTAÇÃO DE DOCUMENTOS VIA MEDIA ASSET
+
+  /**
+   * Passo 1: Envia o arquivo físico para processamento.
+   */
+  uploadMedia(file: File, sector_id?: number): Promise<{ data: ResponseStructure<any> }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (sector_id !== undefined) {
+      formData.append('sector', sector_id.toString());
+      formData.append('content', JSON.stringify({}));
+    }
+    
+    return api.post('/documento/importar/', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
+
+  /**
+   * Passo 2: Verifica o status do processamento (Polling).
+   */
+  checkMediaStatus(mediaAssetId: string) {
+    return api.get<MediaAssetStatusResponse>(`/documento/importar/status/${mediaAssetId}/`);
+  },
+
+  /**
+   * Passo 3: Cria o documento oficial vinculando o asset processado.
+   */
+  createDocumentFromImport(payload: ImportDocumentPayload) {
+    return api.post('/documento/importar/criar/', payload);
+  }
 };
 
 export default documentService;

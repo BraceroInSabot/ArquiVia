@@ -33,6 +33,8 @@ class Document(models.Model):
         db_column='FK_classification_document')
     created_at = models.DateTimeField(auto_now_add=True, db_column='date_created_at_document')
     is_active = models.BooleanField(default=True, db_column='is_active_document')
+    file_url = models.FileField(upload_to='uploaded_documents/', blank=True, default=None, db_column='file_url_document')
+    thumbnail_path = models.FileField(upload_to='thumbnails/', blank=True, default=None, db_column='thumbnail_path_document')
     
     history = HistoricalRecords(table_name='Document_Record')
     search_content = models.TextField(blank=True, null=True, db_column='search_content_document')
@@ -162,29 +164,3 @@ class Category(models.Model):
         verbose_name = 'Category'
         verbose_name_plural = 'Categories'
         
-class MediaAsset(models.Model):
-    """
-    Physic file in S3.
-    Work as a stagin area before upload to S3.
-    """
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    file_path = models.CharField(max_length=500)
-    original_name = models.CharField(max_length=255)
-    content_type = models.CharField(max_length=100)
-    size_bytes = models.BigIntegerField(default=0)
-    thumbnail_path = models.CharField(max_length=500, null=True, blank=True)
-    processing_status = models.CharField(
-        max_length=20, 
-        choices=[('PENDING', 'Pendente'), ('PROCESSING', 'Processando'), ('DONE', 'Pronto'), ('ERROR', 'Erro')],
-        default='PENDING'
-    )
-    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.original_name} ({self.processing_status})"
-    
-    class Meta:
-        db_table = 'MediaAsset'
-        verbose_name = 'Artigo de Mídia'
-        verbose_name_plural = 'Artigos de Mídia'

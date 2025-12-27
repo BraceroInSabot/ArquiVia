@@ -1,9 +1,14 @@
 from rest_framework import serializers
-from django.db import transaction 
+from django.db import transaction
+
+from apps.core.presigned_url import generate_presigned_url 
 from .models import Attached_Files_Document, Document, Classification, Category, Classification_Status, Classification_Privacity
 from apps.APISetor.models import Sector, SectorUser
 from apps.core.utils import optimize_image
 from typing import List, Dict
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class DocumentCreateSerializer(serializers.ModelSerializer):
     """
@@ -84,7 +89,15 @@ class DocumentCreateSerializer(serializers.ModelSerializer):
                 privacity=privacidade_padrao,
             )
             
+            title = "Novo Documento"
+            file_url = None
+            if self.context.get('file_obj'):
+                file_url = self.context['file_obj']
+                title = self.context['file_obj'].name
+
             documento = Document.objects.create(
+                title=title,
+                file_url=file_url,
                 creator=user,
                 classification=classification_to_set,
                 **validated_data
@@ -151,7 +164,17 @@ class DocumentListSerializer(serializers.ModelSerializer):
     
     enterprise = serializers.CharField(source='sector.enterprise.name', read_only=True)
     
+    is_uploaded_document = serializers.BooleanField(source='file_url', read_only=True)
+    
     categories_data = serializers.SerializerMethodField()
+    
+    download_url = serializers.SerializerMethodField()
+    
+    def get_download_url(self, obj: Document) -> None | str:
+        return generate_presigned_url(obj.file_url)
+    
+    def get_thumbnail_url(self, obj: Document) -> None | str:
+        return generate_presigned_url(obj.thumbnail_path)
     
     def get_categories_data(self, obj: Document) -> List[Dict[str, str]]:
         """
@@ -171,7 +194,20 @@ class DocumentListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Document
-        fields = ['document_id', 'title', 'creator_name', 'created_at', 'is_active', 'sector', 'enterprise', 'categories_data']
+        fields = [
+            'document_id', 
+            'title', 
+            'creator_name', 
+            'created_at', 
+            'is_active', 
+            'sector', 
+            'enterprise', 
+            'categories_data',
+            'file_url',
+            'download_url',
+            'thumbnail_path',
+            'is_uploaded_document'
+        ]
         
 class DocumentUpdateSerializer(serializers.ModelSerializer):
     """
@@ -237,4 +273,3 @@ class AttachFileSerializer(serializers.ModelSerializer):
             return optimized
         
         return value
-    

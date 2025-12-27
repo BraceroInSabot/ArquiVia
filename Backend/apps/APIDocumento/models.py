@@ -115,26 +115,33 @@ class Classification(models.Model):
         verbose_name = 'Classification'
         verbose_name_plural = 'Classifications'
         
-class Classification_Privacity(models.Model):
-    privacity_choices = [
-        ('PB', 'Publico'),
-        ('PV', 'Privado'),
-    ]
+class Classification_Privacity(models.Model):    
+    status_id = models.AutoField(primary_key=True, db_column='PK_status')
+    is_public = models.BooleanField(default=False, db_column='is_public_status')
+    is_private = models.BooleanField(default=False, db_column='is_private_status')
+    is_exclusive = models.BooleanField(default=False, db_column='is_exclusive_status')
+    exclusive_users = models.ManyToManyField(
+        User,
+        related_name='exclusivity',
+        blank=True,
+        db_table='Classification_Privacity_Exclusivity'
+    )
     
-    classification_privacity_id = models.AutoField(primary_key=True, db_column='PK_classification_privacity')
-    privacity = models.CharField(
-        max_length=20, 
-        unique=True, 
-        choices=privacity_choices, 
-        db_column='privacity_classification_privacity')
-
     def __str__(self):
-        return self.privacity 
+        if self.is_public:
+            return 'Publico'
+        elif self.is_private:
+            return 'Privado'
+        elif self.is_exclusive:
+            return 'Exclusivo'
+        else:
+            return 'Status Indefinido'
     
     class Meta:
         db_table = 'Classification_Privacity'
         verbose_name = 'Classification Privacity'
         verbose_name_plural = 'Classifications Privacies'
+
 
 class Category(models.Model):
     category_id = models.AutoField(primary_key=True, db_column='PK_category')

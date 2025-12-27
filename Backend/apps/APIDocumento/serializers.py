@@ -171,10 +171,11 @@ class DocumentListSerializer(serializers.ModelSerializer):
     download_url = serializers.SerializerMethodField()
     
     def get_download_url(self, obj: Document) -> None | str:
-        return generate_presigned_url(obj.file_url)
+        return generate_presigned_url(obj.file_url) # type: ignore
     
     def get_thumbnail_url(self, obj: Document) -> None | str:
-        return generate_presigned_url(obj.thumbnail_path)
+        return generate_presigned_url(obj.thumbnail_path) # type: ignore
+
     
     def get_categories_data(self, obj: Document) -> List[Dict[str, str]]:
         """

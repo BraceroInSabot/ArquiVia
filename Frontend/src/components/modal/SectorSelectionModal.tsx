@@ -348,7 +348,7 @@ const SectorSelectionModal = ({ onClose, onSuccess }: SectorSelectionModalProps)
              {(step === 'IMPORT_PROCESSING' || importStatus === 'PROCESSING') && renderProcessing()}
         </div>
       </div>
-      <form method="dialog" className="modal-backdrop bg-black/60 backdrop-blur-sm"><button onClick={onClose}>close</button></form>
+      <form method="dialog" className="modal-backdrop bg-black/60"><button onClick={onClose}>close</button></form>
     </div>,
     document.body
   );

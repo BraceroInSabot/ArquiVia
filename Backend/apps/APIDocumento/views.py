@@ -38,10 +38,13 @@ class CreateDocumentView(APIView):
     parser_classes = [JSONParser] 
     
     def post(self, request) -> HttpResponse:
-    
+        user_exclusive_access = request.data.get('users_exclusive_access', '[]')
+        
         serializer = DocumentCreateSerializer(
             data=request.data, 
-            context={'request': request}
+            context={'request': request, 
+                     'user_exclusive_access': user_exclusive_access
+                     }
         )
         
         serializer.is_valid(raise_exception=True)
@@ -469,7 +472,6 @@ class FileUploadView(APIView):
             res.data = default_response(success=False, message="Nenhum arquivo enviado")
             return res
 
-        print(request.data)
         serializer = DocumentCreateSerializer(
             data=request.data, 
             context={'request': request, 

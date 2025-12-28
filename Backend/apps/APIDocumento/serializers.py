@@ -53,7 +53,6 @@ class DocumentCreateSerializer(serializers.ModelSerializer):
         """
         privacity_obj = data.get('privacity') 
         users_ids = self.context['user_exclusive_access'] if 'user_exclusive_access' in self.context else []
-        print(users_ids)
         if privacity_obj.pk == 3: 
             if not users_ids:
                 raise serializers.ValidationError({
@@ -74,7 +73,6 @@ class DocumentCreateSerializer(serializers.ModelSerializer):
         categories = validated_data.pop('categories', [])
         privacity_obj = validated_data.pop('privacity')
         users_ids =  self.context['user_exclusive_access'] if 'user_exclusive_access' in self.context else []
-        print(users_ids)
         with transaction.atomic():
             try:
                 status_padrao = Classification_Status.objects.get(status='Em andamento')

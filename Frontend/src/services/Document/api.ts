@@ -1,5 +1,23 @@
 import api from '../core-api';
-import type { Classification, CreateDocument, Document, DocumentList, ResponseStructure, UpdateDocumentPayload, UpdateClassificationPayload, Category, AddCategoriesPayload, CreateCategoryPayload, UpdateCategoryPayload, AttachedFile, DocumentHistory, DocumentFilters, AvailableCategorySearch, PaginatedResponse, MediaAssetStatusResponse, ImportDocumentPayload} from '../core-api';
+import type { Classification, 
+  CreateDocument, 
+  Document, 
+  DocumentList, 
+  ResponseStructure, 
+  UpdateDocumentPayload, 
+  UpdateClassificationPayload, 
+  Category, 
+  AddCategoriesPayload, 
+  CreateCategoryPayload, 
+  UpdateCategoryPayload, 
+  AttachedFile, 
+  DocumentHistory, 
+  DocumentFilters, 
+  AvailableCategorySearch, 
+  PaginatedResponse, 
+  MediaAssetStatusResponse, 
+  ImportDocumentPayload
+} from '../core-api';
 
 const documentService = {
     /**
@@ -215,12 +233,14 @@ const documentService = {
   /**
    * Passo 1: Envia o arquivo físico para processamento.
    */
-  uploadMedia(file: File, sector_id?: number): Promise<{ data: ResponseStructure<any> }> {
+  uploadMedia(file: File, sector_id?: number, privacity_id: number = 1, selectedUserIds: number[] = []): Promise<{ data: ResponseStructure<any> }> {
     const formData = new FormData();
     formData.append('file', file);
     if (sector_id !== undefined) {
       formData.append('sector', sector_id.toString());
       formData.append('content', JSON.stringify({}));
+      formData.append('privacity_id', privacity_id.toString());
+      formData.append('users_exclusive_access', JSON.stringify(selectedUserIds));
     }
     
     return api.post('/documento/importar/', formData, {

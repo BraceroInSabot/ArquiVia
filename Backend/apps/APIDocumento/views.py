@@ -1,3 +1,4 @@
+import json
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView, Response
@@ -459,16 +460,22 @@ class FileUploadView(APIView):
 
     def post(self, request, *args, **kwargs):
         file_obj = request.FILES.get('file')
-        
+        user_exclusive_access = request.data.get('users_exclusive_access', '[]')
+        user_exclusive_access = json.loads(user_exclusive_access)
+
         if not file_obj:
             res = Response()
             res.status_code = 400
             res.data = default_response(success=False, message="Nenhum arquivo enviado")
             return res
 
+        print(request.data)
         serializer = DocumentCreateSerializer(
             data=request.data, 
-            context={'request': request, 'file_obj': file_obj}
+            context={'request': request, 
+                     'file_obj': file_obj, 
+                     'user_exclusive_access': user_exclusive_access
+                     }
         )
         
         serializer.is_valid(raise_exception=True)

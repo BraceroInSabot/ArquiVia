@@ -274,3 +274,64 @@ class SectorReviewDateView(APIView):
             res.status_code = 404
             res.data = default_response(success=False, message="Política de revisão não encontrada para este setor.")
             return res
+
+class RetrieveUsersInSectorView(APIView):
+    permission_classes = [IsAuthenticated, IsOwnerOrSectorMember]
+    
+    def get(self, request, pk: int):
+        sector = get_object_or_404(Sector, pk=pk)
+        self.check_object_permissions(request, sector)
+        
+        sector_users = SectorUser.objects.filter(sector=sector).select_related('user')
+        
+        users_data = [
+            {
+                "user_id": su.user.pk,
+                "username": su.user.username,
+                "email": su.user.email,
+                "hierarquia": "Administrador" if su.is_adm else "Membro"
+            }
+            for su in sector_users
+        ]
+        
+        users_data.sort(key=lambda x: x['hierarquia'], reverse=True)
+        
+        if sector.manager == sector.enterprise.owner:
+            # Manager is also Owner
+            users_data.insert(0,
+                {
+                    "user_id": sector.manager.pk,
+                    "username": sector.manager.username,
+                    "email": sector.manager.email,
+                    "hierarquia": "Gerente / Proprietário"
+                }
+            )
+        else:
+            # Manager
+            users_data.append(
+                {
+                    "user_id": sector.manager.pk,
+                    "username": sector.manager.username,
+                    "email": sector.manager.email,
+                    "hierarquia": "Gerente"
+                }
+            )
+            # Enterprise Owner
+            users_data.append(
+                {
+                    "user_id": sector.enterprise.owner.pk,
+                    "username": sector.enterprise.owner.username,
+                    "email": sector.enterprise.owner.email,
+                    "hierarquia": "Proprietário"
+                }
+            )
+        
+        res: HttpResponse = Response()
+        res.status_code = 200
+        res.data = default_response(
+            success=True, 
+            message="Usuários do setor recuperados com sucesso!", 
+            data=users_data # type: ignore
+            )
+        return res
+    

@@ -102,6 +102,11 @@ class SetManagerForSectorView(APIView):
         
         sector_query.manager = new_manager_query # type: ignore
         sector_query.save()
+        
+        sector_user = SectorUser.objects.filter(user=new_manager_query, sector=sector_query).first()
+        
+        if sector_user:
+            sector_user.delete()
 
         res: HttpResponse = Response()
         res.status_code = 200

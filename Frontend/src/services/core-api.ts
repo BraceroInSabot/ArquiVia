@@ -376,8 +376,9 @@ export interface ImportDocumentPayload {
   title: string;
   description: string;
   sector_id: number;
-  privacity_id: string;
+  privacity_id: number;
   media_asset_id: string;
+  users_exclusive_access?: number[];
 }
 
 export interface SectorSimple {

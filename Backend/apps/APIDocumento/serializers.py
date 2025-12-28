@@ -11,44 +11,30 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 class DocumentCreateSerializer(serializers.ModelSerializer):
-    """
-    Serializer para a criação de um novo Documento.
-    Ele lida com a validação, verificação de permissão e a criação
-    transacional do Documento e sua Classificação associada.
-    """
+    
+    privacity_id = serializers.PrimaryKeyRelatedField(
+        source='privacity',
+        queryset=Classification_Privacity.objects.all(),
+        write_only=True
+    )
     
     sector = serializers.PrimaryKeyRelatedField(
         queryset=Sector.objects.all(),
-        help_text="ID do setor ao qual este documento pertence."
     )
     
     categories = serializers.PrimaryKeyRelatedField(
         queryset=Category.objects.all(),
         many=True,
-        required=False, 
-        help_text="Lista de IDs de categorias para etiquetar o documento."
+        required=False,
     )
     
     content = serializers.JSONField()
 
     class Meta:
         model = Document
-        fields = ['content', 'sector', 'categories']
-        
+        fields = ['content', 'sector', 'categories', 'privacity_id']
+
     def validate_sector(self, sector):
-        """
-        Método de validação customizado para o campo 'sector'.
-        Verifica se o usuário tem permissão para postar neste setor.
-        
-        Args:
-            sector (Sector): Setor encaminhado pelo usuário.
-            
-        Returns:
-            Sector: Setor válido.
-            
-        Raises:
-            serializers.ValidationError: Se o usuário não tiver permissão.
-        """
         user = self.context['request'].user
         
         is_owner = sector.enterprise.owner == user
@@ -60,50 +46,70 @@ class DocumentCreateSerializer(serializers.ModelSerializer):
             
         return sector
 
+    def validate(self, data):
+        """
+        Validação cruzada entre campos.
+        Verifica se a privacidade é 'Exclusivo' (ID 3) e exige a lista de usuários.
+        """
+        privacity_obj = data.get('privacity') 
+        users_ids = self.context['user_exclusive_access'] if 'user_exclusive_access' in self.context else []
+        print(users_ids)
+        if privacity_obj.pk == 3: 
+            if not users_ids:
+                raise serializers.ValidationError({
+                    "users_exclusive_access": "Para documentos exclusivos, é necessário fornecer a lista de usuários."
+                })
+            
+            count = User.objects.filter(pk__in=users_ids).count()
+            if count != len(users_ids):
+                raise serializers.ValidationError({
+                    "users_exclusive_access": "Um ou mais IDs de usuário fornecidos são inválidos."
+                })
+
+        return data
+
     def create(self, validated_data):
-        """
-        Cria o Documento e sua Classificação associada.
-        
-        Args:
-            validate_data (dict): Dados validados para criação do Documento.
-            
-        Returns:
-            Document: Documento criado.
-            
-        Raises:
-            serializers.ValidationError: Se a criação da Classificação falhar.
-        """
         user = self.context['request'].user
-        categories = validated_data.pop('categories', [])
-        sector = validated_data.get('sector')
         
-        with transaction.atomic(): # enquanto ok, faça. Se der errado, rollback
+        categories = validated_data.pop('categories', [])
+        privacity_obj = validated_data.pop('privacity')
+        users_ids =  self.context['user_exclusive_access'] if 'user_exclusive_access' in self.context else []
+        print(users_ids)
+        with transaction.atomic():
             try:
                 status_padrao = Classification_Status.objects.get(status='Em andamento')
-                privacidade_padrao = Classification_Privacity.objects.get(privacity='Privado')
-            except (Classification_Status.DoesNotExist, Classification_Privacity.DoesNotExist):
-                raise serializers.ValidationError("Erro interno: Configuração de status/privacidade padrão não encontrada.")
+            except Classification_Status.DoesNotExist:
+                raise serializers.ValidationError("Erro interno: Status padrão 'Em andamento' não encontrado.")
             
-            classification_to_set = Classification.objects.create(
+            classification = Classification.objects.create(
                 classification_status=status_padrao,
-                privacity=privacidade_padrao,
+                privacity=privacity_obj,
+                reviewer=None,
+                is_reviewed=False
             )
             
+            if privacity_obj.pk == 3 and users_ids:
+                users_objs = User.objects.filter(pk__in=users_ids)
+                
+                if hasattr(classification, 'users_exclusive_access'):
+                    classification.privacity.exclusivity.set(users_objs) # type: ignore
+                
             title = "Novo Documento"
             file_url = None
             if self.context.get('file_obj'):
-                file_url = self.context['file_obj']
-                title = self.context['file_obj'].name
+                file_obj = self.context['file_obj']
+                file_url = file_obj
+                title = getattr(file_obj, 'name', title)
 
             documento = Document.objects.create(
                 title=title,
                 file_url=file_url,
                 creator=user,
-                classification=classification_to_set,
+                classification=classification,
                 **validated_data
             )
             
-            if categories is not None:
+            if categories:
                 documento.categories.set(categories)
             
         return documento

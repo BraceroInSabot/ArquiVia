@@ -121,6 +121,13 @@ const sectorService = {
     return api.put(`/setor/${sectorId}/politica-revisao/`, data);
   },
 
+  /*
+   * Lista os usuários do setor com a sua devida hierarquia.
+   * @param sectorId O ID do setor.
+   */
+  listSectorUsersWithHierarchy(sectorId: number): Promise<{ data: ResponseStructure<[]> }> {
+    return api.get(`/setor/${sectorId}/usuarios/`);
+  }
 };
 
 export default sectorService;

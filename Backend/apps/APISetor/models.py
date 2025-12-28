@@ -31,7 +31,7 @@ class SectorUser(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, db_column="FK_user_sector_user", related_name="user_links")
     
     class Meta:
-        db_table = "SectorUser"
+        db_table = "Sector_User"
         
         verbose_name = "Vinculo entre Setor e Usuario"
         verbose_name_plural = "Vinculos entre Setores e Usuarios"

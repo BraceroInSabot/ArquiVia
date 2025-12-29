@@ -86,7 +86,7 @@ def log_save_handler(sender, instance, created, **kwargs):
             changes=get_changes_json(instance, created)
         )
     except Exception as e:
-        print(f"Erro ao salvar AuditLog: {e}")
+        pass
 
 @receiver(post_delete)
 def log_delete_handler(sender, instance, **kwargs):

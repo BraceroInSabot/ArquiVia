@@ -177,8 +177,6 @@ def optimize_image(
         return optimized_file
         
     except Exception as e:
-        # If optimization fails, return None to use original file
-        print(f"Image optimization failed: {str(e)}")
         return None
 
 

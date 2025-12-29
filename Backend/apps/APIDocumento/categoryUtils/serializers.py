@@ -87,7 +87,6 @@ class CreateCategorySerializer(ModelSerializer):
         else:
             is_public = False
         
-        print(validated_data)
         
         category = Category.objects.create(
             category_enterprise=enterprise,

@@ -310,7 +310,6 @@ class ListCategoriesByDocumentView(APIView):
                 Q(category_sector=document.sector) # type: ignore
             ).distinct()
         
-        print(categories)
         serializer = ListCategoriesByDocumentId(categories, many=True)
         
         res: HttpResponse = Response()

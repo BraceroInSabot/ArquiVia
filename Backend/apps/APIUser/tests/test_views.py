@@ -42,7 +42,6 @@ class TestLoginAPI:
         url: str = reverse("entrar")
         client = APIClient()
         response: DRFResponse = client.post(url, valid_payload, format='json') # type: ignore
-        print(response)
         assert response.status_code == 200 # type: ignore
         assert 'access_token' in response.cookies # type: ignore
         assert 'refresh_token' in response.cookies # type: ignore

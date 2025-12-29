@@ -22,5 +22,4 @@ def generate_presigned_url(file_path, expiration=3600) -> None | str:
         )
         return response
     except Exception as e:
-        print(e)
         return None

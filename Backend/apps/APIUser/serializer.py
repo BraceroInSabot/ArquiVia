@@ -70,7 +70,6 @@ class RegistroUsuarioSerializer(serializers.ModelSerializer):
         ).validate()
         
         if isinstance(validation, list) and len(validation) > 0:
-            print(validation)
             raise serializers.ValidationError(
                 [err for err in validation]
             )
@@ -171,7 +170,6 @@ class GoogleAccountCompleteSerializer(serializers.ModelSerializer):
         ).validate()
         
         if isinstance(validation, list) and len(validation) > 0:
-            print(validation)
             raise serializers.ValidationError(
                 [err for err in validation]
             )

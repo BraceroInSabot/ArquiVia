@@ -59,7 +59,6 @@ class OperationalDashboardView(APIView):
                 break
             
         my_last_docs = Document.objects.filter(pk__in=list(my_docs_ids))
-        # print(my_docs_ids)
         
         # Componente 2: Documentos que precisam ser revisados.
         enterprise_query = (

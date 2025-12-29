@@ -89,7 +89,6 @@ class DocumentCreateSerializer(serializers.ModelSerializer):
             if privacity_obj.pk == 3 and users_ids:
                 users_objs = User.objects.filter(pk__in=users_ids)
                 for user in users_objs:
-                    print(user)
                     classification.exclusive_users.add(user) # type: ignore
                 
             title = "Novo Documento"
@@ -186,8 +185,6 @@ class DocumentListSerializer(serializers.ModelSerializer):
         Search for categories linked to document object.
         """
         categories_data = []
-        
-        print(obj.categories.all())
 
         for category in obj.categories.all():
             categories_data.append({

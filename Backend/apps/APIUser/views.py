@@ -129,7 +129,6 @@ class GoogleLoginView(SocialLoginView):
         
         is_new_user = (timezone.now() - self.user.date_joined) < timedelta(seconds=30) # type: ignore
         
-        print(self.user)
         data = {
             'access_token': str(self.access_token),
             'refresh_token': str(self.refresh_token),
@@ -315,7 +314,6 @@ class ChangePasswordView(APIView):
 
         user = request.user
         new_password = serializer.validated_data['new_password'] # type: ignore
-        print(new_password)
         user.set_password(new_password)
         user.save()
 
@@ -382,7 +380,6 @@ class RequisicaoRedefinicaoSenhaView(APIView):
             email.send()
             return True
         except Exception as e:
-            print(e)
             return False
 
     def post(self, request):

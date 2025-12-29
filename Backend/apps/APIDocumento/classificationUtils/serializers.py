@@ -43,7 +43,6 @@ class ReviewDetailsSerializer(serializers.ModelSerializer):
         if last_log:
             return last_log.timestamp
         
-        print("Nenhum log encontrado para a classificação:", obj.pk)
         return None
 
     def get_review_age_days(self, obj):

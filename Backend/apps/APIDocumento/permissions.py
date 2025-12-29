@@ -70,7 +70,6 @@ class CanActivateOrDeactivateDocument(BasePermission):
     message = "Você não tem permissão para ativar ou desativar este documento."
     
     def has_object_permission(self, request, view,  obj):
-        print(obj)
         if not isinstance(obj, Document):
              return False
 
@@ -82,8 +81,6 @@ class CanActivateOrDeactivateDocument(BasePermission):
             user=request.user
         ).exists()
         
-        print(is_owner, is_manager, is_adm)
-    
         return is_owner or is_manager or is_adm
     
 class CanDELETEDocument(BasePermission):

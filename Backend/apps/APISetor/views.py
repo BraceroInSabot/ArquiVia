@@ -237,9 +237,7 @@ class SectorReviewDateView(APIView):
             return res
         
         revision_policy = SectorReviewPolicy.objects.get_or_create(sector=sector)[0]
-        
-        print(revision_policy)
-        
+
         if revision_policy.days == review_date:
             pass
         else:

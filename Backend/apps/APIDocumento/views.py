@@ -81,12 +81,17 @@ class ListDocumentsView(APIView):
         )
         
         queryset = queryset.filter(
-            Q(classification__privacity__privacity='Público') | 
+            Q(classification__privacity__privacity='Público') |
             Q(creator=request_user) |
             Q(sector__enterprise__owner=request_user) |
             Q(sector__manager=request_user) |
             Q(sector__sector_links__user=request_user)
         ).distinct() 
+        
+        queryset = queryset.exclude(
+            Q(classification__privacity__privacity='Exclusivo') &
+            ~Q(classification__exclusive_users=request_user)
+        )
         
         queryset = queryset.select_related(
             'classification__classification_status', 
@@ -379,7 +384,14 @@ class DocumentSearchView(APIView):
         elif privacity_id == '2': # Público
             queryset = queryset.filter(classification__privacity=privacity_id)
         else:
-            pass
+            queryset = queryset.filter(
+            Q(classification__privacity__privacity='Exclusivo') & 
+            (
+                Q(classification__exclusive_users=request_user) |
+                Q(sector__enterprise__owner=request_user) |
+                Q(sector__manager=request_user)
+            )
+        )
 
         if reviewer_name:
             queryset = queryset.filter(classification__reviewer__name__icontains=reviewer_name)

@@ -20,5 +20,6 @@ export const STATUS_OPTIONS = [
 
 export const PRIVACITY_OPTIONS = [
   { id: 1, name: "Privado" },
-  { id: 2, name: "Público" }
+  { id: 2, name: "Público" },
+  { id: 3, name: "Exclusivo" }
 ];

@@ -88,9 +88,9 @@ class DocumentCreateSerializer(serializers.ModelSerializer):
             
             if privacity_obj.pk == 3 and users_ids:
                 users_objs = User.objects.filter(pk__in=users_ids)
-                
-                if hasattr(classification, 'users_exclusive_access'):
-                    classification.privacity.exclusivity.set(users_objs) # type: ignore
+                for user in users_objs:
+                    print(user)
+                    classification.exclusive_users.add(user) # type: ignore
                 
             title = "Novo Documento"
             file_url = None

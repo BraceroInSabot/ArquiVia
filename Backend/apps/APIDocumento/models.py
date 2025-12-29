@@ -106,6 +106,12 @@ class Classification(models.Model):
         on_delete=models.PROTECT, 
         db_column='FK_privacity_classification', 
         null=True)
+    exclusive_users = models.ManyToManyField(
+        User,
+        related_name='exclusivity',
+        blank=True,
+        db_table='Classification_Privacity_Exclusivity'
+    )
 
     def __str__(self):
         return f"Revisado por {self.reviewer}" 
@@ -124,12 +130,6 @@ class Classification_Privacity(models.Model):
     
     privacity_id = models.AutoField(primary_key=True, db_column='PK_classification_privacity')
     privacity = models.CharField(max_length=20, default='Privado', choices=privacity_choices, unique=True, db_column='privacity')
-    exclusive_users = models.ManyToManyField(
-        User,
-        related_name='exclusivity',
-        blank=True,
-        db_table='Classification_Privacity_Exclusivity'
-    )
     
     def __str__(self):
         return self.privacity

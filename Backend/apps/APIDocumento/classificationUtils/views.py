@@ -67,13 +67,7 @@ class UpdateClassificationView(APIView):
 
         self.check_object_permissions(request, document)
         
-        try:
-            classification_to_update = document.classification
-        except Classification.DoesNotExist:
-            res: HttpResponse = Response()
-            res.status_code = 404
-            res.data = default_response(success=False, message="Classificação não encontrada para este documento.")
-            return res
+        classification_to_update = document.classification
         
         serializer = UpdateClassificationSerializer(
             instance=classification_to_update, 

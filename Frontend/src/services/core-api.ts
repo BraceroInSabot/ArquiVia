@@ -136,6 +136,7 @@ export interface Document {
   title: string;
   categories: string[];
   author: string;
+  sector_id: number;
 }
 
 export interface CreateDocument {
@@ -179,6 +180,12 @@ export interface ReviewDetails {
   last_review_date_from_log: string;
 }
 
+export interface ExclusiveUser {
+  user_id: number;
+  name: string;
+  email?: string;
+}
+
 export interface Classification {
   classification_id: number;
   is_reviewed: boolean;
@@ -188,6 +195,7 @@ export interface Classification {
   } | null;
   privacity: ClassificationPrivacity | null;
   review_details?: ReviewDetails | null;
+  exclusive_users?: ExclusiveUser[];
 }
 
 export interface UpdateClassificationPayload {
@@ -195,6 +203,7 @@ export interface UpdateClassificationPayload {
   classification_status?: number | null;
   privacity?: number | null;
   reviewer?: number | null;
+  exclusive_users?: number[];
 }
 
 

@@ -3,16 +3,20 @@ import { createPortal } from 'react-dom';
 import { X, Save, Loader2, AlertCircle, Settings } from 'lucide-react';
 
 import documentService from '../../services/Document/api';
+import sectorService from '../../services/Sector/api'; 
+
 import type { 
   UpdateClassificationPayload,
   Category,
   AddCategoriesPayload
 } from '../../services/core-api';
 import { useAuth } from '../../contexts/AuthContext';
-import { type ClassificationFormData, STATUS_OPTIONS, PRIVACITY_OPTIONS } from '../../types/classification';
+import { STATUS_OPTIONS, PRIVACITY_OPTIONS } from '../../types/classification';
 
 import ConfirmCloseModal from './ConfirmCloseModal';
 import ClassificationForm from '../form/ClassificationForm';
+import { type ClassificationFormData } from '../../types/classification';
+import type { ExclusiveUser } from '../../services/core-api';
 import CategoryManager from '../Document/CategoryManager';
 
 interface ClassificationModalProps {
@@ -25,22 +29,59 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
 
   const [originalData, setOriginalData] = useState<ClassificationFormData | null>(null);
   const [formData, setFormData] = useState<ClassificationFormData | null>(null);
+  
   const [reviewerName, setReviewerName] = useState<string>("Nenhum");
   const [reviewDetails, setReviewDetails] = useState<any>(null);
   const [originalCategories, setOriginalCategories] = useState<Category[]>([]);
   const [linkedCategories, setLinkedCategories] = useState<Category[]>([]);
+  
+  // Lista de usuários do setor para o autocomplete
+  const [sectorUsers, setSectorUsers] = useState<ExclusiveUser[]>([]);
+
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showConfirmClose, setShowConfirmClose] = useState(false);
 
+  // Verifica se houve mudanças (Dirty Check)
   const isDirty = useMemo(() => {
-    const classificationDirty = JSON.stringify(originalData) !== JSON.stringify(formData);
+    // 1. Comparação dos dados básicos e array de usuários exclusivos
+    const safeOriginal = { ...originalData, exclusive_users: originalData?.exclusive_users?.map(u => u.user_id).sort() };
+    const safeForm = { ...formData, exclusive_users: formData?.exclusive_users?.map(u => u.user_id).sort() };
+    
+    const classificationDirty = JSON.stringify(safeOriginal) !== JSON.stringify(safeForm);
+
+    // 2. Comparação das categorias
     const originalCatIds = originalCategories.map(c => c.category_id).sort().join(',');
     const currentCatIds = linkedCategories.map(c => c.category_id).sort().join(',');
     const categoriesDirty = originalCatIds !== currentCatIds;
+
     return classificationDirty || categoriesDirty;
   }, [originalData, formData, originalCategories, linkedCategories]);
+
+  // Função auxiliar para extrair usuários caso a API retorne uma hierarquia aninhada
+  const flattenSectorUsers = (data: any[]): ExclusiveUser[] => {
+    let users: ExclusiveUser[] = [];
+    data.forEach(item => {
+      // Tenta adaptar o objeto item para ExclusiveUser
+      if (item.id || item.user_id) {
+         users.push({
+           user_id: item.user_id || item.id,
+           name: item.name || item.username,     // Fallback caso venha como 'nome'
+           email: item.email
+         });
+      }
+      // Se houver filhos (estrutura de árvore), chama recursivamente
+      if (item.children && Array.isArray(item.children)) {
+        users = [...users, ...flattenSectorUsers(item.children)];
+      }
+      // Se houver propriedade 'users' dentro do nó
+      if (item.users && Array.isArray(item.users)) {
+         users = [...users, ...flattenSectorUsers(item.users)];
+      }
+    });
+    return users;
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -48,21 +89,48 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
       setIsLoading(true);
       setError(null);
       try {
-        const [classificationRes, categoriesRes] = await Promise.all([
+        // 1. Buscar classificação e categorias
+        // 2. Buscar detalhes do documento para saber o sector_id (assumindo que existe um método getDocument ou getById)
+        const [classificationRes, categoriesRes, documentRes] = await Promise.all([
           documentService.getClassification(documentId),
-          documentService.listCategoriesByDocument(documentId)
+          documentService.listCategoriesByDocument(documentId),
+          documentService.getDocumentById(documentId) // <--- Buscando dados do doc para ter o setor
         ]);
 
         const classificationData = classificationRes.data.data;
+        const documentData = documentRes.data.data; // Assumindo estrutura padrão
+
+        // Se tivermos o ID do setor, buscamos os usuários
+        let fetchedUsers: ExclusiveUser[] = [];
+        if (documentData && documentData.sector_id) {
+            try {
+                const usersRes = await sectorService.listSectorUsersWithHierarchy(documentData.sector_id);
+                // O usuário disse que retorna { data: ResponseStructure<[]> }. Assumindo que o array está em data.data
+                // ou ajustando conforme a estrutura real do ResponseStructure.
+                const rawUsers = usersRes.data?.data || []; 
+                fetchedUsers = flattenSectorUsers(Array.isArray(rawUsers) ? rawUsers : []);
+            } catch (userErr) {
+                console.warn("Não foi possível buscar usuários do setor:", userErr);
+            }
+        }
+
         const statusId = STATUS_OPTIONS.find(opt => opt.name === classificationData.classification_status?.status)?.id || null;
         const privacityId = PRIVACITY_OPTIONS.find(opt => opt.name === classificationData.privacity?.privacity)?.id || null;
         
+        // Mapeia e garante tipagem dos usuários exclusivos já salvos
+        const exclusiveUsers: ExclusiveUser[] = (classificationData.exclusive_users || []).map((u: any) => ({
+             user_id: u.user_id || u.id,
+             name: u.name,
+             email: u.email
+        }));
+
         const initialFormData: ClassificationFormData = {
           is_reviewed: classificationData.is_reviewed,
           classification_status: statusId,
           privacity: privacityId,
           reviewer: classificationData.reviewer?.user_id || null, 
           review_details: classificationData.review_details || null,
+          exclusive_users: exclusiveUsers, 
         };
 
         setOriginalData(initialFormData);
@@ -70,9 +138,9 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
         setReviewerName(classificationData.reviewer?.name || "Nenhum");
         setReviewDetails(classificationData.review_details || null);
 
-        const categoryData = categoriesRes.data.data || [];
-        setOriginalCategories(categoryData);
-        setLinkedCategories(categoryData);
+        setOriginalCategories(categoriesRes.data.data || []);
+        setLinkedCategories(categoriesRes.data.data || []);
+        setSectorUsers(fetchedUsers);
 
       } catch (err: any) {
         console.error("Erro ao buscar dados do modal:", err);
@@ -93,15 +161,23 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
     const savePromises: Promise<any>[] = [];
 
     if (JSON.stringify(originalData) !== JSON.stringify(formData)) {
-      const classificationPayload: UpdateClassificationPayload = {
+      const classificationPayload: UpdateClassificationPayload & { exclusive_users?: number[] } = {
         is_reviewed: formData.is_reviewed,
         classification_status: formData.classification_status,
         privacity: formData.privacity,
-        reviewer: formData.reviewer
+        reviewer: formData.reviewer,
       };
+
+      if (Number(formData.privacity) === 3 && formData.exclusive_users) {
+        classificationPayload.exclusive_users = formData.exclusive_users.map(u => u.user_id);
+      } else {
+        classificationPayload.exclusive_users = []; 
+      }
+
       savePromises.push(documentService.updateClassification(documentId, classificationPayload));
     }
 
+    // Lógica de categorias mantida
     const originalCatIds = originalCategories.map(c => c.category_id).sort().join(',');
     const currentCatIds = linkedCategories.map(c => c.category_id).sort().join(',');
     
@@ -114,16 +190,24 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
 
     try {
       const results = await Promise.all(savePromises);
+      
+      // Atualiza o estado local com a resposta para resetar o "isDirty"
       results.forEach(response => {
         const updatedData = response.data.data;
-        if (updatedData.is_reviewed !== undefined) {
+        if (updatedData && updatedData.is_reviewed !== undefined) {
           const statusId = STATUS_OPTIONS.find(opt => opt.name === updatedData.classification_status?.status)?.id || null;
           const privacityId = PRIVACITY_OPTIONS.find(opt => opt.name === updatedData.privacity?.privacity)?.id || null;
+          
           const newFormData: ClassificationFormData = {
             is_reviewed: updatedData.is_reviewed,
             classification_status: statusId,
             privacity: privacityId,
             reviewer: updatedData.reviewer?.user_id || null,
+            exclusive_users: (updatedData.exclusive_users || []).map((u:any) => ({
+                user_id: u.user_id || u.id,
+                name: u.name,
+                email: u.email
+            })),
           };
           setOriginalData(newFormData);
           setFormData(newFormData);
@@ -158,23 +242,15 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
 
       if (name === 'is_reviewed') {
         const { checked } = e.target as HTMLInputElement;
-        
         if (!checked) {
           setReviewerName("Nenhum"); 
           return { ...prev, is_reviewed: false, reviewer: null };
         }
-
         const currentReviewerId = prev.reviewer || user?.data.user_id || null;
-        
         if (!prev.reviewer && user?.data) {
             setReviewerName(user.data.name); 
         }
-
-        return { 
-          ...prev, 
-          is_reviewed: true,
-          reviewer: currentReviewerId
-        };
+        return { ...prev, is_reviewed: true, reviewer: currentReviewerId };
       }
 
       const processedValue = (value === "null" || value === "") ? null : Number(value);
@@ -182,13 +258,17 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
     });
   };
 
+  const handleExclusiveUsersChange = (newUsers: ExclusiveUser[]) => {
+    setFormData(prev => prev ? ({ ...prev, exclusive_users: newUsers }) : null);
+  };
+
   const handleTakeReview = () => {
     if (!user || !user.data) return;
-    setFormData(prev => ({
-      ...prev!,
+    setFormData(prev => prev ? ({
+      ...prev,
       is_reviewed: true,
       reviewer: user.data.user_id 
-    }));
+    }) : null);
     setReviewerName(user.data.name);
   };
 
@@ -219,10 +299,12 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
                 formData={formData}
                 reviewerName={reviewerName}
                 reviewDetails={reviewDetails}
+                allUsers={sectorUsers} // Lista filtrada por setor
                 isCurrentUserTheReviewer={isCurrentUserTheReviewer}
                 isDirty={isDirty}
                 isSaving={isSaving}
                 onFormChange={handleFormChange}
+                onExclusiveUsersChange={handleExclusiveUsersChange}
                 onTakeReview={handleTakeReview}
                 onSave={handleSave}
             />
@@ -239,11 +321,8 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
 
   return createPortal(
     <>
-      {/* Modal Principal */}
       <div className="modal modal-open" role="dialog">
         <div className="modal-box w-11/12 max-w-3xl h-[80vh] flex flex-col relative p-0 overflow-hidden">
-            
-            {/* Cabeçalho Fixo */}
             <div className="flex justify-between items-center p-4 border-b border-base-200 bg-base-100 z-10">
                 <h3 className="font-bold text-lg flex items-center gap-2 text-secondary">
                     <Settings size={20} className="text-primary" />
@@ -254,12 +333,10 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
                 </button>
             </div>
 
-            {/* Corpo Rolável */}
             <div className="flex-1 overflow-y-auto p-6">
                 {renderContent()}
             </div>
 
-            {/* Rodapé Fixo */}
             <div className="modal-action p-4 border-t border-base-200 bg-base-100 m-0 justify-end gap-2">
                 <button 
                     className="btn btn-ghost text-secondary" 
@@ -287,12 +364,8 @@ export default function ClassificationModal({ documentId, onClose }: Classificat
                 </button>
             </div>
         </div>
-        
-        {/* Backdrop */}
-        <div className="modal-backdrop bg-black/50 backdrop-blur-sm" onClick={handleCloseAttempt}></div>
+        <div className="modal-backdrop bg-black/50" onClick={handleCloseAttempt}></div>
       </div>
-
-      {/* Modal de Confirmação */}
       {showConfirmClose && (
         <ConfirmCloseModal
           onCancel={() => setShowConfirmClose(false)}

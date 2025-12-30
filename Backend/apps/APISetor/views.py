@@ -286,6 +286,7 @@ class RetrieveUsersInSectorView(APIView):
             {
                 "user_id": su.user.pk,
                 "username": su.user.username,
+                "name": su.user.name, # type: ignore
                 "email": su.user.email,
                 "hierarquia": "Administrador" if su.is_adm else "Membro"
             }
@@ -300,6 +301,7 @@ class RetrieveUsersInSectorView(APIView):
                 {
                     "user_id": sector.manager.pk,
                     "username": sector.manager.username,
+                    "name": sector.manager.name, # type: ignore
                     "email": sector.manager.email,
                     "hierarquia": "Gerente / Proprietário"
                 }
@@ -310,6 +312,7 @@ class RetrieveUsersInSectorView(APIView):
                 {
                     "user_id": sector.manager.pk,
                     "username": sector.manager.username,
+                    "name": sector.manager.name, # type: ignore
                     "email": sector.manager.email,
                     "hierarquia": "Gerente"
                 }
@@ -319,6 +322,7 @@ class RetrieveUsersInSectorView(APIView):
                 {
                     "user_id": sector.enterprise.owner.pk,
                     "username": sector.enterprise.owner.username,
+                    "name": sector.enterprise.owner.name, # type: ignore
                     "email": sector.enterprise.owner.email,
                     "hierarquia": "Proprietário"
                 }

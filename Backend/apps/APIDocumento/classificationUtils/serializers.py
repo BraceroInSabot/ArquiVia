@@ -68,6 +68,8 @@ class RetrieveClassificationSerializer(ModelSerializer):
     
     review_details = ReviewDetailsSerializer(source='*', read_only=True)
     
+    exclusive_users = ReviewerSerializer(many=True, read_only=True)
+    
     
     class Meta:
         model = Classification
@@ -78,6 +80,7 @@ class RetrieveClassificationSerializer(ModelSerializer):
             'reviewer',
             'review_details',
             'privacity',
+            'exclusive_users'
         ]
         
 class UpdateClassificationSerializer(ModelSerializer):
@@ -96,6 +99,24 @@ class UpdateClassificationSerializer(ModelSerializer):
         required=False,
         allow_null=True
     )
+    exclusive_users = serializers.ListField(
+        child=serializers.IntegerField(),
+        required=False
+    )
+    
+    def update(self, instance, validated_data):
+        exclusive_users_data = validated_data.pop('exclusive_users', None)
+        
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        instance.save()
+        
+        if exclusive_users_data is not None:
+            users = User.objects.filter(user_id__in=exclusive_users_data)
+            instance.exclusive_users.set(users)
+        
+        return instance
     
     class Meta:
         model = Classification
@@ -104,4 +125,5 @@ class UpdateClassificationSerializer(ModelSerializer):
             'classification_status',
             'reviewer',
             'privacity',
+            'exclusive_users'
         ]

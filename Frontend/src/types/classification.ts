@@ -1,3 +1,5 @@
+import type { ExclusiveUser } from "../services/core-api";
+
 export interface ReviewDetails {
   review_age_days: number;
   last_review_date_from_log: string;
@@ -9,6 +11,7 @@ export interface ClassificationFormData {
   privacity: number | null;
   reviewer: number | null; 
   review_details?: ReviewDetails | null;
+  exclusive_users?: ExclusiveUser[];
 }
 
 export const STATUS_OPTIONS = [

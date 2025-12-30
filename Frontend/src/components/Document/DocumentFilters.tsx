@@ -1,11 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Funnel, Search } from 'lucide-react';
+import { Funnel, Search, LayoutGrid, List } from 'lucide-react';
 import type { DocumentFilters, AvailableCategorySearch, AvailableUser } from '../../services/core-api';
 import DocumentFilterSearch from './DocumentFilterSearch';
+
+// Adicionando tipos para o ViewMode
+export type ViewMode = 'grid' | 'list';
 
 interface DocumentFiltersProps {
   defaultFilters: DocumentFilters;
   onFilterChange: (filters: DocumentFilters) => void;
+  // Novos props para controle de visualização
+  viewMode: ViewMode;
+  onViewModeChange: (mode: ViewMode) => void;
+  
   availableCategories: AvailableCategorySearch[];
   availableReviewers: AvailableUser[];
   isLoading: boolean;
@@ -14,6 +21,8 @@ interface DocumentFiltersProps {
 const DocumentFiltersComponent: React.FC<DocumentFiltersProps> = ({ 
   defaultFilters, 
   onFilterChange,
+  viewMode,            // <--- Novo
+  onViewModeChange,    // <--- Novo
   availableCategories,
   availableReviewers,
   isLoading
@@ -29,7 +38,6 @@ const DocumentFiltersComponent: React.FC<DocumentFiltersProps> = ({
     const newFilters = { ...filters, ...filterUpdate };
     setFilters(newFilters);
     
-    // ALTERAÇÃO AQUI: Dispara o onFilterChange se for searchTerm OU groupBy
     if (filterUpdate.searchTerm !== undefined || filterUpdate.groupBy !== undefined) {
       onFilterChange(newFilters);
     }
@@ -63,6 +71,26 @@ const DocumentFiltersComponent: React.FC<DocumentFiltersProps> = ({
           <Funnel size={20} />
           <span className="hidden sm:inline">Filtros</span>
         </button>
+
+        {/* Toggle de Visualização (Novo) */}
+        <div className="join shadow-sm border border-base-300">
+          <button
+            type="button"
+            className={`join-item btn ${viewMode === 'grid' ? 'btn-active btn-neutral' : 'btn-ghost bg-base-100'}`}
+            onClick={() => onViewModeChange('grid')}
+            title="Visualização em Grade"
+          >
+            <LayoutGrid size={20} />
+          </button>
+          <button
+            type="button"
+            className={`join-item btn ${viewMode === 'list' ? 'btn-active btn-neutral' : 'btn-ghost bg-base-100'}`}
+            onClick={() => onViewModeChange('list')}
+            title="Visualização em Lista"
+          >
+            <List size={20} />
+          </button>
+        </div>
 
         {/* Dropdown de Agrupamento */}
         <select

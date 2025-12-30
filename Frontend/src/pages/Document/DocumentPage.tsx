@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { FileText } from 'lucide-react';
 import type { DocumentFilters } from '../../services/core-api';
 
-import DocumentFiltersComponent from '../../components/Document/DocumentFilters'; // Verifique se o caminho está correto (DocumentFilters ou DocumentFiltersComponent)
-import DocumentListComponent from '../../components/Document/DocumentList'; // Verifique se o caminho está correto
+import DocumentFiltersComponent, { type ViewMode } from '../../components/Document/DocumentFilters'; 
+import DocumentListComponent from '../../components/Document/DocumentList'; 
 import CreateDocumentButton from '../../components/button/CreateButtonDocument';
 
 export interface DocumentPageProps {
@@ -15,13 +15,15 @@ const DocumentPage: React.FC<DocumentPageProps> = ({
 }) => {
   
   const [activeFilters, setActiveFilters] = useState<DocumentFilters>(defaultFilters);
+  
+  // NOVO: Estado para controlar a visualização (inicia como 'grid' ou 'list')
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
 
   const handleFilterChange = (newFilters: DocumentFilters) => {
     setActiveFilters(newFilters);
   };
 
   return (
-    // Fundo da página (Base-200 = #F4F6F7 conforme config)
     <div className="min-h-screen bg-base-100 p-4 md:p-8 font-sans text-neutral">
       <div className="max-w-7xl mx-auto">
         
@@ -45,16 +47,22 @@ const DocumentPage: React.FC<DocumentPageProps> = ({
                <DocumentFiltersComponent 
                   defaultFilters={activeFilters}
                   onFilterChange={handleFilterChange}
-                  availableCategories={[]}
-                  availableReviewers={[]}
+                  availableCategories={[]} // TODO: Buscar do backend se necessário
+                  availableReviewers={[]}  // TODO: Buscar do backend se necessário
                   isLoading={false}
+                  
+                  // Passando o controle do ViewMode
+                  viewMode={viewMode}
+                  onViewModeChange={setViewMode}
                 />
             </div>
 
             {/* Lista de Documentos */}
             <div className="min-h-[400px]">
                 <DocumentListComponent 
-                  filters={activeFilters} 
+                  filters={activeFilters}
+                  // Passando o modo de visualização atual
+                  viewMode={viewMode}
                 />
             </div>
             

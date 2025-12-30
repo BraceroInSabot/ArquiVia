@@ -2,7 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Eye, Settings, User, Calendar, SearchX, Loader2, AlertCircle, 
-  Trash2, Power, Building, Layers, Archive, Edit, FileText, MoreVertical
+  Trash2, Power, Building, Layers, Archive, Edit, FileText, MoreVertical,
+  FilePenLine // <--- Novo ícone importado
 } from 'lucide-react'; 
 
 import type { DocumentList, DocumentFilters, PaginatedResponse } from '../../services/core-api';
@@ -11,7 +12,6 @@ import ClassificationModal from '../../components/modal/ClassificationModal';
 import PaginationControl from './PaginationControl';
 import ConfirmModal, { type ConfirmVariant } from '../../components/modal/ConfirmModal';
 
-// Tipo ViewMode importado ou definido localmente
 type ViewMode = 'grid' | 'list';
 
 interface DocumentListProps {
@@ -61,6 +61,11 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters, viewMode 
   
   const [areLabelsExpanded, setAreLabelsExpanded] = useState(false);
   
+  // --- ESTADOS PARA RENOMEAR ---
+  const [renamingDoc, setRenamingDoc] = useState<DocumentList | null>(null);
+  const [newTitle, setNewTitle] = useState('');
+  const [isRenaming, setIsRenaming] = useState(false);
+
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [confirmConfig, setConfirmConfig] = useState<ConfirmConfig>({
     isOpen: false, type: null, doc: null, title: '', message: '', variant: 'warning', confirmText: ''
@@ -119,6 +124,40 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters, viewMode 
   const handleModalOpen = (documentId: number) => { setSelectedDocId(documentId); setIsModalOpen(true); };
   const handleModalClose = () => { setIsModalOpen(false); setSelectedDocId(null); };
   
+  // --- LÓGICA DE RENOMEAR ---
+  const handleOpenRename = (doc: DocumentList) => {
+    setRenamingDoc(doc);
+    setNewTitle(doc.title || '');
+  };
+
+  const handleCloseRename = () => {
+    setRenamingDoc(null);
+    setNewTitle('');
+    setIsRenaming(false);
+  };
+
+  const handleRenameSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!renamingDoc || !newTitle.trim()) return;
+
+    setIsRenaming(true);
+    try {
+        // Usando a mesma lógica do EditDocumentPage: updateDocument com { title: ... }
+        await documentService.updateDocument(renamingDoc.document_id, { title: newTitle });
+        
+        // Atualiza a lista localmente para refletir a mudança instantaneamente
+        setDocuments(prevDocs => 
+            prevDocs.map(d => d.document_id === renamingDoc.document_id ? { ...d, title: newTitle } : d)
+        );
+        handleCloseRename();
+    } catch (err) {
+        console.error("Erro ao renomear:", err);
+        alert("Erro ao renomear o documento.");
+    } finally {
+        setIsRenaming(false);
+    }
+  };
+
   const requestToggleStatus = (doc: DocumentList) => {
     const actionText = doc.is_active ? "Desativar" : "Ativar";
     const variant: ConfirmVariant = doc.is_active ? "warning" : "success";
@@ -268,6 +307,14 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters, viewMode 
                       {doc.file_url ? <Eye size={18} /> : <Edit size={18} />}
                    </button>
                 </div>
+
+                {/* --- BOTÃO DE RENOMEAR (CARD) --- */}
+                <div className="tooltip tooltip-top" data-tip="Renomear">
+                   <button onClick={() => handleOpenRename(doc)} className="btn btn-square btn-sm btn-ghost text-info hover:bg-info/10">
+                      <FilePenLine size={18} />
+                   </button>
+                </div>
+
                 <div className="tooltip tooltip-top" data-tip="Configurações">
                     <button onClick={() => handleModalOpen(doc.document_id)} className="btn btn-square btn-sm btn-ghost text-secondary hover:bg-secondary/10"><Settings size={18} /></button>
                 </div>
@@ -284,26 +331,18 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters, viewMode 
     );
   };
 
-  // --- MODO LISTA RESPONSIVO (Table Fixed) ---
   const renderListView = (docs: DocumentList[]) => {
     return (
       <div className="w-full rounded-lg border border-base-200 bg-base-100 shadow-sm overflow-visible">
-        {/* 'table-fixed' é crucial aqui para evitar barras de rolagem horizontais em Desktop.
-            O layout controla rigidamente a largura das colunas. */}
         <table className="table table-sm w-full table-fixed">
           
-          {/* Definição de Larguras para Desktop */}
           <thead className="bg-base-200 text-xs font-bold text-gray-500 uppercase">
             <tr>
               <th className="w-12 text-center">St</th>
-              {/* O nome ocupa o espaço restante */}
               <th className="w-auto">Documento</th>
-              
-              {/* Colunas ocultas em Mobile (hidden) e Tablet (md:table-cell) */}
               <th className="hidden lg:table-cell w-48">Contexto</th>
               <th className="hidden md:table-cell w-36">Criador / Data</th>
               <th className="hidden xl:table-cell w-40">Etiquetas</th>
-              
               <th className="w-20 text-end">Ações</th>
             </tr>
           </thead>
@@ -312,12 +351,10 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters, viewMode 
             {docs.map(doc => (
               <tr key={doc.document_id} className={`hover group ${!doc.is_active ? 'opacity-60 grayscale-[0.3]' : ''}`}>
                 
-                {/* Status */}
                 <td className="text-center align-middle">
                     <div className={`w-2.5 h-2.5 rounded-full mx-auto ${doc.is_active ? 'bg-success' : 'bg-warning'}`} title={doc.is_active ? "Ativo" : "Inativo"}></div>
                 </td>
 
-                {/* Documento (Título e Info Mobile) */}
                 <td className="align-middle py-3">
                     <div className="flex flex-col gap-0.5 pr-2">
                         <span 
@@ -328,8 +365,8 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters, viewMode 
                             {doc.title || "Sem Título"}
                         </span>
                         
-                        {/* --- INFO EXTRA APENAS MOBILE --- 
-                            Quando as colunas da direita somem, essas infos aparecem aqui embaixo do nome */}
+                        <span className="text-[10px] text-gray-400 font-mono hidden sm:block">Ref: #{doc.document_id}</span>
+                        
                         <div className="flex flex-col gap-1 mt-1 sm:hidden">
                             <span className="text-[10px] text-gray-500 flex items-center gap-1">
                                 <Building size={10} /> {doc.enterprise} 
@@ -343,7 +380,6 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters, viewMode 
                     </div>
                 </td>
 
-                {/* Contexto (Desktop Grande) */}
                 <td className="hidden lg:table-cell align-middle">
                     <div className="flex flex-col text-xs text-gray-500 truncate">
                         <span className="font-semibold flex items-center gap-1 truncate" title={doc.enterprise || ''}>
@@ -355,7 +391,6 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters, viewMode 
                     </div>
                 </td>
 
-                {/* Criador (Tablet+) */}
                 <td className="hidden md:table-cell align-middle">
                     <div className="flex flex-col text-xs text-gray-500 truncate">
                          <span className="font-medium truncate" title={doc.creator_name}>{doc.creator_name}</span>
@@ -363,7 +398,6 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters, viewMode 
                     </div>
                 </td>
 
-                {/* Etiquetas (Monitor Wide) */}
                 <td className="hidden xl:table-cell align-middle">
                     <div className="flex flex-wrap gap-1 max-h-8 overflow-hidden">
                         {doc.categories_data?.slice(0, 2).map((cat, idx) => (
@@ -381,17 +415,22 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters, viewMode 
                     </div>
                 </td>
 
-                {/* Ações */}
                 <td className="text-end align-middle">
                     <div className="dropdown dropdown-end dropdown-left sm:dropdown-end">
                         <label tabIndex={0} className="btn btn-sm btn-ghost btn-square text-gray-500">
                             <MoreVertical size={16} />
                         </label>
-                        <ul tabIndex={0} className="dropdown-content z-[20] menu p-2 shadow-lg bg-base-100 rounded-box w-48 border border-base-200">
+                        <ul tabIndex={0} className="dropdown-content z-50 menu p-2 shadow-lg bg-base-100 rounded-box w-48 border border-base-200">
                             <li>
                                 <a onClick={() => doc.file_url ? handleS3FileDownload(doc.file_url) : handleEditClick(doc.document_id)}>
                                     {doc.file_url ? <Eye size={14} /> : <Edit size={14} />} 
                                     {doc.file_url ? "Visualizar" : "Editar"}
+                                </a>
+                            </li>
+                            {/* --- BOTÃO DE RENOMEAR (LISTA) --- */}
+                            <li>
+                                <a onClick={() => handleOpenRename(doc)}>
+                                    <FilePenLine size={14} /> Renomear
                                 </a>
                             </li>
                             <li>
@@ -507,6 +546,42 @@ const DocumentListComponent: React.FC<DocumentListProps> = ({ filters, viewMode 
           documentId={selectedDocId}
           onClose={handleModalClose}
         />
+      )}
+
+      {/* --- MODAL DE RENOMEAR --- */}
+      {renamingDoc && (
+        <div className="modal modal-open">
+            <form onSubmit={handleRenameSubmit} className="modal-box relative">
+                <button 
+                    type="button" 
+                    className="btn btn-sm btn-circle absolute right-2 top-2" 
+                    onClick={handleCloseRename}
+                >✕</button>
+                <h3 className="text-lg font-bold mb-4">Renomear Documento</h3>
+                
+                <div className="form-control w-full">
+                    <label className="label">
+                        <span className="label-text">Novo Título</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        placeholder="Digite o novo nome..." 
+                        className="input input-bordered w-full focus:input-primary" 
+                        value={newTitle}
+                        onChange={(e) => setNewTitle(e.target.value)}
+                        autoFocus
+                    />
+                </div>
+
+                <div className="modal-action">
+                    <button type="button" className="btn btn-ghost" onClick={handleCloseRename} disabled={isRenaming}>Cancelar</button>
+                    <button type="submit" className="btn btn-primary" disabled={isRenaming || !newTitle.trim()}>
+                        {isRenaming ? <Loader2 className="animate-spin" size={20} /> : "Salvar"}
+                    </button>
+                </div>
+            </form>
+            <div className="modal-backdrop bg-black/50" onClick={handleCloseRename}></div>
+        </div>
       )}
 
       <ConfirmModal 

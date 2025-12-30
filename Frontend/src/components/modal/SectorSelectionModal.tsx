@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import sectorService from '../../services/Sector/api';
 import documentService from '../../services/Document/api';
 import type { Sector } from '../../services/core-api';
+import { useAuth } from '../../contexts/AuthContext';
 
 const defaultEmptyContent = {
   "root": {
@@ -38,8 +39,7 @@ interface SectorSelectionModalProps {
 
 interface SectorUser {
     user_id: number;
-    username: string;
-    email: string;
+    name: string;
     hierarquia: string;
 }
 
@@ -66,6 +66,7 @@ const SectorSelectionModal = ({ onClose, onSuccess }: SectorSelectionModalProps)
   const pollingIntervalRef = useRef<number | null>(null);
   const [docTitle, setDocTitle] = useState('');
   const [docDesc, setDocDesc] = useState('');
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchSectors = async () => {
@@ -90,7 +91,9 @@ const SectorSelectionModal = ({ onClose, onSuccess }: SectorSelectionModalProps)
         try {
       
             const response = await sectorService.listSectorUsersWithHierarchy(selectedSector.sector_id);
-            setSectorUsers(response.data.data || []);
+            const users_list = response.data.data || [];
+            //@ts-ignore
+            setSectorUsers(users_list.filter((u) => u.user_id !== user?.data.user_id));
         } catch (error) {
             console.error("Erro ao buscar usuários do setor:", error);
             toast.error("Erro ao carregar lista de usuários.");
@@ -390,14 +393,9 @@ const SectorSelectionModal = ({ onClose, onSuccess }: SectorSelectionModalProps)
                             {sectorUsers.map(user => (
                                 <label key={user.user_id} className="flex items-center justify-between p-3 cursor-pointer hover:bg-base-200/50 transition-colors">
                                     <div className="flex items-center gap-3">
-                                        <div className="avatar placeholder">
-                                            <div className="bg-neutral-focus text-neutral-content rounded-full w-8">
-                                                <span className="text-xs">{user.username.charAt(0).toUpperCase()}</span>
-                                            </div>
-                                        </div>
                                         <div>
-                                            <p className="text-sm font-semibold leading-none">{user.username}</p>
-                                            <p className="text-xs text-gray-500 leading-none mt-1">{user.hierarquia} • {user.email}</p>
+                                            <p className="text-sm font-semibold leading-none">{user.name}</p>
+                                            <p className="text-xs text-gray-500 leading-none mt-1">{user.hierarquia}</p>
                                         </div>
                                     </div>
                                     <input 

@@ -28,7 +28,9 @@ const DocumentFiltersComponent: React.FC<DocumentFiltersProps> = ({
   const handleFilterUpdate = (filterUpdate: Partial<DocumentFilters>) => {
     const newFilters = { ...filters, ...filterUpdate };
     setFilters(newFilters);
-    if (filterUpdate.searchTerm !== undefined) {
+    
+    // ALTERAÇÃO AQUI: Dispara o onFilterChange se for searchTerm OU groupBy
+    if (filterUpdate.searchTerm !== undefined || filterUpdate.groupBy !== undefined) {
       onFilterChange(newFilters);
     }
   };

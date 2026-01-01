@@ -23,7 +23,8 @@ interface ActionsPluginProps {
   isAutosaveActive: boolean;
   onAutosaveToggle: () => void;
   isGlowing: boolean;
-  onManualSave: () => void;
+  // MUDANÇA: A função agora aceita o conteúdo JSON como string
+  onManualSave: (jsonContent: string) => void;
 }
 
 // @ts-ignore
@@ -52,6 +53,19 @@ export default function ActionsPlugin({isAutosaveActive, onAutosaveToggle, isGlo
             setIsEditable(editable);
         });
     }, [editor]);
+
+    // --- NOVA FUNÇÃO DE SALVAMENTO ---
+    const handleSaveClick = () => {
+        // Extrai o estado do editor de forma segura
+        editor.getEditorState().read(() => {
+            // 1. Pega o estado JSON do Lexical
+            const jsonState = editor.getEditorState().toJSON();
+            // 2. Transforma em string
+            const jsonString = JSON.stringify(jsonState);
+            // 3. Envia para o componente pai
+            onManualSave(jsonString);
+        });
+    };
 
     const toggleLock = () => {
         editor.setEditable(!isEditable);
@@ -125,8 +139,6 @@ export default function ActionsPlugin({isAutosaveActive, onAutosaveToggle, isGlo
     };
 
     return (
-        // FIX 1: Container fixo usando w-full e justify-center.
-        // Isso impede que ele force a largura da página além de 100vw.
         <div className="fixed bottom-6 left-0 w-full z-[100] flex justify-center pointer-events-none px-4">
             
             {/* --- PAINEL DE HISTÓRICO --- */}
@@ -193,16 +205,12 @@ export default function ActionsPlugin({isAutosaveActive, onAutosaveToggle, isGlo
                 </div>
             )}
 
-            {/* --- BARRA DE AÇÕES FIXA (SEM SCROLL) --- */}
-            {/* - pointer-events-auto: Habilita cliques
-                - flex-nowrap: Garante que fique em linha
-                - gap-1: Espaçamento mínimo
-            */}
+            {/* --- BARRA DE AÇÕES FIXA --- */}
             <div className="pointer-events-auto flex items-center justify-center gap-1 sm:gap-2 p-1.5 bg-base-100 shadow-xl rounded-full border border-base-300 max-w-full">
                 
-                {/* Botão Salvar: Icone sempre, Texto apenas em SM+ */}
+                {/* Botão Salvar: Modificado para usar handleSaveClick */}
                 <button
-                    onClick={onManualSave}
+                    onClick={handleSaveClick}
                     disabled={!isEditable}
                     className={`btn btn-sm btn-primary rounded-full px-2 sm:px-4 text-white border-none ${!isEditable ? 'opacity-50 cursor-not-allowed' : ''}`}
                     title="Salvar Agora"
@@ -211,7 +219,6 @@ export default function ActionsPlugin({isAutosaveActive, onAutosaveToggle, isGlo
                     <span className="hidden sm:inline ml-1">Salvar</span>
                 </button>
                 
-                {/* Divisor: Oculto no Mobile para economizar espaço */}
                 <div className="hidden sm:block w-px h-6 bg-base-200 mx-1"></div>
 
                 {/* Toggle AutoSave */}
@@ -221,7 +228,6 @@ export default function ActionsPlugin({isAutosaveActive, onAutosaveToggle, isGlo
                     className={`btn btn-sm btn-ghost rounded-full text-[10px] sm:text-xs font-normal px-2 ${isAutosaveActive ? 'text-success bg-success/10' : 'text-gray-400'}`}
                     title={isAutosaveActive ? "Auto-salvamento Ativado" : "Desativado"}
                 >
-                    {/* No mobile pode mostrar só 'AUTO' ou abreviação se ficar apertado, mas aqui cabe */}
                     {isAutosaveActive ? 'AUTO ON' : 'AUTO OFF'}
                 </button>
 

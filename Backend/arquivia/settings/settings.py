@@ -6,6 +6,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 INSTALLED_APPS = [
     # 1. DJANGO CORE
+    'daphne',
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions", 
@@ -34,6 +35,7 @@ INSTALLED_APPS = [
     "apps.APIUser",
     "apps.APIEmpresa",
     "apps.APISetor",
+    'channels',
     "apps.APIDocumento",
     'apps.APIAudit',
     'apps.APIDashboard',
@@ -104,6 +106,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "arquivia.wsgi.application"
+ASGI_APPLICATION = "arquivia.asgi.application"
 
 AUTH_PASSWORD_VALIDATORS = [
     {

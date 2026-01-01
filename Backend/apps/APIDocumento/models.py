@@ -35,9 +35,10 @@ class Document(models.Model):
     is_active = models.BooleanField(default=True, db_column='is_active_document')
     file_url = models.FileField(upload_to='uploaded_documents/', blank=True, default=None, db_column='file_url_document')
     thumbnail_path = models.FileField(upload_to='thumbnails/', blank=True, default=None, db_column='thumbnail_path_document')
-    
     history = HistoricalRecords(table_name='Document_Record')
     search_content = models.TextField(blank=True, null=True, db_column='search_content_document')
+    yjs_state = models.BinaryField(null=True, blank=True, db_column='yjs_state_document')
+    html_snapshot = models.TextField(null=True, blank=True, db_column='html_snapshot_document')
 
     def __str__(self):
         return self.title 

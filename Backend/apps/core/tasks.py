@@ -1,7 +1,6 @@
 import os
 import sys
 import boto3
-import subprocess
 from celery import shared_task
 from django.conf import settings
 from io import BytesIO
@@ -11,6 +10,9 @@ from urllib.parse import urlparse, unquote
 from apps.APIDocumento.models import Document
 import time
 from dotenv import load_dotenv
+from celery import shared_task
+from django_redis import get_redis_connection
+import y_py
 
 load_dotenv(".env")
 
@@ -129,3 +131,55 @@ def process_media_asset(document_id):
     except Exception as e:
         print(f"[Celery Error] Fatal: {str(e)}")
         raise e
+
+@shared_task
+def persist_document_task(doc_id):
+    redis_queue_key = f'yjs_queue:{doc_id}'
+    con = get_redis_connection("default")
+    
+    # 1. Pega e LIMPA a fila atomicamente (para não perder dados que entrarem durante o processo)
+    # LPOP pega e remove. Se tiver 1000 itens, pegamos todos.
+    # Nota: RPOP/LPOP processa um por um. Para pegar tudo e limpar, usamos LRANGE + DEL numa transaction
+    # Mas para simplificar e ser robusto:
+    
+    # Pega tudo
+    raw_updates = con.lrange(redis_queue_key, 0, -1)
+    if not raw_updates:
+        return "Fila vazia"
+        
+    # Limpa o que pegamos
+    con.delete(redis_queue_key)
+
+    try:
+        doc = Document.objects.get(pk=doc_id)
+        ydoc = y_py.YDoc()
+        
+        # Carrega estado anterior
+        if doc.yjs_state:
+            try:
+                y_py.apply_update(ydoc, doc.yjs_state)
+            except:
+                ydoc = y_py.YDoc() # Reset se corrompido
+
+        applied = 0
+        for blob in raw_updates:
+            try:
+                # Decodificação básica do protocolo Y-Websocket
+                # [Tipo, Subtipo, ...Payload]
+                if len(blob) > 2:
+                    # Se for Sync(0) e (Update(2) ou Step2(1))
+                    if blob[0] == 0 and blob[1] in [1, 2]:
+                        payload = blob[2:]
+                        if payload:
+                            y_py.apply_update(ydoc, payload)
+                            applied += 1
+            except:
+                continue # Ignora update podre individual
+
+        if applied > 0:
+            doc.yjs_state = y_py.encode_state_as_update(ydoc)
+            doc.save()
+            return f"Salvo: {applied} updates"
+            
+    except Exception as e:
+        return f"Erro task: {e}"

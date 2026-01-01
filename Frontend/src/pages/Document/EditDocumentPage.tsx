@@ -1,180 +1,266 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2, CheckCircle, AlertCircle } from 'lucide-react'; // AlertCircle adicionado
+import { ArrowLeft, Loader2, CheckCircle, WifiOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+// Lexical Core
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
-import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
 import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import type { EditorState } from 'lexical';
+import { $getRoot } from 'lexical';
 
-// Imports de Serviços
-import documentService from '../../services/Document/api';
-import { getLatestHistoryEntry } from '../../utils/history_manager';
+// Colaboração (Yjs + WebSocket)
+import { CollaborationPlugin } from '@lexical/react/LexicalCollaborationPlugin';
+import type { Provider } from '@lexical/yjs';
+import * as Y from 'yjs';
+import { WebsocketProvider } from 'y-websocket';
 
-// Imports de Plugins do Lexical
+// Plugins do Lexical
 import { ListNode, ListItemNode } from '@lexical/list';
 import { HeadingNode, QuoteNode } from '@lexical/rich-text';
 import { LinkNode } from '@lexical/link';
-import { ImageNode } from '../../components/node/ImageNode';
-import { VideoNode } from '../../components/node/VideoNode';
 import { ListPlugin } from '@lexical/react/LexicalListPlugin';
 import { LinkPlugin } from '@lexical/react/LexicalLinkPlugin';
 import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
 import { TRANSFORMERS, CODE } from '@lexical/markdown';
 
-// Imports de Plugins Customizados
+// Plugins Customizados e Nós
+import { ImageNode } from '../../components/node/ImageNode';
+import { VideoNode } from '../../components/node/VideoNode';
 import VideoPlugin from '../../plugin/VideoPlugin';
 import ImagePlugin from '../../plugin/ImagePlugin';
 import FormattingToolbarPlugin from '../../plugin/ToolBarPlugin';
 import ActionsPlugin from '../../plugin/DownBarPlugin';
 
-import '../../assets/css/EditorTheme.css'; 
+// Contextos e Serviços
+import { useAuth } from '../../contexts/AuthContext'; 
+import documentService from '../../services/Document/api';
 
-const baseInitialConfig = {
-  namespace: 'MyEditor',
-  theme: {
-    list: { ol: 'editor-list-ol', ul: 'editor-list-ul', listitem: 'editor-listitem' },
-    image: 'editor-image', video: 'editor-video',
-    heading: { h1: 'editor-heading-h1', h2: 'editor-heading-h2', h3: 'editor-heading-h3' },
-    quote: 'editor-quote', code: 'editor-code', link: 'editor-link',
-    text: { bold: 'editor-text-bold', italic: 'editor-text-italic', underline: 'editor-text-underline', highlight: 'editor-text-highlight' },
-  },
-  onError(error: Error) { throw error; },
-  nodes: [HeadingNode, QuoteNode, ListNode, ListItemNode, LinkNode, ImageNode, VideoNode]
-};
+// Estilos
+import '../../assets/css/EditorTheme.css'; 
+import '../../assets/css/CollaborativeCursor.css'; 
+
+const WS_ENDPOINT = 'ws://localhost:8000/'; 
+const CURSOR_COLORS = ['#d946ef', '#f43f5e', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b'];
+const getRandomColor = () => CURSOR_COLORS[Math.floor(Math.random() * CURSOR_COLORS.length)];
 
 const filteredTransformers = TRANSFORMERS.filter(t => t !== CODE);
 
-// --- CORREÇÃO APLICADA AQUI ---
-// O setTimeout(..., 0) resolve o aviso de flushSync
-function LoadInitialStatePlugin({ initialContent }: { initialContent: string | null }) {
-  const [editor] = useLexicalComposerContext();
-  
-  useEffect(() => {
-    if (initialContent) {
-      // Move a atualização para o final da fila de eventos
-      const timer = setTimeout(() => {
-        try {
-          const initialEditorState = editor.parseEditorState(initialContent);
-          editor.setEditorState(initialEditorState);
-        } catch (e) {
-          console.error("Falha ao carregar estado salvo.", e);
-        }
-      }, 0);
+// --- PLUGIN DE RESTAURAÇÃO (CORRIGIDO PARA SINGLE USER) ---
+const RestoreContentPlugin = ({ 
+    content, 
+    providerRef,
+    isConnected
+}: { 
+    content: string | null, 
+    providerRef: React.MutableRefObject<WebsocketProvider | null>,
+    isConnected: boolean
+}) => {
+    const [editor] = useLexicalComposerContext();
+    const hasRestored = useRef(false);
 
-      return () => clearTimeout(timer);
-    }
-  }, [editor, initialContent]); 
-  
-  return null;
-}
-// --- FIM DA CORREÇÃO ---
+    useEffect(() => {
+        const provider = providerRef.current;
+        // Se não tem conteúdo de backup, ou já restaurou, ou não conectou ainda: aborta.
+        if (!content || hasRestored.current || !provider || !isConnected) return;
+
+        // Função que faz o trabalho sujo
+        const attemptRestore = (source: string) => {
+            if (hasRestored.current) return;
+
+            // Pequeno delay para garantir que qualquer binário recebido do socket seja processado
+            setTimeout(() => {
+                editor.update(() => {
+                    // Verifica novamente dentro do update para evitar race conditions
+                    if (hasRestored.current) return;
+
+                    const root = $getRoot();
+                    const textContent = root.getTextContent();
+                    const isEmpty = textContent.trim().length === 0;
+
+                    if (isEmpty) {
+                        try {
+                            const initialEditorState = editor.parseEditorState(content);
+                            editor.setEditorState(initialEditorState);
+                            console.log(`⚡ Conteúdo restaurado da API via ${source} (Yjs estava vazio).`);
+                            hasRestored.current = true;
+                        } catch (e) {
+                            console.error("Erro restore:", e);
+                        }
+                    } else {
+                        console.log(`🔄 Yjs já tem conteúdo (${source}). Ignorando API.`);
+                        hasRestored.current = true;
+                    }
+                });
+            }, 100); 
+        };
+
+        // ESTRATÉGIA DUPLA:
+        // 1. Se 'synced' disparar (temos gente online), restaura na hora.
+        if (provider.synced) {
+            attemptRestore('Immediate Sync');
+        } else {
+            const onSync = (isSynced: boolean) => {
+                if (isSynced) attemptRestore('Event Sync');
+            };
+            provider.on('synced', onSync);
+
+            // 2. TIMEOUT DE SOLIDÃO (A CORREÇÃO):
+            // Se passar 1 segundo e ninguém falar nada, assumimos que estamos sozinhos
+            // e o servidor é um Relay Cego. Forçamos a verificação.
+            const timeoutId = setTimeout(() => {
+                if (!hasRestored.current) {
+                    attemptRestore('Timeout Fallback');
+                }
+            }, 1000);
+
+            return () => {
+                // provider.off('synced', onSync); // y-websocket as vezes falha no off, deixamos quieto
+                clearTimeout(timeoutId);
+            };
+        }
+    }, [content, isConnected, editor, providerRef]);
+
+    return null;
+};
 
 const EditDocumentPage = () => {
   const { id } = useParams<{ id: string }>(); 
   const navigate = useNavigate();
-  const [title, setTitle] = useState(''); 
-  const [isLoading, setIsLoading] = useState(true); 
-  const [initialContent, setInitialContent] = useState<string | null>(null);
+  const { user } = useAuth(); 
+
+  const [title, setTitle] = useState('');
+  const [serverContent, setServerContent] = useState<string | null>(null);
+  const [isLoadingMetadata, setIsLoadingMetadata] = useState(true); 
+  const [isConnected, setIsConnected] = useState(false); 
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
   const [isTitleFocused, setIsTitleFocused] = useState(false);
 
   const [isAutosaveActive, setIsAutosaveActive] = useState(true);
   const [isGlowing, setIsGlowing] = useState(false);
 
-  const inactivityTimerRef = useRef<number | null>(null);
-  const editorStateRef = useRef<string | null>(null);
-  const autosaveActiveRef = useRef<boolean>(true);
+  const providerRef = useRef<WebsocketProvider | null>(null);
 
-  // --- LÓGICA (INTACTA) ---
+  const userInfo = useMemo(() => ({
+    name: user?.data?.name || 'Usuário Anônimo',
+    color: getRandomColor(),
+  }), [user]);
+
+  const initialConfig = {
+    namespace: 'CollaborativeEditor',
+    theme: {
+      list: { ol: 'editor-list-ol', ul: 'editor-list-ul', listitem: 'editor-listitem' },
+      image: 'editor-image', video: 'editor-video',
+      heading: { h1: 'editor-heading-h1', h2: 'editor-heading-h2', h3: 'editor-heading-h3' },
+      quote: 'editor-quote', code: 'editor-code', link: 'editor-link',
+      text: { bold: 'editor-text-bold', italic: 'editor-text-italic', underline: 'editor-text-underline', highlight: 'editor-text-highlight' },
+    },
+    editorState: null, 
+    onError(error: Error) { console.error('Lexical Error:', error); },
+    nodes: [HeadingNode, QuoteNode, ListNode, ListItemNode, LinkNode, ImageNode, VideoNode]
+  };
+
+  const providerFactory = useCallback(
+    (id: string, yjsDocMap: Map<string, Y.Doc>): Provider => {
+      let doc = yjsDocMap.get(id);
+
+      if (!doc) {
+        doc = new Y.Doc();
+        yjsDocMap.set(id, doc);
+      } else {
+        doc.load();
+      }
+
+      const url = `${WS_ENDPOINT}ws/editor/`;
+      
+      const provider = new WebsocketProvider(
+        url,
+        id + '/', 
+        doc,
+        { connect: false }
+      );
+
+      providerRef.current = provider;
+
+      provider.on('status', (event: any) => {
+        const connected = event.status === 'connected';
+        setIsConnected(connected);
+        setSaveStatus(connected ? 'saved' : 'unsaved');
+      });
+
+      provider.awareness.setLocalStateField('user', {
+        name: userInfo.name,
+        color: userInfo.color,
+      });
+
+      provider.connect();
+
+      return provider as unknown as Provider;
+    },
+    [userInfo]
+  );
+
   useEffect(() => {
-    const fetchDocument = async () => {
-      setIsLoading(true);
+    const fetchMetadata = async () => {
+      setIsLoadingMetadata(true);
       if (id) {
         try {
           const response = await documentService.getDocumentById(Number(id)); 
           const doc = response.data.data; 
           setTitle(doc.title || 'Documento Sem Título');
-          // @ts-ignore
-          setInitialContent(doc.content); 
+          if (doc.content) {
+              //@ts-ignore
+              setServerContent(doc.content);
+          }
         } catch (error) {
-          toast.error("Não foi possível carregar o documento.");
-          setInitialContent(null);
+          toast.error("Erro ao carregar dados do documento.");
         }
-      } else {
-        const latestState = getLatestHistoryEntry();
-        if (latestState) setInitialContent(latestState.state);
-        else setInitialContent(null); 
       }
-      setIsLoading(false);
+      setIsLoadingMetadata(false);
     };
-    fetchDocument();
+    fetchMetadata();
   }, [id]); 
 
   const triggerGlow = () => {
     setIsGlowing(true);
-    setSaveStatus('saved');
     setTimeout(() => setIsGlowing(false), 1500);
   };
 
-  const saveSnapshot = useCallback(async (currentState: string) => {
+  const handleManualSave = async (jsonContent: string) => {
+    triggerGlow();
     setSaveStatus('saving');
-    
-    if (id) {
-      if (currentState === '{"root":{"children":[{"type":"paragraph","version":1}],"direction":null,"format":"","indent":0,"version":1}}') return; 
-      try {
-        await documentService.updateDocument(Number(id), { content: currentState }); 
-        triggerGlow();
-      } catch (error) {
-        console.error("Falha ao salvar snapshot:", error);
+    try {
+        if (id) {
+            await documentService.updateDocument(Number(id), {
+                title: title,
+                content: jsonContent 
+            });
+            toast.success("Documento salvo com sucesso!");
+            setSaveStatus('saved');
+        }
+    } catch (e) {
+        console.error("Erro ao salvar REST:", e);
+        toast.error("Erro ao salvar.");
         setSaveStatus('unsaved');
-      }
-    } else {
-        triggerGlow();
-    }
-  }, [id]); 
-
-  const handleOnChange = (editorState: EditorState) => {
-    const editorStateJSON = JSON.stringify(editorState.toJSON());
-    editorStateRef.current = editorStateJSON;
-    setSaveStatus('unsaved');
-
-    if (!autosaveActiveRef.current) return;
-    if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
-
-    inactivityTimerRef.current = window.setTimeout(() => {
-      saveSnapshot(editorStateJSON);
-    }, 300000); 
-  };
-
-  const handleManualSave = () => {
-    const currentState = editorStateRef.current;
-    if (currentState) {
-      if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
-      saveSnapshot(currentState); 
     }
   };
-
-  useEffect(() => {
-    autosaveActiveRef.current = isAutosaveActive;
-  }, [isAutosaveActive]);
 
   const getDisplayTitle = () => {
-    if (isTitleFocused) return title; // Se focado, mostra tudo
-    if (title.length > 30) return title.substring(0, 24) + '...'; // Se blur, corta
-    return title; // Se curto, mostra tudo
+    if (isTitleFocused) return title; 
+    if (title.length > 30) return title.substring(0, 24) + '...'; 
+    return title; 
   };
 
-  if (isLoading) {
+  if (isLoadingMetadata || !id || !user) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-base-200 gap-4">
         <Loader2 size={48} className="animate-spin text-primary" />
-        <p className="text-gray-500 font-medium">Carregando editor...</p>
+        <p className="text-gray-500 font-medium">
+            {!id ? "Documento não identificado..." : "Conectando ao editor seguro..."}
+        </p>
       </div>
     );
   }
@@ -206,38 +292,43 @@ const EditDocumentPage = () => {
                       documentService.updateDocument(Number(id), { title: title });
                     }
                   }}
-                  
                   placeholder="Título do Documento"
-                  className="input input-ghost text-xl font-bold max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl w-full focus:outline-none"
-                  title={title}
+                  className="input input-ghost text-xl font-bold max-w-xs md:max-w-md w-full focus:outline-none"
                 />
           </div>
         </div>
-
-        <div className="navbar-end w-auto min-w-[140px]">
-            {saveStatus === 'saving' && (
-                <div className="flex items-center gap-2 text-gray-500 text-sm">
-                    <Loader2 size={16} className="animate-spin" /> Salvando...
-                </div>
-            )}
-            {saveStatus === 'saved' && (
-                <div className="flex items-center gap-2 text-success text-sm font-medium">
-                    <CheckCircle size={16} /> Salvo
-                </div>
-            )}
-            {saveStatus === 'unsaved' && (
-                <div className="flex items-center gap-2 text-warning text-sm font-medium" title="Alterações não salvas">
-                    <AlertCircle size={16} /> Não salvo
-                </div>
-            )}
+        
+        <div className='gap-2'>
+          <div className="navbar-end w-auto min-w-[140px]">
+              {!isConnected ? (
+                  <div className="flex items-center gap-2 text-error text-sm font-medium animate-pulse" title="Tentando reconectar...">
+                      <WifiOff size={16} /> Offline
+                  </div>
+              ) : (
+                  <div className="flex items-center gap-2 text-success text-sm font-medium">
+                      <CheckCircle size={16} /> Online
+                  </div>
+              )}
+          </div>
+          <div className='navbar-end w-auto min-w-[140px]'>
+              {saveStatus === 'saving' && (
+                  <div className="flex items-center gap-2 text-primary text-sm font-medium animate-pulse">
+                      <Loader2 size={16} /> Salvando...
+                  </div>
+              )}
+              {saveStatus === 'saved' && (
+                  <div className="flex items-center gap-2 text-success text-sm font-medium">
+                      <CheckCircle size={16} /> Salvo
+                  </div>
+              )}
+          </div>
         </div>
       </div>
 
       <div className="flex overflow-y-auto flex justify-center">
-          
           <div className="bg-white w-full max-w-[850px] min-h-[1100px] h-fit mb-20 p-2 shadow-lg rounded-none md:rounded-lg border border-base-300 flex flex-col relative">
             
-            <LexicalComposer initialConfig={baseInitialConfig}>
+            <LexicalComposer initialConfig={initialConfig}>
                 <div className="flex flex-col flex-grow h-full relative">
                 
                     <div className="sticky flex justify-end top-0 z-10">
@@ -250,13 +341,26 @@ const EditDocumentPage = () => {
                     }}>
                         <RichTextPlugin
                             contentEditable={<ContentEditable className="editor-input outline-none min-h-full text-lg leading-relaxed text-gray-800" />}
-                            placeholder={null} // Placeholder removido do JSX original, ajuste se necessário
+                            placeholder={null} 
                             ErrorBoundary={LexicalErrorBoundary}
                         />
                     </div>
                     
-                    <OnChangePlugin onChange={handleOnChange} />
-                    <HistoryPlugin />
+                    <CollaborationPlugin
+                        id={id}
+                        providerFactory={providerFactory}
+                        shouldBootstrap={true}
+                        username={userInfo.name}
+                        cursorColor={userInfo.color}
+                    />
+
+                    <RestoreContentPlugin 
+                        content={serverContent} 
+                        providerRef={providerRef}
+                        isConnected={isConnected} // Importante passar isso
+                    />
+                    
+                    <OnChangePlugin onChange={() => { }} />
                     <ListPlugin />
                     <LinkPlugin />
                     <MarkdownShortcutPlugin transformers={filteredTransformers} />
@@ -269,9 +373,6 @@ const EditDocumentPage = () => {
                         isGlowing={isGlowing}
                         onManualSave={handleManualSave}
                     />
-                    
-                    {/* Usando o componente corrigido */}
-                    <LoadInitialStatePlugin initialContent={initialContent} />
 
                 </div>
             </LexicalComposer>

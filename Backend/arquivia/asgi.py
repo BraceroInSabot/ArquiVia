@@ -8,8 +8,11 @@ https://docs.djangoproject.com/en/5.1/howto/deployment/asgi/
 """
 
 import os
-
 from django.core.asgi import get_asgi_application
+from channels.routing import ProtocolTypeRouter, URLRouter
+from channels.auth import AuthMiddlewareStack
+from channels.security.websocket import AllowedHostsOriginValidator
+from apps.APIDocumento.routing import websocket_urlpatterns
 from dotenv import load_dotenv
 
 load_dotenv(".env")
@@ -19,4 +22,13 @@ if (os.getenv("DEBUG", 'False').lower() in ("true", "1", "t", "y", "yes", "on"))
 else:
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "arquivia.settings.prod")
 
-application = get_asgi_application()
+application = ProtocolTypeRouter({
+    "http": get_asgi_application(),
+    "websocket": AllowedHostsOriginValidator(
+        AuthMiddlewareStack(
+            URLRouter(
+                websocket_urlpatterns
+            )
+        )
+    ),
+})

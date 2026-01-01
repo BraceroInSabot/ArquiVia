@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     # 3. LOCAL APPS
     "apps.core",
     "apps.APIUser",
+    "apps.APIPayment",
     "apps.APIEmpresa",
     "apps.APISetor",
     'channels',

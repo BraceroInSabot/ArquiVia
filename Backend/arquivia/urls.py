@@ -28,4 +28,5 @@ urlpatterns = [
     path(f"api/{VERSAO}/documento/", include("apps.APIDocumento.urls")),
     path(f"api/{VERSAO}/documento-auditoria/", include("apps.APIAudit.urls")),
     path(f"api/{VERSAO}/painel/", include("apps.APIDashboard.urls")),
+    path(f"api/{VERSAO}/pagamento/", include("apps.APIPayment.urls")),
 ]

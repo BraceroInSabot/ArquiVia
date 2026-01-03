@@ -8,11 +8,12 @@ load_dotenv(".env")
 
 SECRET_KEY = os.getenv("S_KEY")
 
-DEBUG = os.getenv("DEBUG", "False")
+DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
 ALLOWED_HOSTS += [
     "localhost",
     "127.0.0.1",
+    "*"
 ]
 
 
@@ -112,3 +113,7 @@ STORAGES = {
 
 STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/static/"
 MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/media/"
+
+ASAAS_API_KEY = os.getenv('ASAAS_API_KEY_DEV')
+ASAAS_API_NAME = os.getenv('ASAAS_API_NAME_DEV')
+ASAAS_API_URL = os.getenv('ASAAS_API_URL_DEV')

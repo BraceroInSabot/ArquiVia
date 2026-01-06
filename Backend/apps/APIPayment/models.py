@@ -29,6 +29,7 @@ class Plan_Type(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2, db_column='price_type')
     description = models.TextField(null=True, blank=True, db_column='description_type')
     features = models.JSONField(null=True, blank=True, db_column='features_type')
+    is_active = models.BooleanField(default=True, db_column='is_active_type')
     
     def __str__(self):
         return self.plan_type

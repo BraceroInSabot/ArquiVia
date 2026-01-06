@@ -1,5 +1,8 @@
 import requests
 from django.conf import settings
+from apps.APIUser.models import AbsUser as User
+from django.utils import timezone
+from datetime import timedelta
 
 class AsaasService:
     def __init__(self):
@@ -32,22 +35,22 @@ class AsaasService:
             "externalReference": str(user.pk)
         }
         
-        data = self._request("POST", "customers", payload)
+        data = self._request("POST", "customers", payload)            
         return data["id"] # Retorna 'cus_xxxxx'
 
-    def create_subscription(self, customer_id, value=99.90):
+    def create_subscription(self, customer_id, plan_type):
         """Cria uma assinatura mensal no Boleto/Pix (mais simples pra começar)"""
         payload = {
             "customer": customer_id,
-            "billingType": "UNDEFINED", # Deixa o usuário escolher no link (Pix/Boleto/Cartão)
-            "value": value,
-            "nextDueDate": "2026-02-01", # Lógica para D+3 ou similar
+            "billingType": "UNDEFINED",
+            "value": float(plan_type.price),
+            "nextDueDate": (timezone.now() + timedelta(days=3)).strftime("%Y-%m-%d"), # Lógica para D+3 ou similar
             "cycle": "MONTHLY",
             "description": "Assinatura ArquiVia Pro"
         }
         
         data = self._request("POST", "subscriptions", payload)
-        return data # Retorna o objeto da assinatura completo
+        return data
     
     def restore_customer(self, customer_id):
         """Restaura o cliente no Asaas se deletado (opcional)"""

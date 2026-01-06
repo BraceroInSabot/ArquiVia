@@ -6,3 +6,9 @@ insert into "Classification_Status"("PK_status", "status") values (1, 'Concluíd
 insert into "Classification_Status"("PK_status", "status") values (2, 'Em andamento');
 insert into "Classification_Status"("PK_status", "status") values (3, 'Revisão necessária');
 insert into "Classification_Status"("PK_status", "status") values (4, 'Arquivado');
+
+insert into "Plan_Status"("PK_plan_status", "plan_status") values (1, 'Ativo');
+insert into "Plan_Status"("PK_plan_status", "plan_status") values (2, 'Pagamento Pendente');
+insert into "Plan_Status"("PK_plan_status", "plan_status") values (3, 'Pagamento em Atraso');
+insert into "Plan_Status"("PK_plan_status", "plan_status") values (4, 'Devolução Realizada');
+insert into "Plan_Status"("PK_plan_status", "plan_status") values (5, 'Cancelado');

@@ -16,7 +16,7 @@ class DebugCreatePlanView(APIView):
         View de desenvolvimento para simular a aquisição de um plano para o usuário logado.
         """
         user = request.user
-        plan_type = get_object_or_404(Plan_Type, pk=plan_type_id)
+        plan_type = get_object_or_404(Plan_Type, pk=plan_type_id, is_active=True)
 
         if Plan.objects.filter(user=user).exists():
             res = Response()
@@ -24,6 +24,7 @@ class DebugCreatePlanView(APIView):
             res.data = default_response(
                 success=False, 
                 message="Usuário já possui um plano!", 
+                # TODO: Serializer
                 data={'plan_id': user.plan.pk}
                 )
             return res
@@ -38,6 +39,7 @@ class DebugCreatePlanView(APIView):
             res.data = default_response(
                 success=True,
                 message="Plan criada com sucesso",
+                # TODO: Serializer
                 data= {
                     'plan_id': new_plan.pk,
                     'status': str(new_plan.status),

@@ -1,26 +1,40 @@
-# apps/financas/webhooks.py
 import json
-from django.http import JsonResponse
+from django.http import JsonResponse, QueryDict
 from django.views.decorators.csrf import csrf_exempt
 from apps.APIPayment.models import Plan, Plan_Status
 
 @csrf_exempt
 def asaas_webhook(request):
+    """
+    Webhook para receber atualizações de pagamento do Asaas.
+    Suporta payload application/json e application/x-www-form-urlencoded.
+    """
     if request.method != "POST":
         return JsonResponse({}, status=405)
-    print(json.loads(request.body))
+
     try:
-        event_data = json.loads(request.body)
-        event = event_data.get('event')
-        payment = event_data.get('payment')
-        
-        # Loga tudo em dev para entender o fluxo
-        print(f"WEBHOOK RECEBIDO: {event}")
+        # Detecta o tipo de conteúdo e extrai o JSON corretamente
+        if request.content_type == 'application/json':
+            payload = json.loads(request.body)
+        else:
+            if not request.POST:
+                data_dict = QueryDict(request.body.decode('utf-8'))
+                payload_str = data_dict.get('data')
+            else:
+                payload_str = request.POST.get('data')
+
+            if not payload_str:
+                return JsonResponse({'status': 'ignored', 'reason': 'no_data_field'}, status=400)
+            
+            payload = json.loads(payload_str)
+
+        event = payload.get('event')
+        payment = payload.get('payment')
 
         if not payment:
             return JsonResponse({'status': 'ignored'})
 
-        # Busca a user_plan pelo Customer ID (é mais seguro que subscription id as vezes)
+        # TODO: Mover lógica de busca e atualização para um Service
         customer_id = payment.get('customer')
         
         try:
@@ -28,21 +42,19 @@ def asaas_webhook(request):
         except Plan.DoesNotExist:
             return JsonResponse({'status': 'customer_not_found'}, status=404)
 
-        # Lógica de Atualização de Status
-        if event == 'PAYMENT_CONFIRMED' or event == 'PAYMENT_RECEIVED':
-            user_plan.status = Plan_Status.objects.get(plan_status='ACTIVE')
-            # Atualiza a data de vencimento se vier no payload
-            # user_plan.next_due_date = ... 
+        if event in ['PAYMENT_CONFIRMED', 'PAYMENT_RECEIVED', 'PAYMENT_CREATED']:
+            print(user_plan)
+            user_plan.status = Plan_Status.objects.get(plan_status_id=1)
             user_plan.save()
-            print(f"Plan de {user_plan.user} ATIVADA!")
 
         elif event == 'PAYMENT_OVERDUE':
-            user_plan.status = Plan_Status.objects.get(plan_status='OVERDUE')
+            user_plan.status = Plan_Status.objects.get(plan_status_id=3)
             user_plan.save()
-            # TODO: Bloquear acesso do usuário aqui ou disparar e-mail
 
+        return JsonResponse({'status': 'success'})
+
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
     except Exception as e:
-        print(f"Erro webhook: {e}")
-        return JsonResponse({'status': 'error'}, status=500)
-
-    return JsonResponse({'status': 'success'})
+        # TODO: Adicionar logger de erro real aqui
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)

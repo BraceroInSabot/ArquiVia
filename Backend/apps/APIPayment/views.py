@@ -1,10 +1,13 @@
-# apps/financas/views.py (Exemplo simplificado)
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Plan
 from .utils.asaas import AsaasService
 from apps.core.utils import default_response
+from django.conf import settings
 
+if settings.DEBUG:
+    from .dev.views import *
+    
 class CreateCheckoutView(APIView):
     def post(self, request):
         user = request.user
@@ -18,7 +21,7 @@ class CreateCheckoutView(APIView):
             plan.save()
 
         if not plan.asaas_subscription_id:
-            sub_data = service.create_subscription(plan.asaas_customer_id)
+            sub_data = service.create_subscription(plan.asaas_customer_id) # type: ignore
             plan.asaas_subscription_id = sub_data['id']
             plan.save()
             

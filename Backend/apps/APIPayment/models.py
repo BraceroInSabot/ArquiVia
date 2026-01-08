@@ -1,5 +1,7 @@
 from django.db import models
 from django.conf import settings
+from apps.APISetor.models import Sector
+from apps.APIEmpresa.models import Enterprise
 from .utils.asaas import AsaasService
 
 class Plan_Status(models.Model):
@@ -21,7 +23,6 @@ class Plan_Status(models.Model):
             plan_status='Active'
         )
         return status.pk
-
         
 class Plan_Type(models.Model):
     plan_type_id = models.AutoField(primary_key=True, db_column='PK_plan_type')
@@ -48,6 +49,7 @@ class Plan(models.Model):
     purchase_at = models.DateTimeField(auto_now=True, db_column='purchase_at_plan')
     status = models.ForeignKey(Plan_Status, on_delete=models.CASCADE, default=Plan_Status.get_default_pk, db_column='FK_plan_status')
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='plan', db_column='FK_user_plan')
+    plan_type = models.ForeignKey(Plan_Type, on_delete=models.SET_NULL, null=True, blank=True, db_column='FK_plan_type')
 
     class Meta:
         db_table = 'Plan'
@@ -90,3 +92,37 @@ class Plan(models.Model):
         self.asaas_subscription_id = sub_data['id']
         self.save()
         return sub_data
+    
+class Plan_Subscription_Item(models.Model):
+    plan = models.ForeignKey(Plan, related_name='items', on_delete=models.CASCADE)
+    
+    enterprise = models.ForeignKey(
+        Enterprise, 
+        on_delete=models.CASCADE, 
+        null=True, 
+        blank=True,
+        unique=True,
+        related_name='active_plan_items',
+        db_column='FK_enterprise_plan_item'
+    )
+    
+    sector = models.ForeignKey(
+        Sector, 
+        on_delete=models.CASCADE, 
+        null=True, 
+        blank=True,
+        unique=True,
+        related_name='active_plan_items',
+        db_column='FK_sector_plan_item'
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'Plan_Subscription_Item'
+        verbose_name = 'Plan Subscription Item'
+        verbose_name_plural = 'Plan Subscription Items'
+    
+    def __str__(self):
+        return f"{self.plan.plan_type.plan_type} - Item {self.pk}" # type: ignore
+    

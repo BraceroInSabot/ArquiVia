@@ -1,9 +1,13 @@
+from rest_framework.permissions import IsAuthenticated
+from .models import Plan, Plan_Subscription_Item, Plan_Type
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Plan
 from .utils.asaas import AsaasService
 from apps.core.utils import default_response
 from django.conf import settings
+from .serializers import PlanDashboardSerializer, Plan_Type_Serializer
+
 
 if settings.DEBUG:
     from .dev.views import *
@@ -46,3 +50,60 @@ class CreateCheckoutView(APIView):
             }
         )
         return res
+
+class PlanDashboardView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        
+        try:
+            plan = Plan.objects.select_related('plan_type', 'status')\
+                               .prefetch_related('items')\
+                               .get(user=user)
+            
+            serializer = PlanDashboardSerializer(plan)
+            res = Response()
+            res.status_code = 200
+            res.data = default_response(
+                success=True,
+                data=serializer.data
+            )
+            return res
+
+        except Plan.DoesNotExist:
+            res = Response()
+            res.status_code = 200
+            res.data = default_response(
+                success=True,
+                data={'has_plan': False} # type: ignore
+            )
+            return res
+        
+class PlansRetrievalView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        
+        try:
+            plan_types = Plan_Type.objects.filter(is_active=True)
+            
+            serializer = Plan_Type_Serializer(plan_types, many=True)
+            res = Response()
+            res.status_code = 200
+            res.data = default_response(
+                success=True,
+                data=serializer.data
+            )
+            return res
+        
+        except Plan_Type.DoesNotExist:
+            res = Response()
+            res.status_code = 200
+            res.data = default_response(
+                success=True,
+                data={'has_plan': False} # type: ignore
+            )
+            return res
+        

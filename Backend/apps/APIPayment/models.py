@@ -27,10 +27,14 @@ class Plan_Status(models.Model):
 class Plan_Type(models.Model):
     plan_type_id = models.AutoField(primary_key=True, db_column='PK_plan_type')
     plan_type = models.CharField(max_length=50, unique=True, db_column='plan_type')
-    price = models.DecimalField(max_digits=10, decimal_places=2, db_column='price_type')
+    price = models.DecimalField(max_digits=10, decimal_places=2, null=True, db_column='price_type')
     description = models.TextField(null=True, blank=True, db_column='description_type')
     features = models.JSONField(null=True, blank=True, db_column='features_type')
     is_active = models.BooleanField(default=True, db_column='is_active_type')
+    is_most_popular = models.BooleanField(default=False, db_column='is_most_popular_type')
+    order = models.PositiveIntegerField(default=0, db_column='order_type')
+    is_free = models.BooleanField(default=False, db_column='is_free_type')
+    is_price_under_review = models.BooleanField(default=False, db_column='is_price_under_review_type')
     
     def __str__(self):
         return self.plan_type
@@ -94,6 +98,8 @@ class Plan(models.Model):
         return sub_data
     
 class Plan_Subscription_Item(models.Model):
+    plan_subscription_item_id = models.AutoField(primary_key=True, db_column='PK_plan_subscription_item')
+    
     plan = models.ForeignKey(Plan, related_name='items', on_delete=models.CASCADE)
     
     enterprise = models.ForeignKey(

@@ -395,6 +395,19 @@ export interface SectorSimple {
   name: string;
 }
 
+export interface ManyPlans {
+  plan_type_id: number;
+  plan_type: string;
+  price: number | null;
+  description: string | null;
+  features: { [key: string]: any } | null;
+  is_active: boolean;
+  is_most_popular: boolean;
+  order: number;
+  is_free: boolean;
+  is_price_under_review: boolean;
+}
+
 const api = axios.create({
   baseURL: URL,
   withCredentials: true,

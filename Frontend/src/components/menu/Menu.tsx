@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { Building2, Layers, FileText, User } from 'lucide-react'; // Ícones
+import { Building2, Layers, FileText, User, HandCoins } from 'lucide-react'; // Ícones
 import LogoutButton from "../button/LogoutButton";
 
 const Menu = () => {
@@ -14,6 +14,7 @@ const Menu = () => {
         { label: 'Setores', path: '/setores', icon: <Layers size={20} /> },
         { label: 'Documentos', path: '/documentos', icon: <FileText size={20} /> },
         { label: 'Meu Perfil', path: '/perfil', icon: <User size={20} /> },
+        { label: 'Gerenciador de Planos', path: '/gerenciador-planos', icon: <HandCoins size={20} /> },
     ];
     
     return (

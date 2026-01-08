@@ -18,20 +18,19 @@ import ResetPassword from './pages/Authentication/ResetPasswordPage';
 import ProfilePage from './pages/ProfilePage';
 import MainLayout from './components/menu/MenuLayout';
 import CompleteProfilePage from './pages/Authentication/CompleteProfilePage';
+import PlanConsole from './pages/Payment/PlanConsole';
 
 
 function ArquiVia() {
   return (
     <div>
       <Routes>
-        {/* Tratamento de rotas públicas. Todos usuários podem acessar. */}
         <Route path="/" element={<IndexPage />} />
         <Route path="/entrar" element={<LoginPage />} />
         <Route path="/registrar" element={<RegisterPage />} />
         <Route path="/solicitar-redefinicao-senha" element={<RequestResetPassword />} />
         <Route path="/redefinir-senha/:token" element={<ResetPassword />} />
 
-        {/* Tratamento de rotas privadas. Somente usuários logados podem fazer o acesso. */}
         <Route element={<ProtectedRoute />}>
           <Route element={<MainLayout />}>
             <Route path="/painel" element={<DashboardPage />} />
@@ -44,6 +43,7 @@ function ArquiVia() {
             <Route path='/setor/editar/:id' element={<EditSectorPage />} />
             <Route path='/perfil' element={<ProfilePage />} />
             <Route path='/documentos' element={<DocumentPage />} />
+            <Route path='/gerenciador-planos' element={<PlanConsole/>}/>
           </Route>
             <Route path='/completar-perfil' element={<CompleteProfilePage/>}/> 
             <Route path='/documento/editar/:id' element={<EditDocumentPage />} />

@@ -4,7 +4,9 @@ from .views import (
     CreateCheckoutView, 
     DebugCreatePlanView, 
     PlanDashboardView,
-    PlansRetrievalView
+    PlansRetrievalView,
+    PlanItemManagerView,
+    PlanActiveItemsView
 )
 
 
@@ -14,4 +16,6 @@ urlpatterns = [
     path('dev/criar-plano/<int:plan_type_id>/', DebugCreatePlanView.as_view(), name='debug-create-plan'),
     path('dashboard/', PlanDashboardView.as_view(), name='plan-dashboard'),
     path('planos-disponiveis/', PlansRetrievalView.as_view(), name='plans-retrieval'),
+    path('alterar-plano/', PlanItemManagerView.as_view(), name='plan-management'),
+    path('planos-ativos/', PlanActiveItemsView.as_view(), name='plan-active-items')
 ]

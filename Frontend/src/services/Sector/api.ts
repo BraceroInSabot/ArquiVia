@@ -127,6 +127,13 @@ const sectorService = {
    */
   listSectorUsersWithHierarchy(sectorId: number): Promise<{ data: ResponseStructure<[]> }> {
     return api.get(`/setor/${sectorId}/usuarios/`);
+  },
+
+  /**
+   * Retrieve all sector linked to a enterprise wich the user owns
+   */
+  getOwnSectors(): Promise<{ data: ResponseStructure<Sector[]> }> {
+    return api.get('/setor/proprietario/');
   }
 };
 

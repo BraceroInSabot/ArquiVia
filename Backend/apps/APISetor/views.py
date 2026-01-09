@@ -328,4 +328,24 @@ class RetrieveUsersInSectorView(APIView):
             data=users_data # type: ignore
             )
         return res
+
+class RetrieveOwnerSectors(APIView):
+    permission_classes = [IsAuthenticated]
     
+    def get(self, request):
+        user = request.user
+        
+        owned_sectors = Sector.objects.filter(enterprise__owner=user)
+
+        if owned_sectors.count() == 0:
+            res = Response()
+            res.status_code = 404
+            res.data = default_response(success=False, message="Você não possui setores vinculado a uma empresa que seja sua.")
+            return res
+        
+        serializer = SectorDetailSerializer(owned_sectors, many=True)
+        
+        res: HttpResponse = Response()
+        res.status_code = 200
+        res.data = default_response(success=True, message="Setores recuperados com sucesso!", data=serializer.data)
+        return res

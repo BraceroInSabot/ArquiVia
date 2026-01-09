@@ -37,7 +37,7 @@ const PlanSelectionPage: React.FC = () => {
     try {
       const response = await paymentService.getAvailablePlans();
       //@ts-ignore
-      const sortedPlans = (response.data || []).sort((a: PlanType, b: PlanType) => a.order - b.order);
+      const sortedPlans = (response.data.data || []).sort((a: PlanType, b: PlanType) => a.order - b.order);
       setPlans(sortedPlans);
     } catch (error) {
       console.error(error);

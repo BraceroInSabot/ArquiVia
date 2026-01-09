@@ -7,19 +7,32 @@ import {
   CheckCircle2, 
   TrendingUp,
   ExternalLink,
-  Loader2
+  Loader2,
+  Settings
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import paymentService from '../../services/Payment/api'; 
+
 import PlanSelectionPage from '../../components/Payment/PlanSelectionPage'; 
+import PlanManagementModal from '../../components/modal/PlanManagementModal'; 
 import type { PlanData, UsageMetric } from '../../types/plans';
+import paymentService from '../../services/Payment/api';
+
 
 const Plan_Console: React.FC = () => {
     //@ts-ignore
   const navigate = useNavigate();
   const [data, setData] = useState<PlanData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isStatusActive, setIsStatusActive] = useState(false);
+  const [plan_details, setPlanDetails] = useState<PlanData['plan_details'] | null>(null);
+  const [usage, setUsage] = useState<PlanData['usage'] | null>(null);
+  
+  // Controle do Modal de Gestão
+  const [managementModal, setManagementModal] = useState<{
+    isOpen: boolean;
+    type: 'enterprise' | 'sector';
+  }>({ isOpen: false, type: 'enterprise' });
 
   useEffect(() => {
     fetchPlanData();
@@ -27,9 +40,25 @@ const Plan_Console: React.FC = () => {
 
   const fetchPlanData = async () => {
     try {
+      // Se não for o primeiro carregamento, não mostramos loading full screen
+      // para não "piscar" a tela quando voltar do modal
+      if (!data) setIsLoading(true);
+      
       const response = await paymentService.getPlanData();
-      console.log(response.data.data);
-      setData(response.data.data);  
+      //@ts-ignore
+      const payload = response.data.data || response.data;
+      
+      setData(payload);
+
+      setPlanDetails(payload.plan_details);
+      setUsage(payload.usage);
+
+      if (payload.plan_details?.status !== 'ativo') {
+          setIsStatusActive(false);
+      } else {
+          setIsStatusActive(true);
+      }
+
     } catch (error) {
       console.error(error);
       //@ts-ignore
@@ -50,10 +79,14 @@ const Plan_Console: React.FC = () => {
     });
   };
 
+  const openManager = (type: 'enterprise' | 'sector') => {
+    setManagementModal({ isOpen: true, type });
+  };
+
   /**
-   * Renderiza a barra de progresso com cor dinâmica baseada na porcentagem
+   * Renderiza a barra de progresso com cor dinâmica e BOTÃO DE GERENCIAR
    */
-  const renderProgressBar = (metric: UsageMetric, label: string, icon: React.ReactNode) => {
+  const renderProgressBar = (metric: UsageMetric, label: string, icon: React.ReactNode, type: 'enterprise' | 'sector') => {
     let colorClass = 'progress-primary';
     if (metric.percentage >= 90) colorClass = 'progress-error';
     else if (metric.percentage >= 70) colorClass = 'progress-warning';
@@ -68,25 +101,39 @@ const Plan_Console: React.FC = () => {
             </div>
             {label}
           </div>
-          <div className="text-right">
-            <span className="text-sm font-bold text-secondary">
-                {metric.used} <span className="text-gray-400 text-xs font-normal">/ {metric.limit}</span>
-            </span>
-          </div>
+          
+          {/* BOTÃO DE GERENCIAR (Abre o Modal) */}
+          <button 
+            onClick={() => openManager(type)}
+            className="btn btn-xs btn-ghost text-primary hover:bg-primary/10 gap-1 border border-transparent hover:border-primary/20 transition-all"
+          >
+            <Settings size={12} /> Gerenciar Cotas
+          </button>
         </div>
-        <progress 
-            className={`progress w-full h-3 ${colorClass}`} 
-            value={metric.used} 
-            max={metric.limit}
-        ></progress>
-        <div className="text-right mt-1">
-            <span className="text-xs text-gray-400 font-semibold">{metric.percentage}% utilizado</span>
+        
+        <div className="relative pt-1">
+            <div className="flex mb-1 items-center justify-between">
+                <div></div>
+                <div className="text-right">
+                    <span className="text-xs font-semibold inline-block text-secondary">
+                        {metric.used} <span className="text-gray-400 font-normal">/ {metric.limit}</span>
+                    </span>
+                </div>
+            </div>
+            <progress 
+                className={`progress w-full h-3 ${colorClass}`} 
+                value={metric.used} 
+                max={metric.limit}
+            ></progress>
+            <div className="text-right mt-1">
+                <span className="text-xs text-gray-400 font-semibold">{metric.percentage.toFixed(1)}% utilizado</span>
+            </div>
         </div>
       </div>
     );
   };
 
-  if (isLoading) {
+  if (isLoading && !data) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-base-100">
         <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
@@ -95,16 +142,10 @@ const Plan_Console: React.FC = () => {
     );
   }
 
-  // --- ALTERAÇÃO AQUI ---
-  // Estado: Usuário sem plano (has_plan: false)
-  // Agora renderizamos diretamente o componente de Vendas/Seleção de Plano
+  // Se o usuário não tem plano, mostra a tela de vendas
   if (!data?.has_plan || !data.plan_details) {
     return <PlanSelectionPage />;
   }
-
-  // Estado: Usuário com plano (Dashboard)
-  const { plan_details, usage } = data;
-  const isStatusActive = plan_details.status_color === 'green';
 
   return (
     <div className="min-h-screen bg-base-200/50 p-4 md:p-8 font-sans text-neutral">
@@ -115,28 +156,58 @@ const Plan_Console: React.FC = () => {
             <div>
                 <h1 className="text-3xl font-bold text-secondary flex items-center gap-3">
                     Meu Plano
-                    {isStatusActive ? (
-                         <span className="badge badge-success gap-1 text-white p-3">
-                            <CheckCircle2 size={14} /> Ativo
-                         </span>
-                    ) : (
-                        <span className="badge badge-error gap-1 text-white p-3">
-                            <AlertCircle size={14} /> {plan_details.status}
-                         </span>
-                    )}
+                    
+                    {/* INÍCIO DO NOVO CÓDIGO */}
+                    {(() => {
+                        const statusConfig: Record<string, { style: string; icon: React.ReactNode }> = {
+                            'Ativo': { 
+                                style: 'badge-success text-white', 
+                                icon: <CheckCircle2 size={14} /> 
+                            },
+                            'Pagamento Pendente': { 
+                                style: 'badge-warning text-white', 
+                                icon: <AlertCircle size={14} /> 
+                            },
+                            'Pagamento em Atraso': { 
+                                style: 'badge-error text-white', 
+                                icon: <AlertCircle size={14} /> 
+                            },
+                            'Devolução Realizada': { 
+                                style: 'badge-info text-white', 
+                                icon: <CheckCircle2 size={14} /> 
+                            },
+                            'Cancelado': { 
+                                style: 'badge-neutral text-white', 
+                                icon: <AlertCircle size={14} /> 
+                            }
+                        };
+
+                        //@ts-ignore
+                        const config = statusConfig[plan_details.status] || { 
+                            style: 'badge-ghost', 
+                            icon: <AlertCircle size={14} /> 
+                        };
+
+                        return (
+                            <span className={`badge ${config.style} gap-1 p-3 font-semibold shadow-sm`}>
+                                {config.icon} {plan_details?.status}
+                            </span>
+                        );
+                    })()}
+                    {/* FIM DO NOVO CÓDIGO */}
                 </h1>
-                <p className="text-gray-500 mt-1">Gerencie sua assinatura e acompanhe seu consumo.</p>
+                <p className="text-gray-500 mt-1">Gerencie sua assinatura e aloque seus recursos.</p>
             </div>
             
-            {plan_details.payment_link && (
+            {plan_details?.payment_link && (
                 <a 
-                    href={plan_details.payment_link}
+                    href={plan_details?.payment_link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="btn btn-outline btn-secondary gap-2 rounded-full"
+                    className="btn btn-outline btn-secondary gap-2 rounded-full hover:shadow-md transition-all"
                 >
                     <ExternalLink size={18} />
-                    Gerenciar Pagamento
+                    Portal do Cliente (Faturas)
                 </a>
             )}
         </div>
@@ -146,32 +217,32 @@ const Plan_Console: React.FC = () => {
             {/* Card Principal: Detalhes do Plano */}
             <div className="card bg-base-100 shadow-xl border border-base-200 lg:col-span-1 h-full">
                 <div className="card-body">
-                    <h2 className="card-title text-lg text-gray-400 uppercase tracking-wide text-xs font-bold mb-4">
+                    <h2 className="card-title text-xs text-gray-400 uppercase tracking-wider font-bold mb-4">
                         Detalhes da Assinatura
                     </h2>
                     
                     <div className="flex flex-col h-full justify-between gap-6">
                         <div>
                             <p className="text-sm text-gray-500 mb-1">Plano Atual</p>
-                            <p className="text-3xl font-black text-primary">{plan_details.name}</p>
+                            <p className="text-3xl font-black text-primary tracking-tight">{plan_details?.name}</p>
                         </div>
 
-                        <div className="bg-base-200 p-4 rounded-xl border border-base-300">
-                             <div className="flex items-center gap-3 mb-1">
-                                <Calendar size={20} className="text-secondary" />
+                        <div className="bg-base-200/50 p-4 rounded-xl border border-base-200">
+                             <div className="flex items-center gap-2 mb-1">
+                                <Calendar size={18} className="text-secondary" />
                                 <span className="text-sm font-semibold text-gray-600">Próxima Cobrança</span>
                              </div>
-                             <p className="text-xl font-bold text-secondary pl-8">
-                                {formatDate(plan_details.next_due_date)}
+                             <p className="text-xl font-bold text-secondary pl-7">
+                                {
+                                //@ts-ignore
+                                formatDate(plan_details?.next_due_date)}
                              </p>
                         </div>
 
-                        {!isStatusActive && plan_details.payment_link && (
-                            <div className="alert alert-warning shadow-sm">
-                                <AlertCircle size={20} />
-                                <span className="text-xs font-medium">
-                                    Seu plano requer atenção. Regularize o pagamento para evitar bloqueios.
-                                </span>
+                        {!isStatusActive && plan_details?.payment_link && (
+                            <div className="alert alert-warning shadow-sm text-sm">
+                                <AlertCircle size={20} className="shrink-0" />
+                                <span>Regularize o pagamento para evitar bloqueios.</span>
                             </div>
                         )}
                     </div>
@@ -191,15 +262,17 @@ const Plan_Console: React.FC = () => {
                             {renderProgressBar(
                                 usage.enterprises, 
                                 "Empresas Cadastradas", 
-                                <Building size={16} />
+                                <Building size={16} />,
+                                'enterprise'
                             )}
                             
-                            <div className="divider my-2"></div>
+                            <div className="divider my-2 opacity-50"></div>
                             
                             {renderProgressBar(
                                 usage.sectors, 
                                 "Setores Criados", 
-                                <Layers size={16} />
+                                <Layers size={16} />,
+                                'sector'
                             )}
                         </div>
                     ) : (
@@ -211,7 +284,7 @@ const Plan_Console: React.FC = () => {
                     <div className="mt-8 bg-blue-50 text-blue-800 p-4 rounded-lg text-sm flex items-start gap-3 border border-blue-100">
                         <AlertCircle size={18} className="shrink-0 mt-0.5" />
                         <p>
-                            Precisa de mais limites? Considere fazer o upgrade do seu plano para adicionar mais empresas e setores à sua conta.
+                            <strong>Dica:</strong> Use o botão "Gerenciar Cotas" acima para escolher quais empresas ou setores ficam ativos no seu plano atual. Você pode trocar a qualquer momento.
                         </p>
                     </div>
                 </div>
@@ -219,6 +292,16 @@ const Plan_Console: React.FC = () => {
 
         </div>
       </div>
+
+      {/* MODAL DE GERENCIAMENTO */}
+      {managementModal.isOpen && (
+          <PlanManagementModal 
+            isOpen={managementModal.isOpen}
+            type={managementModal.type}
+            onClose={() => setManagementModal(prev => ({ ...prev, isOpen: false }))}
+            onUpdate={fetchPlanData} 
+          />
+      )}
     </div>
   );
 };

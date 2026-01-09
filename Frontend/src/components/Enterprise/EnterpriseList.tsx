@@ -1,14 +1,7 @@
 import type { Enterprise } from '../../services/core-api';
 import EnterpriseCard from './EnterpriseCard';
 import { Building2 } from 'lucide-react'; 
-
-interface EnterpriseListProps {
-  enterprises: Enterprise[] | any; 
-  onView: (id: number) => void;
-  onEdit: (id: number) => void;
-  onToggleStatus: (id: number, currentStatus: boolean) => void;
-  onDelete: (id: number) => void;
-}
+import type { EnterpriseListProps } from '../../types/enterprise';
 
 const EnterpriseList = ({ enterprises, onView, onEdit, onToggleStatus, onDelete }: EnterpriseListProps) => {
   

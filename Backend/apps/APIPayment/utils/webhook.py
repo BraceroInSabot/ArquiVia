@@ -44,8 +44,10 @@ def asaas_webhook(request):
 
         if event in ['PAYMENT_CONFIRMED', 'PAYMENT_RECEIVED', 'PAYMENT_CREATED']:
             print(user_plan)
+            print(user_plan.status)
             user_plan.status = Plan_Status.objects.get(plan_status_id=1)
             user_plan.save()
+            print(user_plan.status)
 
         elif event == 'PAYMENT_OVERDUE':
             user_plan.status = Plan_Status.objects.get(plan_status_id=3)

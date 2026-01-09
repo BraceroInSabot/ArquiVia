@@ -27,8 +27,7 @@ interface PlanData {
     id: number;
     name: string;
     status: string;
-    status_color: string;
-    next_due_date: string | null;
+    next_due_date: string;
     payment_link: string | null;
   };
   usage?: {
@@ -37,4 +36,12 @@ interface PlanData {
   };
 }
 
-export type { PlanType, PlanData, UsageMetric };
+interface PlanResourceToggleProps {
+  resourceId: number;
+  resourceType: 'enterprise' | 'sector';
+  isInitiallyActive: boolean;
+  resourceName?: string;
+  onToggleSuccess?: (newState: boolean) => void;
+}
+
+export type { PlanType, PlanData, UsageMetric, PlanResourceToggleProps };

@@ -11,31 +11,56 @@ import {
   ArrowRight
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+
+// Imports de Serviço e Tipos
 import paymentService from '../../services/Payment/api';
 import type { PlanType } from '../../types/plans';
 
+// Import do Modal de Checkout (Certifique-se de ter criado este arquivo conforme o passo anterior)
+import CheckoutModal from '../modal/PaymentCheckoutModal';
+
 const PlanSelectionPage: React.FC = () => {
+  //@ts-ignore
   const navigate = useNavigate();
+  
+  // Estados de Dados
   const [plans, setPlans] = useState<PlanType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Estados de UI
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
-
   const [timeLeft, setTimeLeft] = useState({ hours: 4, minutes: 59 });
+
+  // Estado para controlar o Modal de Checkout
+  const [checkoutModal, setCheckoutModal] = useState<{
+    isOpen: boolean;
+    plan: PlanType | null;
+  }>({ isOpen: false, plan: null });
+
+  // --- Efeitos ---
 
   useEffect(() => {
     fetchPlans();
+    
+    // Timer de urgência (Fake)
     const timer = setInterval(() => {
         setTimeLeft(prev => {
             if (prev.minutes === 0) return { hours: prev.hours - 1, minutes: 59 };
             return { ...prev, minutes: prev.minutes - 1 };
         });
     }, 60000);
+    
     return () => clearInterval(timer);
   }, []);
+
+  // --- Funções ---
 
   const fetchPlans = async () => {
     try {
       const response = await paymentService.getAvailablePlans();
+      // Ajuste o acesso aos dados conforme o padrão do seu backend (response.data ou response.data.data)
+      //@ts-ignore
+      const rawData = response.data.data || response.data || [];
       //@ts-ignore
       const sortedPlans = (response.data.data || []).sort((a: PlanType, b: PlanType) => a.order - b.order);
       setPlans(sortedPlans);
@@ -48,13 +73,26 @@ const PlanSelectionPage: React.FC = () => {
   };
 
   const handleSelectPlan = (plan: PlanType) => {
+    // 1. Caso Preço sob Consulta -> Redireciona para WhatsApp/Contato
     if (plan.is_price_under_review) {
-        window.open('https://wa.me/17996731503', '_blank');
+        window.open('https://wa.me/17996731503', '_blank'); // Substitua pelo seu link real
         return;
     }
-    navigate(`/checkout/${plan.plan_type_id}?cycle=${billingCycle}`);
+    
+    // 2. Caso Plano Gratuito -> Apenas avisa ou ativa direto (depende da regra de negócio)
+    if (plan.is_free) {
+        toast.success("Seu plano atual já é o gratuito.");
+        return;
+    }
+
+    // 3. Caso Plano Pago -> Abre o Modal de Checkout para confirmar dados
+    setCheckoutModal({
+        isOpen: true,
+        plan: plan
+    });
   };
 
+  // Helper de Renderização de Preço
   const renderPrice = (plan: PlanType, isPopular: boolean) => {
     if (plan.is_price_under_review) {
         return <span className="text-2xl font-bold text-gray-700">Sob Consulta</span>;
@@ -64,6 +102,7 @@ const PlanSelectionPage: React.FC = () => {
     }
 
     const numValue = Number(plan.price);
+    // Aplica desconto visual se for anual
     const finalValue = billingCycle === 'yearly' ? numValue * 0.8 : numValue;
     
     return (
@@ -77,6 +116,7 @@ const PlanSelectionPage: React.FC = () => {
     );
   };
 
+  // Helper de Renderização de Features
   const renderFeatureItem = (key: string, value: string | number | boolean, isPopular: boolean) => {
     const labelMap: Record<string, string> = {
       enterprises: 'Empresas gerenciadas',
@@ -108,6 +148,8 @@ const PlanSelectionPage: React.FC = () => {
     );
   };
 
+  // --- Renderização Principal ---
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white">
@@ -122,12 +164,14 @@ const PlanSelectionPage: React.FC = () => {
       
       {/* Background Decorativo */}
       <div className="absolute top-0 left-0 w-full h-[600px] bg-gradient-to-b from-blue-50 to-white -z-10" />
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] -z-10" />
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/5 rounded-full -z-10" />
 
       <div className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         
-        {/* --- Header --- */}
+        {/* --- Header da Página --- */}
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-6">
+            
+            {/* Banner Urgência */}
             <div className="inline-flex items-center gap-2 bg-red-50 text-red-600 px-4 py-1.5 rounded-full text-sm font-bold border border-red-100 shadow-sm animate-in fade-in slide-in-from-top-4 duration-700">
                 <Timer size={16} />
                 <span>Oferta exclusiva termina em {timeLeft.hours}h {timeLeft.minutes}m</span>
@@ -142,6 +186,7 @@ const PlanSelectionPage: React.FC = () => {
                 Organize documentos e gerencie equipes com a potência que sua empresa precisa.
             </p>
 
+            {/* Toggle Mensal/Anual */}
             <div className="flex items-center justify-center mt-8">
                 <div className="relative bg-slate-100 p-1 rounded-full inline-flex items-center">
                     <button 
@@ -204,6 +249,7 @@ const PlanSelectionPage: React.FC = () => {
                             </p>
                         </div>
 
+                        {/* Lista de Features */}
                         <div className="flex-grow border-t border-dashed border-gray-200 pt-6 mb-8">
                             <ul className="space-y-4">
                                 {plan.features && Object.entries(plan.features).map(([key, value]) => (
@@ -214,6 +260,7 @@ const PlanSelectionPage: React.FC = () => {
                             </ul>
                         </div>
 
+                        {/* Botão de Ação */}
                         <div className="mt-auto">
                             <button 
                                 onClick={() => handleSelectPlan(plan)}
@@ -263,6 +310,18 @@ const PlanSelectionPage: React.FC = () => {
         </div>
 
       </div>
+
+      {/* --- INSERÇÃO DO MODAL DE CHECKOUT --- */}
+      {/* Só renderiza se houver um plano selecionado */}
+      {checkoutModal.plan && (
+        <CheckoutModal 
+            isOpen={checkoutModal.isOpen}
+            onClose={() => setCheckoutModal({ isOpen: false, plan: null })}
+            plan={checkoutModal.plan}
+            billingCycle={billingCycle}
+        />
+      )}
+
     </div>
   );
 };

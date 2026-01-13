@@ -42,6 +42,15 @@ const paymentService = {
      */
     removeItem: async (type: 'enterprise' | 'sector', id: number) => {
         return api.delete('/pagamento/alterar-plano/', { data: { type, id } });
+    },
+
+    /**
+     * Create a subscription for user plan.
+     * @param planId - plan code
+     * @param data -  
+     */
+    createSubscription: async (planId: number, data: { preferable_payment_day: number, billing_cycle: string }) => {
+        return api.post(`/pagamento/plano/${planId}/`, data);
     }
 }
 

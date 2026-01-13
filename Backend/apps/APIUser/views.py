@@ -11,7 +11,16 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from .permissions import OnlyUserRequestOwner
 from apps.APISetor.models import Sector, SectorUser
 from apps.APIEmpresa.models import Enterprise
-from .serializer import ChangePasswordSerializer, GoogleAccountCompleteSerializer, RegistroUsuarioSerializer, UserDetailSerializer, UserEditSerializer, UserSearchSerializer
+from .serializer import (
+    ChangePasswordSerializer, 
+    GoogleAccountCompleteSerializer, 
+    RegistroUsuarioSerializer, 
+    UserDetailSerializer, 
+    UserEditSerializer, 
+    UserSearchSerializer,
+    UserPrivateData,
+    EditUserPrivateData
+)
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from django.conf import settings
@@ -275,6 +284,37 @@ class RetrieveUserView(APIView):
         res: HttpResponse = Response()
         res.status_code = 200
         res.data = default_response(success=True, data=serializer.data)
+        return res
+
+class PrivateDataUserView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        serializer = UserPrivateData(user)
+        res: HttpResponse = Response()
+        res.status_code = 200
+        res.data = default_response(
+            success=True,
+            data=serializer.data
+        )
+        return res
+    
+    def patch(self, request):
+        user = request.user
+        serializer = EditUserPrivateData(
+            instance=user, 
+            data=request.data, 
+            partial=True 
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        res: HttpResponse = Response()
+        res.status_code = 200
+        res.data = default_response(
+            success=True,
+            data=serializer.data
+        )
         return res
 
 class EditUserView(APIView):

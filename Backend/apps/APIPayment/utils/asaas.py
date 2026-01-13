@@ -1,8 +1,13 @@
 import requests
 from django.conf import settings
 from apps.APIUser.models import AbsUser as User
+from apps.APIPayment.models import Plan_Status
 from django.utils import timezone
 from datetime import timedelta
+from dotenv import load_dotenv
+import os
+
+load_dotenv(".env")
 
 class AsaasService:
     def __init__(self):
@@ -32,22 +37,60 @@ class AsaasService:
             "name": user.name,
             "email": user.email,
             "cpfCnpj": user.cpf_cnpj,
+            "phoneMobile": user.phone_mobile,
             "externalReference": str(user.pk)
         }
         
         data = self._request("POST", "customers", payload)            
         return data["id"] # Retorna 'cus_xxxxx'
 
-    def create_subscription(self, customer_id, plan_type):
-        """Cria uma assinatura mensal no Boleto/Pix (mais simples pra começar)"""
+    def create_subscription(
+        self, 
+        customer_id: str | None, 
+        plan_type, 
+        plan,
+        discount: float,
+        discount_type: str,
+    ):
+        """
+        Create a monthly subscription to be payed in payment slip or Pix (easier to start).
+        """
+        trial_days = plan_type.free_trial_days
+        
+        if trial_days is not None and plan.is_free_trial:
+            first_payment_date = timezone.now() + timedelta(days=trial_days)
+            formatted_date = first_payment_date.strftime("%Y-%m-%d")
+            plan.status = Plan_Status.objects.get(plan_status='Ativo')
+            plan.next_due_date = formatted_date
+            print(formatted_date)
+            plan.save()
+        else:
+            formatted_date = timezone.now().strftime("%Y-%m-%d")
+
+        print(os.getenv('ASAAS_REDIRECT_URL_DEV'))
+        base_url = os.getenv('ASAAS_REDIRECT_URL_DEV') if settings.DEBUG else "https://www.arquivia.bracero.com.br"    
+            
         payload = {
             "customer": customer_id,
             "billingType": "UNDEFINED",
             "value": float(plan_type.price),
-            "nextDueDate": (timezone.now() + timedelta(days=3)).strftime("%Y-%m-%d"), # Lógica para D+3 ou similar
+            "nextDueDate": formatted_date, # Lógica para D+3 ou similar
             "cycle": "MONTHLY",
-            "description": "Assinatura ArquiVia Pro"
+            "description": f"{'[DEV]' if settings.DEBUG else ''}Assinatura ArquiVia Pro",
+            "callback": {
+                "successUrl": f"{base_url}/painel",
+                "autoRedirect": False
+            }
         }
+        
+        if discount > 0:
+            payload["discount"] = {
+                "value": discount,
+                "dueDateLimitDays": 0,
+                "type": discount_type
+            }
+        
+        print(f"Assinatura criada.\nVencimento: {formatted_date} && CustomerId: {customer_id}\nPayload: {payload}")
         
         data = self._request("POST", "subscriptions", payload)
         return data

@@ -1,5 +1,5 @@
 from rest_framework.permissions import IsAuthenticated
-from .models import Plan, Plan_Subscription_Item, Plan_Type
+from .models import Plan, Plan_Subscription_Item, Plan_Type, Plan_Status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Plan
@@ -16,44 +16,98 @@ from django.db import transaction
 if settings.DEBUG:
     from .dev.views import *
     
-class CreateCheckoutView(APIView):
-    def post(self, request):
+class SubscriptionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, plan_type_id):
         user = request.user
         service = AsaasService()
+        preferable_payment_day = request.data.get('preferable_payment_day')
+        billing_cycle = request.data.get('billing_cycle')
+        print(billing_cycle)
 
-        plan, created = Plan.objects.get_or_create(user=user)
-        
-        if not plan.asaas_customer_id:
-            customer_id = service.create_customer(user)
-            plan.asaas_customer_id = customer_id
-            plan.save()
+        if not plan_type_id:
+            return Response(default_response(
+                success=False, 
+                message="ID do plano não fornecido."
+            ), status=400)
 
-        if not plan.asaas_subscription_id:
-            sub_data = service.create_subscription(plan.asaas_customer_id) # type: ignore
-            plan.asaas_subscription_id = sub_data['id']
-            plan.save()
-            
-            res = Response()
-            res.status_code = 201
-            res.data = default_response(
-                success=True,
-                message="Plan criada com sucesso",
-                data={
-                    "subscription_id": sub_data['id']
-                }
-            )
-            return res
+        plan_type = get_object_or_404(Plan_Type, pk=plan_type_id, is_active=True)
 
-        res = Response()
-        res.status_code = 200
-        res.data = default_response(
-            success=True,
-            message="Plano de assinatura já existente",
-            data={
-                "subscription_id": plan.asaas_subscription_id
-            }
-        )
-        return res
+        try:
+            with transaction.atomic():
+                has_active_plan = user.plans.filter(status__plan_status='Ativo').exists()
+                
+                if has_active_plan:
+                    return Response(default_response(
+                        success=False, 
+                        message="Você já possui uma assinatura ativa. Gerencie sua assinatura atual no painel."
+                    ), status=409)
+                    
+                last_plan = user.plans.order_by('-purchase_at').first()
+                customer_id = last_plan.asaas_customer_id if last_plan else None
+
+                if not customer_id:
+                    customer_id = service.create_customer(user)
+
+                initial_status, _ = Plan_Status.objects.get_or_create(plan_status='Pagamento Pendente')
+
+                is_trial = False
+                if plan_type.free_trial_days and plan_type.free_trial_days > 0:
+                    is_trial = True
+
+                new_plan = Plan.objects.create(
+                    user=user,
+                    plan_type=plan_type,
+                    status=initial_status,
+                    asaas_customer_id=customer_id,
+                    preferable_payment_day=preferable_payment_day,
+                    is_free_trial=is_trial
+                )
+
+                discount = 0.0
+                discount_type = 'FIXED'
+
+                if plan_type.discount:
+                    if plan_type.discount.fixed_value:
+                        discount = float(plan_type.discount.fixed_value)
+                        discount_type = 'FIXED_VALUE'
+                    elif plan_type.discount.percentage:
+                        discount = float(plan_type.discount.percentage)
+                        discount_type = 'PERCENTAGE'
+
+                sub_data = service.create_subscription(
+                    customer_id=new_plan.asaas_customer_id,
+                    plan_type=plan_type,
+                    plan=new_plan,
+                    discount=discount,
+                    discount_type=discount_type,
+                )
+                
+                new_plan.asaas_subscription_id = sub_data.get('id')
+                new_plan.payment_link = sub_data.get('paymentLink')
+                print(sub_data)
+                
+                new_plan.save()
+
+                return Response(default_response(
+                    success=True,
+                    message="Assinatura criada com sucesso.",
+                    data={
+                        "subscription_id": new_plan.asaas_subscription_id,
+                        "payment_link": new_plan.payment_link,
+                        "next_due_date": new_plan.next_due_date, # type: ignore
+                        "is_trial": new_plan.is_free_trial
+                    }
+                ), status=201)
+
+        except Exception as e:
+            # TODO: Adicionar log de erro real (Sentry/CloudWatch)
+            return Response(default_response(
+                success=False,
+                message="Erro interno ao processar assinatura.",
+                data={'error_details': str(e)}
+            ), status=500)
 
 class PlanDashboardView(APIView):
     permission_classes = [IsAuthenticated]

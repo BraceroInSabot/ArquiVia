@@ -72,12 +72,16 @@ const Plan_Console: React.FC = () => {
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('pt-BR', {
+    
+    const date = new Date(dateString);
+    
+    return date.toLocaleDateString('pt-BR', {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
+      timeZone: 'UTC',
     });
-  };
+};
 
   const openManager = (type: 'enterprise' | 'sector') => {
     setManagementModal({ isOpen: true, type });

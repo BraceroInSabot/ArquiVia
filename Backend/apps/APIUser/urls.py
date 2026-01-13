@@ -17,6 +17,7 @@ from .views import (
     UsersLinkedToMyListView,
     GoogleLoginView,
     CompleteGoogleProfileView,
+    PrivateDataUserView
 )
 
 urlpatterns = [
@@ -32,6 +33,7 @@ urlpatterns = [
     path('alterar-senha/', ChangePasswordView.as_view(), name='alterar-senha'),
     path('desativar/', DeactivateUserView.as_view(), name='desativar-usuario'),
     path("listar/", UsersLinkedToMyListView.as_view(), name="usuario-listar"),
+    path('informacoes-privadas/', PrivateDataUserView.as_view(), name='informacoes-privadas'),
 ]+ [
     # Password Reset
     path("esqueci-senha/", RequisicaoRedefinicaoSenhaView.as_view(), name="esqueci-senha"),

@@ -226,3 +226,14 @@ class UserSearchSerializer(serializers.ModelSerializer):
         model = User
         fields = ['user_id', 'name',]
         read_only_fields = ['user_id', 'name',]
+        
+class UserPrivateData(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['cpf_cnpj', 'phone_mobile']
+
+class EditUserPrivateData(serializers.ModelSerializer):
+    
+    class Meta:
+        model = User
+        fields = ['cpf_cnpj', 'phone_mobile']

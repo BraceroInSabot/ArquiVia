@@ -2,7 +2,12 @@ from django.db import models
 from django.conf import settings
 from apps.APISetor.models import Sector
 from apps.APIEmpresa.models import Enterprise
-from .utils.asaas import AsaasService
+
+class Plan_Discount(models.Model):
+    plan_discount_id = models.AutoField(primary_key=True, db_column='PK_plan_discount')
+    discount_title = models.CharField(max_length=100, null=True, blank=True, db_column='discount_title_plan_discount')
+    percentage = models.DecimalField(null=True, blank=True, max_digits=5, decimal_places=2, db_column='percentage_plan_discount')
+    fixed_value = models.DecimalField(null=True, blank=True, max_digits=10, decimal_places=2, db_column='fixed_value_plan_discount')
 
 class Plan_Status(models.Model):
     plan_status_id = models.AutoField(primary_key=True, db_column='PK_plan_status')
@@ -35,6 +40,8 @@ class Plan_Type(models.Model):
     order = models.PositiveIntegerField(default=0, db_column='order_type')
     is_free = models.BooleanField(default=False, db_column='is_free_type')
     is_price_under_review = models.BooleanField(default=False, db_column='is_price_under_review_type')
+    discount = models.ForeignKey(Plan_Discount, on_delete=models.SET_NULL, null=True, blank=True, db_column='FK_plan_discount')
+    free_trial_days = models.PositiveIntegerField(null=True, blank=True, db_column='free_trial_days_type')
     
     def __str__(self):
         return self.plan_type
@@ -49,11 +56,18 @@ class Plan(models.Model):
     asaas_customer_id = models.CharField(max_length=50, unique=True, null=True, blank=True, db_column='asaas_customer_id_plan')
     asaas_subscription_id = models.CharField(max_length=50, null=True, blank=True, db_column='asaas_subscription_id_plan')
     payment_link = models.URLField(null=True, blank=True, db_column='payment_link_plan')
-    next_due_date = models.DateField(null=True, blank=True, db_column='next_due_date_plan')
+    # -- Quando foi solicitado a compra, não o pagamento
     purchase_at = models.DateTimeField(auto_now=True, db_column='purchase_at_plan')
+    # Data da realização do pagamento
+    payment_date = models.DateTimeField(null=True, blank=True, db_column='payment_date_plan')
+    # -- Data do próximo pagamento
+    next_due_date = models.DateField(null=True, blank=True, db_column='next_due_date_plan')
     status = models.ForeignKey(Plan_Status, on_delete=models.CASCADE, default=Plan_Status.get_default_pk, db_column='FK_plan_status')
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='plan', db_column='FK_user_plan')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='plans', db_column='FK_user_plan')
     plan_type = models.ForeignKey(Plan_Type, on_delete=models.SET_NULL, null=True, blank=True, db_column='FK_plan_type')
+    is_free_trial = models.BooleanField(default=False, db_column='is_free_trial_plan')
+    preferable_payment_day = models.PositiveIntegerField(null=True, blank=True, db_column='preferable_payment_day_plan')
+    
 
     class Meta:
         db_table = 'Plan'
@@ -62,40 +76,7 @@ class Plan(models.Model):
         ordering = ['-purchase_at']
 
     def __str__(self):
-        return f"{self.user.email} - {self.status}"
-    
-    @classmethod
-    def create_plan_for_user(cls, user):
-        """
-        Create a Plan instance for the given user, initializing the Asaas customer ID.
-        
-        Args:
-            user (User): The user for whom the plan is to be created.
-        """
-        try:
-            customer_id = AsaasService().create_customer(user)
-        except Exception as e:
-            print(f"Erro ao criar cliente no Asaas: {e}")
-        
-        plan = cls.objects.create(
-            user=user,
-            asaas_customer_id=customer_id,
-            status=Plan_Status.objects.get(plan_status_id=2)
-        )
-        
-        return plan
-
-    def create_subscription(self, plan_type: Plan_Type):
-        """
-        Create a subscription for the plan's user in Asaas.
-        
-        Args:
-            plan_type (Plan_Type): The plan type to subscribe to.
-        """
-        sub_data = AsaasService().create_subscription(customer_id=self.asaas_customer_id, plan_type=plan_type)
-        self.asaas_subscription_id = sub_data['id']
-        self.save()
-        return sub_data
+        return f"{self.plan_type.plan_type} assinado por {self.user.name} - {self.status}" # type: ignore
     
 class Plan_Subscription_Item(models.Model):
     plan_subscription_item_id = models.AutoField(primary_key=True, db_column='PK_plan_subscription_item')
